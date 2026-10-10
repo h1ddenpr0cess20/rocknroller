@@ -1,0 +1,27 @@
+{
+  "name": "rocknroller",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rock 'n' Roller: a granite boulder rolls through the venues of a tour — garages, dive bars, clubs, arenas — smashing the annoying people in the way, lit by a full light show",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite build && vite preview",
+    "test": "node --test \"test/**/*.test.js\"",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.13.0",
+    "vite": "^8.3.2"
+  },
+  "dependencies": {
+    "@fontsource/anton": "^5.3.0",
+    "@fontsource/barlow-condensed": "^5.3.0"
+  }
+}
