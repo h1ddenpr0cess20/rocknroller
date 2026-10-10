@@ -13,8 +13,8 @@ import { across, backTile, barred, branch, centre, flat, wallTile, wash } from '
  */
 
 export const STADIUM = {
-  tiles: ['#7a6a9a', '#665688', '#8a6a7a', '#584a78'],
-  walls: ['#5a4a7a', '#4a3e6a', '#6a4a70', '#44386a'],
+  tiles: ['#9a96a6', '#848092', '#a89870', '#767286'],
+  walls: ['#6a5a86', '#5a4c76', '#7a5a7a', '#52467a'],
   ambient: [0.95, 0.9, 1.15], lamp: '#fff0d0', trap: '#22182e', lift: '#3a3050', exit: '#ffd23a', zapHue: 0.4, vary: 0.06,
 };
 

@@ -11,8 +11,8 @@ import { across, backTile, barred, branch, centre, flat, wallTile, wash } from '
  */
 
 export const ARENA = {
-  tiles: ['#6a7a9a', '#586888', '#7a6a8a', '#4e5a78'],
-  walls: ['#5a6a8a', '#4a5a7a', '#6a5a7a', '#46547a'],
+  tiles: ['#9aa2ae', '#868e9c', '#a89a7a', '#7a8290'],
+  walls: ['#6a7a98', '#5a6a88', '#7a6a88', '#56648a'],
   ambient: [0.9, 0.95, 1.1], lamp: '#cfe4ff', trap: '#242a3a', lift: '#3a4260', exit: '#ffb02a', zapHue: 5.0, vary: 0.06,
 };
 

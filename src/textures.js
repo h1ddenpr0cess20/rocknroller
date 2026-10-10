@@ -283,7 +283,7 @@ function panels(GFX) {
     const edge = Math.min(fx, fy, 1 - fx, 1 - fy);
     const bevel = smoothstep(0.1, 0.02, edge);
     const gap = edge < 0.022 ? 1 : 0;
-    const k = relief ? 0.7 - gap * 0.7 - bevel * 0.1 : gap ? 0.1 : (alt ? 0.62 : 1) * (0.9 + bevel * 0.2);
+    const k = relief ? 0.7 - gap * 0.7 - bevel * 0.1 : gap ? 0.25 : (alt ? 0.82 : 1) * (0.94 + bevel * 0.12);
     return grey(Math.round(255 * Math.min(1, k)));
   });
   return pair(GFX, 256, paint(false), paint(true));
@@ -500,11 +500,12 @@ function damask(GFX) {
 function canvasWall(GFX) {
   const n = fractal(107, 6, 3);
   const paint = (relief) => (size) => pixels(size, (u, v) => {
-    const f = (u * 4) % 1;
-    const stripe = Math.floor(u * 4) % 2;
-    const seam = Math.min(f, 1 - f) < 0.018 ? 1 : 0;
-    const hem = v > 0.93 ? 1 : 0;
-    const k = relief ? 0.55 + n(u, v) * 0.25 - seam * 0.35 - hem * 0.15 : (stripe ? 1 : 0.7) * (0.9 + n(u, v) * 0.18) * (1 - seam * 0.3 - hem * 0.12);
+    const f = (u * 3) % 1;
+    const stripe = Math.floor(u * 3) % 2;
+    const seam = Math.min(f, 1 - f) < 0.012 ? 1 : 0;
+    const weave = 0.5 + 0.5 * Math.sin(u * 256 * Math.PI) * Math.sin(v * 256 * Math.PI);
+    const sag = 0.94 + 0.06 * Math.sin(f * Math.PI);
+    const k = relief ? 0.55 + n(u, v) * 0.2 + weave * 0.15 - seam * 0.3 : (stripe ? 1 : 0.88) * sag * (0.94 + n(u, v) * 0.1 + weave * 0.04) * (1 - seam * 0.2);
     return grey(Math.round(255 * Math.min(1, k)));
   });
   return pair(GFX, 256, paint(false), paint(true));

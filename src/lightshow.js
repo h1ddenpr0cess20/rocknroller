@@ -108,16 +108,16 @@ function sparkleTexture(GFX, seed) {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, size, size);
     const mid = size / 2;
-    for (let k = 0; k < 1500; k++) {
+    for (let k = 0; k < 900; k++) {
       const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * mid * 0.96;
-      const edge = 1 - (r / mid) ** 2;
-      if (rnd() > edge * 1.1) continue;
-      const w = 2 + rnd() * 5;
+      const edge = (1 - (r / mid) ** 2) ** 1.6;
+      if (rnd() > edge) continue;
+      const w = 1.4 + rnd() * 2.6;
       const x = mid + Math.cos(a) * r, y = mid + Math.sin(a) * r;
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(rnd() * 3);
-      ctx.fillStyle = `rgba(255,255,255,${0.35 + rnd() * 0.65})`;
+      ctx.fillStyle = `rgba(255,255,255,${0.25 + rnd() * 0.6})`;
       ctx.fillRect(-w / 2, -w / 2, w, w * (0.7 + rnd() * 0.6));
       ctx.restore();
     }
@@ -416,7 +416,7 @@ export function createLightshow(GFX, venue) {
     // Its own copy, as each ball's field turns on its own.
     const map = copyOf(GFX, sp.map);
     if (map) map.center.set(0.5, 0.5);
-    const spMat = new GFX.MeshBasicMaterial({ map, color: new GFX.Color(1, 1, 1), opacity: 0.8, ...additive });
+    const spMat = new GFX.MeshBasicMaterial({ map, color: new GFX.Color(1, 1, 1), opacity: 0.5, ...additive });
     const floor = new GFX.Mesh(new GFX.PlaneGeometry(radius * 2, radius * 2), spMat);
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(f.x, y + 0.045, f.z);
