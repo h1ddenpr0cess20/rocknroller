@@ -330,7 +330,6 @@ export const FLOORS = { concrete, planks, checker, carpet, plate, grass, panels,
 
 /** Poster names, for the walls: the bands every venue has had on its walls. */
 const BANDS = ['THE DEAD BATTERIES', 'GRAVEL PIT', 'VELVET HAMMER', 'WET CONCRETE', 'THE FEEDBACKS', 'SKULL SOCKS', 'CRASH TEST', 'LOUD NEIGHBOURS', 'DEAD AIR', 'MOSH POTATO', 'SIXTH STRING', 'THE RIFFRAFF'];
-const POSTER_COLOURS = ['#e63a6a', '#2ac6e8', '#f5c518', '#8a4be8', '#3ae88a', '#f5f0e6', '#ff7a1a'];
 
 /** Bricks, a tile wide and a tile high: four courses, each set half a brick over from the last. With `posters`, papered with gig flyers. */
 function brick(GFX, { posters = false } = {}) {

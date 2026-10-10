@@ -109,6 +109,7 @@ function harm(gig, amount) {
  *   `broke`    the panels he broke.
  *   `bumped`   the bumpers he bounced off.
  *   `encore`   true if a lighter brought him back.
+ *   `events`   a speaker stack came down, or pyro fired: { type, x, y, z }.
  */
 export function stepGig(gig, push, dt = STEP, { live = true, moving = true, rev = false } = {}) {
   const ball = gig.ball;
@@ -116,7 +117,7 @@ export function stepGig(gig, push, dt = STEP, { live = true, moving = true, rev 
   gig.time += dt;
   gig.actors.place(gig.time, dt);
   const touched = gig.actors.step(dt, gig.time, live && moving ? ball : null);
-  const out = { impact: 0, outcome: null, hurt: null, hits: [], picked: [], door: null, broke: [], bumped: [], encore: false };
+  const out = { impact: 0, outcome: null, hurt: null, hits: [], picked: [], door: null, broke: [], bumped: [], encore: false, events: gig.actors.drain() };
   if (!moving) return out;
 
   const cx0 = Math.floor(ball.x), cz0 = Math.floor(ball.z);

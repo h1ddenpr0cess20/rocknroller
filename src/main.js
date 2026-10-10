@@ -47,6 +47,7 @@ try {
   const stage = await createStage(view);
   game = createGame({ stage, hud, input, audio, storage });
   globalThis.rocknroller = game;
+  game.debug.audio = audio;
   // For the tests and the console: run the game `seconds` ahead without drawing it (software rendering is slow).
   game.debug.advance = (seconds, step = 1 / 60) => {
     for (let t = 0; t < seconds; t += step) game.update(step, input.take());

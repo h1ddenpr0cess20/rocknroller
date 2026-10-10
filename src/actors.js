@@ -139,7 +139,7 @@ export function createActors(GFX, venue, world, { killY }) {
     };
     const mesh = createSpeakerMesh(GFX, { w: h.w - inset * 2, d: h.d - inset * 2, height: CRUSHER_HEIGHT, venue });
     group.add(mesh.group);
-    return { ...h, base, box, mesh: mesh.group, look: mesh };
+    return { ...h, base, box, mesh: mesh.group, look: mesh, up: 0 };
   });
 
   // Pyro: a vent in the floor with a pilot light, bursting into flame on the beat.
@@ -215,10 +215,16 @@ export function createActors(GFX, venue, world, { killY }) {
     box.max[0] = x + sx; box.max[1] = y + sy; box.max[2] = z + sz;
   };
 
+  /** What just happened that the game should hear: a stack coming down, pyro firing. */
+  const events = [];
+
   /** Puts the kinematic things where they are at `time`. */
   function place(time, dt = 0) {
     for (const h of crushers) {
-      moveBox(h.box, h.box.min[0], h.base + h.lift * hammerAt(time, h.period, h.phase), h.box.min[2], dt);
+      const up = hammerAt(time, h.period, h.phase);
+      if (h.up > 0.95 && up <= 0.95) events.push({ type: 'slam', x: h.x + h.w / 2, y: h.base, z: h.z + h.d / 2 });
+      h.up = up;
+      moveBox(h.box, h.box.min[0], h.base + h.lift * up, h.box.min[2], dt);
     }
     for (const l of lifts) {
       const s = liftAt(time, l.period, l.phase, l.pause);
@@ -232,11 +238,14 @@ export function createActors(GFX, venue, world, { killY }) {
       if (up >= 1) g.box.solid = false;
     }
     for (const s of spikes) {
+      const was = s.out;
       s.out = spikesAt(time, s.period, s.phase);
       s.warn = warningAt(time, s.period, s.phase);
+      if (was < 0.5 && s.out >= 0.5) events.push({ type: 'burst', x: s.x + s.w / 2, y: s.base, z: s.z + s.d / 2 });
     }
   }
   place(0);
+  events.length = 0;
 
   /** Is the ground ahead of a walker, going (dx, dz), somewhere it would go? */
   const footing = (b, dx, dz) => {
@@ -265,6 +274,8 @@ export function createActors(GFX, venue, world, { killY }) {
   return {
     group, foes, crushers, spikes, lifts, doors, pickups, bumpers,
     place,
+    /** Takes the events since last asked. */
+    drain() { return events.splice(0); },
 
     /**
      * One physics step for every foe. `rock` is Rock's ball, or null while

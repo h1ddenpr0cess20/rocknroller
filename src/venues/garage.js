@@ -22,7 +22,7 @@ const PARTY = ['#ff2d95', '#2de2ff', '#ffd23a'];
 
 export function garage() {
   const g = new Venue({
-    name: 'The Garage', act: 1, cols: 100, rows: 118, palette: GARAGE, tempo: 112,
+    name: 'The Garage', act: 1, cols: 100, rows: 118, palette: GARAGE, tempo: 124,
     intro: 'Rock has a band now. Rock did not ask for one.',
     look: {
       floor: 'concrete', wall: 'plywood', lamp: 'bulb', exitSign: 'GIG', ampName: 'GARAGE',

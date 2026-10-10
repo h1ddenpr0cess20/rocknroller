@@ -57,7 +57,6 @@ export function createGame({ stage, hud, input, audio, storage }) {
   let timer = 0;
   let accumulator = 0;
   let playTime = 0;
-  let hitStop = 0;
   let lostHow = null;
   let saved = storage.load();
   let seen = new Set();
@@ -247,6 +246,7 @@ export function createGame({ stage, hud, input, audio, storage }) {
       if (out.impact > 6) effects.dust(b.x, b.y - b.r, b.z);
     }
     for (const h of out.hits) hit(h);
+    for (const e of out.events) happened(e);
     if (out.hurt && out.hurt.how !== 'foe') {
       hud.integrity(gig.rock);
       if (out.hurt.how === 'burnt') {
@@ -293,12 +293,24 @@ export function createGame({ stage, hud, input, audio, storage }) {
     else if (out.outcome) lose(out.outcome);
   }
 
+  /** A speaker stack came down, or pyro fired: heard and felt by how near it is. */
+  function happened(e) {
+    const b = gig.ball;
+    const d = Math.hypot(e.x - b.x, e.z - b.z);
+    if (d > 16) return;
+    const near = 1 - d / 16;
+    if (e.type === 'slam') {
+      audio.slam(near);
+      effects.dust(e.x, e.y, e.z);
+      stage.shake = Math.max(stage.shake, 0.05 * near);
+    } else audio.burst(near);
+  }
+
   function hit(h) {
     const f = h.foe;
     const b = gig.ball;
     const at = screenOf(f.x, f.y + 0.7, f.z);
     const grade = GRADES[h.grade];
-    hitStop = h.grade === 'crit' ? 0.11 : h.down ? 0.065 : 0.04;
     audio.smash(h.grade, h.speed);
     if (h.down) {
       effects.smash(f.x, f.y + 0.4, f.z, { size: f.stats.boss ? 2.4 : 1, dir: h.dir, crit: h.grade === 'crit' });
@@ -417,8 +429,7 @@ export function createGame({ stage, hud, input, audio, storage }) {
     timer += dt;
     const live = state === 'play';
     if (live) playTime += dt;
-    hitStop = Math.max(0, hitStop - dt);
-    if (hitStop <= 0) {
+    {
       const push = live ? toGround(stick, view.yaw) : [0, 0];
       accumulator = Math.min(accumulator + dt, STEP * 12);
       while (accumulator >= STEP) {
@@ -429,7 +440,7 @@ export function createGame({ stage, hud, input, audio, storage }) {
           rev: state === 'play' && revHeld,
         });
         handle(out);
-        if (hitStop > 0 || state !== 'play' && state !== 'ready' && state !== 'title') { accumulator = 0; break; }
+        if (state !== 'play' && state !== 'ready' && state !== 'title') { accumulator = 0; break; }
       }
     }
 
