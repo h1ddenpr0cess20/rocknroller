@@ -47,9 +47,9 @@ export const FOES = Object.freeze({
   drum: { name: 'Runaway Drum', blurb: 'Nobody is playing it. It is playing itself.', move: 'crawl', toughness: 5, power: 6, hype: 70, radius: 0.49, speed: 1.6 },
   poolball: { name: '8-Ball', blurb: 'Rolled off the table. Has a grudge.', move: 'walk', toughness: 7, power: 7, hype: 90, radius: 0.49, speed: 2.6 },
   // The ones who run the night.
-  promoter: { name: 'The Promoter', blurb: 'Takes sixty percent. Smiles on the other forty.', move: 'walk', toughness: 11, power: 14, hype: 600, radius: 0.85, speed: 1.6, boss: true, hp: 60 },
-  maestro: { name: 'The Maestro', blurb: 'Conducts. Everything. Including you.', move: 'walk', toughness: 11, power: 15, hype: 800, radius: 0.85, speed: 1.8, boss: true, hp: 70 },
-  headliner: { name: 'The Headliner', blurb: 'Has a flying V, a smoke machine and no idea who you are.', move: 'walk', toughness: 12, power: 18, hype: 1500, radius: 1.04, speed: 1.6, boss: true, hp: 90 },
+  promoter: { name: 'The Promoter', blurb: 'Takes sixty percent. Smiles on the other forty.', move: 'walk', toughness: 9, power: 9, hype: 600, radius: 0.85, speed: 1.6, boss: true, hp: 50 },
+  maestro: { name: 'The Maestro', blurb: 'Conducts. Everything. Including you.', move: 'walk', toughness: 9, power: 10, hype: 800, radius: 0.85, speed: 1.8, boss: true, hp: 56 },
+  headliner: { name: 'The Headliner', blurb: 'Has a flying V, a smoke machine and no idea who you are.', move: 'walk', toughness: 10, power: 12, hype: 1500, radius: 1.04, speed: 1.6, boss: true, hp: 70 },
 });
 
 /** How high a flyer goes over the floor where its loop starts: over the crowd's heads. */

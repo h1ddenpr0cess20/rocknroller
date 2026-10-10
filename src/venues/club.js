@@ -128,12 +128,11 @@ export function club() {
   d.stairs(3, 1.5);
 
   // The back office: the promoter, and a ply door across a side room with the last record.
-  const office = d.room(15, 13);
-  for (const k of [2, 6, 10]) g.pillar(...backTile(office, k), 1.0, { prop: 'amp', rot: office.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
-  g.foe('promoter', ...office.tile(11, 0), { range: 7 });
-  g.foe('influencer', ...office.tile(5, -3), { range: 6 }).foe('security', ...office.tile(7, 3), { range: 6 });
-  g.pick(...office.tile(2, 3), 10).pick(...office.tile(5, 0), 10).pick(...office.tile(9, -4), 10);
-  g.tape(...office.tile(3, -4));
+  const office = d.room(19, 15);
+  for (const k of [2, 6, 10, 14]) g.pillar(...backTile(office, k), 1.0, { prop: 'amp', rot: office.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  g.foe('promoter', ...office.tile(12, 0), { range: 3 });
+  g.pick(...office.tile(2, 3), 10).pick(...office.tile(5, 0), 10).pick(...office.tile(8, -4), 10);
+  g.tape(...office.tile(3, -5)).tape(...office.tile(3, 5));
   wash(g, office, [NEON[1], NEON[3]], { cans: 3, program: 'chase', every: 2 });
   sign(office, 5, 'OFFICE', NEON[2], 1.5, 0.6);
   const safe = branch(d, office, 6);

@@ -162,6 +162,18 @@ const liftWaiting = (l, end) => (gig) => {
   return end === 0 ? s === 0 && u < l.pause * 0.45 : s === 1 && u > 0.5 && u < 0.5 + l.pause * 0.45;
 };
 
+let openFloor = () => false;
+
+/** Whether there is floor all the way along a straight line from `a` to `c`, level enough to roll along it. */
+function open(a, c) {
+  const n = Math.ceil(Math.hypot(c.x - a.x, c.z - a.z) * 2);
+  for (let i = 1; i < n; i++) {
+    const x = a.x + ((c.x - a.x) * i) / n, z = a.z + ((c.z - a.z) * i) / n;
+    if (!openFloor(Math.floor(x), Math.floor(z))) return false;
+  }
+  return true;
+}
+
 /** Turns a plan into waypoints: tile centres at a pace to suit, with waits and rides where they're needed. */
 function waypoints(gig, moves, from) {
   const venue = gig.venue;
@@ -219,10 +231,17 @@ function waypoints(gig, moves, from) {
  * long it took, every way Rock was lost or hurt, the people he ran into, and
  * the gig as it came out.
  */
-export function drive(index, { limit = 1200, sample = null, records = true } = {}) {
+export function drive(index, { limit = 1200, sample = null, records = true, duel = true, from = null } = {}) {
   const gig = createGig(GFX, index);
   const venue = gig.venue;
   const net = graph(venue);
+  openFloor = (x, z) => venue.cell(x, z)?.kind === 'floor';
+  if (from) {
+    gig.safe = [from[0] + 0.5, venue.heightAt(from[0] + 0.5, from[1] + 0.5) + gig.ball.r, from[1] + 0.5];
+    putBack(gig);
+    gig.passes = 9;
+    for (const p of gig.actors.pickups) if (p.kind === 'pass') p.taken = true;
+  }
   const b = gig.ball;
   const losses = [], harms = [], hits = [];
 
@@ -264,6 +283,7 @@ export function drive(index, { limit = 1200, sample = null, records = true } = {
 
   let down = 0;
   let still = 0;
+  let fight = null;
   let target = goal();
 
   while (t < limit) {
@@ -309,10 +329,32 @@ export function drive(index, { limit = 1200, sample = null, records = true } = {
       px = ux * along + -uz * cross;
       pz = uz * along + ux * cross;
     }
+    // A boss in the room: back off for a run-up, then charge it, and again.
+    let rev = false;
+    const boss = duel ? gig.actors.foes.find((f) => f.stats.boss && !f.dead && Math.hypot(f.x - b.x, f.z - b.z) < 20 && Math.abs(f.y - b.y) < 2.5 && open(b, f)) : null;
+    if (boss) {
+      fight ??= { entry: [b.x, b.z], mode: 'back' };
+      const bd = Math.hypot(boss.x - b.x, boss.z - b.z);
+      const ed = Math.hypot(fight.entry[0] - b.x, fight.entry[1] - b.z);
+      if (fight.mode === 'back' && (ed < 1.5 || bd > 13)) fight.mode = 'charge';
+      if (fight.mode === 'charge') {
+        px = (boss.x - b.x) / bd;
+        pz = (boss.z - b.z) / bd;
+        rev = bd > 2.5;
+      } else {
+        const ex = fight.entry[0] - b.x, ez = fight.entry[1] - b.z, el = Math.hypot(ex, ez) || 1;
+        px = (ex / el) * 1;
+        pz = (ez / el) * 1;
+      }
+    } else if (fight) {
+      fight = null;
+      replan();
+    }
     const l = Math.hypot(px, pz);
     if (l > 1) { px /= l; pz /= l; }
 
-    const out = stepGig(gig, [px, pz], STEP);
+    const out = stepGig(gig, [px, pz], STEP, { rev });
+    if (boss && fight && out.hits.some((h) => h.foe === boss)) fight.mode = 'back';
     sample?.(gig);
     if (Math.hypot(b.vx, b.vz) < 0.05 && !waiting) still += STEP; else still = 0;
     if (still > 20) return result(false, { stuck: { at: here(), wp, of: route.length, goal: target } });

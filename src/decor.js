@@ -1,3 +1,4 @@
+import { FURNITURE } from './furniture.js';
 import { canvas, cached, grilleTexture, random, texture, tiled } from './textures.js';
 
 /**
@@ -368,7 +369,7 @@ function table(GFX, { rise = 0.62 }) {
   return { group };
 }
 
-export const PROPS = { amp, case: roadCase, drums, speaker, bar, pool, jukebox, pinball, keg, table };
+export const PROPS = { amp, case: roadCase, drums, speaker, bar, pool, jukebox, pinball, keg, table, ...FURNITURE };
 
 /**
  * The props of a venue, each over its tiles: { group, update(time, beat) }.
