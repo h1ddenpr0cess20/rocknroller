@@ -496,10 +496,38 @@ function damask(GFX) {
   return pair(GFX, 256, paint(false), paint(true));
 }
 
+/** Tent canvas: wide taut stripes with a seam between, a little sag, stitched. The festival's tents. */
+function canvasWall(GFX) {
+  const n = fractal(107, 6, 3);
+  const paint = (relief) => (size) => pixels(size, (u, v) => {
+    const f = (u * 4) % 1;
+    const stripe = Math.floor(u * 4) % 2;
+    const seam = Math.min(f, 1 - f) < 0.018 ? 1 : 0;
+    const hem = v > 0.93 ? 1 : 0;
+    const k = relief ? 0.55 + n(u, v) * 0.25 - seam * 0.35 - hem * 0.15 : (stripe ? 1 : 0.7) * (0.9 + n(u, v) * 0.18) * (1 - seam * 0.3 - hem * 0.12);
+    return grey(Math.round(255 * Math.min(1, k)));
+  });
+  return pair(GFX, 256, paint(false), paint(true));
+}
+
+/** Festival hoarding: upright painted slats, two rails, a row of sponsor blocks along the top third. */
+function fence(GFX) {
+  const n = fractal(113, 8, 3);
+  const paint = (relief) => (size) => pixels(size, (u, v) => {
+    const f = (u * 8) % 1;
+    const gap = Math.min(f, 1 - f) < 0.03 ? 1 : 0;
+    const rail = Math.abs(v - 0.22) < 0.035 || Math.abs(v - 0.78) < 0.035 ? 1 : 0;
+    const block = v > 0.32 && v < 0.62 && Math.floor(u * 2) % 2 === 0 && (u * 2) % 1 > 0.08 && (u * 2) % 1 < 0.92 ? 1 : 0;
+    const k = relief ? 0.5 + n(u, v) * 0.2 - gap * 0.4 + rail * 0.25 + block * 0.1 : (0.86 + n(u, v) * 0.16) * (1 - gap * 0.5) * (rail ? 0.72 : 1) * (block ? 0.6 : 1);
+    return grey(Math.round(255 * Math.min(1, k)));
+  });
+  return pair(GFX, 256, paint(false), paint(true));
+}
+
 export const WALLS = {
   brick: (GFX) => brick(GFX),
   posters: (GFX) => brick(GFX, { posters: true }),
-  plywood, foam, curtain, corrugated, block, damask,
+  plywood, foam, curtain, corrugated, block, damask, canvas: canvasWall, fence,
 };
 
 /** The floor texture called `name`, painted once. */
