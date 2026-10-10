@@ -261,7 +261,7 @@ export function createLightshow(GFX, venue) {
     const high = f.height ?? 1.6;
     const lens = [f.x, y + high, f.z];
     const aim = f.aim ?? [0, 0];
-    const target = [f.x + aim[0], y + 0.03, f.z + aim[1]];
+    const target = [f.x + aim[0], heightOf(f.x + aim[0], f.z + aim[1]) + 0.03, f.z + aim[1]];
     const g = new GFX.Group();
     g.position.set(f.x, y, f.z);
     const post = new GFX.Mesh(new GFX.CylinderGeometry(0.025, 0.04, high, 8), iron);

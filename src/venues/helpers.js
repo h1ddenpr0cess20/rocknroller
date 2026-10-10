@@ -27,3 +27,42 @@ export const backTile = (p, along, inset = 0) => p.tile(along, p.back * (Math.fl
 
 /** A heading's unit vector. */
 export const heading = (h) => HEADING[h];
+
+/** The wall tile just beyond piece `p`'s back wall, `along` it: where a light goes to sit on the wall top. */
+export const wallTile = (p, along) => p.tile(along, p.back * (Math.floor((p.width - 1) / 2) + 1));
+
+/** The tile in the middle of piece `p`. */
+export const centre = (p) => p.tile(Math.floor(p.length / 2), 0);
+
+/** The offset in tiles from tile `a` to tile `b`, for aiming a light. */
+export const aimAt = (a, b) => [b[0] - a[0], b[1] - a[1]];
+
+/**
+ * A wash of colour on a room: PAR cans on its back wall, each aimed at the
+ * middle, chasing through `colors`. `strobe` adds a strobe at the back as well.
+ */
+export function wash(v, p, colors, { cans = 2, strobe = false, program = 'chase', every = 2, glow = 0.7 } = {}) {
+  const mid = centre(p);
+  for (let i = 0; i < cans; i++) {
+    const at = wallTile(p, Math.round(((i + 1) * p.length) / (cans + 1)));
+    v.light('par', ...at, { colors, program, every, shift: i, glow, reach: 8, aim: aimAt(at, mid), height: 1.5 });
+  }
+  if (strobe) {
+    const at = wallTile(p, Math.floor(p.length / 2));
+    v.light('strobe', ...at, { colors: ['#ffffff'], reach: 9, height: 1.3 });
+  }
+}
+
+const NAME_OF = { '1,0': '+x', '-1,0': '-x', '0,1': '+z', '0,-1': '-z' };
+
+/** The heading (as the digger wants it) that leads out through piece `p`'s front side (the low walls, toward the camera). */
+export const frontHeading = (p) => NAME_OF[`${-p.back * p.across[0]},${-p.back * p.across[1]}`];
+
+/** The heading that leads out through piece `p`'s back wall. */
+export const backHeading = (p) => NAME_OF[`${p.back * p.across[0]},${p.back * p.across[1]}`];
+
+/** A side branch off piece `p`, `along` it: out through its front (`side` 'front') or back wall, as a digger to build with. */
+export function branch(d, p, along, side = 'front', depth = 7) {
+  const sign = side === 'front' ? -p.back : p.back;
+  return d.fork().jump(pick(p.tile(along, sign * depth), side === 'front' ? frontHeading(p) : backHeading(p)));
+}

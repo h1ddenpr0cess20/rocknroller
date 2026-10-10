@@ -193,7 +193,182 @@ function plain(GFX, { w = 1, d = 1, rise }) {
   return { group };
 }
 
-export const PROPS = { amp, case: roadCase, drums, speaker };
+
+/** Wood for bars and tables: dark boards with a polish. */
+const wood = (GFX, hex = '#5a3a22') => std(GFX, hex, { roughness: 0.35, clearcoat: 0.7, clearcoatRoughness: 0.2 });
+
+/** A bar counter, `w` tiles long: dark wood, a brass rail, a row of taps and bottles on it, a strip of neon along the front. */
+function bar(GFX, { w = 3, d = 1, rise = 0.9, venue }) {
+  const group = new GFX.Group();
+  const length = Math.max(w, d), alongX = w >= d;
+  const holder = new GFX.Group();
+  if (!alongX) holder.rotation.y = Math.PI / 2;
+  const top = shadowed(new GFX.Mesh(new GFX.BoxGeometry(length * 0.98, 0.07, 0.96), wood(GFX, '#6a4528')));
+  top.position.y = rise - 0.035;
+  const body = shadowed(new GFX.Mesh(new GFX.BoxGeometry(length * 0.96, rise - 0.07, 0.86), wood(GFX, '#3a2414')));
+  body.position.y = (rise - 0.07) / 2;
+  const rail = new GFX.Mesh(new GFX.CylinderGeometry(0.025, 0.025, length * 0.94, 10), std(GFX, '#e0b44a', { metalness: 1, roughness: 0.25 }));
+  rail.rotation.z = Math.PI / 2;
+  rail.position.set(0, 0.22, 0.46);
+  const glowColour = venue?.look?.barNeon ?? '#ff2d95';
+  const strip = new GFX.Mesh(new GFX.BoxGeometry(length * 0.9, 0.025, 0.012), new GFX.MeshBasicMaterial({ color: new GFX.Color(glowColour), toneMapped: false }));
+  strip.position.set(0, rise * 0.55, 0.436);
+  holder.add(body, top, rail, strip);
+  // Taps and bottles along the top.
+  const metal = std(GFX, '#d6d9e0', { metalness: 1, roughness: 0.2 });
+  for (let i = 0; i < Math.floor(length * 1.5); i++) {
+    const x = -length * 0.44 + (i / Math.max(1, Math.floor(length * 1.5) - 1)) * length * 0.88;
+    if (i % 3 === 0) {
+      const tap = shadowed(new GFX.Mesh(new GFX.CylinderGeometry(0.018, 0.018, 0.16, 8), metal));
+      tap.position.set(x, rise + 0.08, 0.0);
+      const spout = new GFX.Mesh(new GFX.CylinderGeometry(0.012, 0.012, 0.09, 6), metal);
+      spout.rotation.x = Math.PI / 2;
+      spout.position.set(x, rise + 0.15, 0.04);
+      holder.add(tap, spout);
+    } else {
+      const colour = ['#2a7a3a', '#8a4a1a', '#3a5aa8', '#a8802a'][i % 4];
+      const bottle = shadowed(new GFX.Mesh(new GFX.CylinderGeometry(0.03, 0.035, 0.2, 10), new GFX.MeshPhysicalMaterial({ color: new GFX.Color(colour), roughness: 0.1, clearcoat: 1 })));
+      bottle.position.set(x, rise + 0.1, -0.1 + (i % 2) * 0.1);
+      holder.add(bottle);
+    }
+  }
+  group.add(holder);
+  return { group };
+}
+
+/** A pool table, 3 × 2: green baize in dark rails, six pockets, a rack of balls and a cue. */
+function pool(GFX, { w = 3, d = 2, rise = 0.7 }) {
+  const group = new GFX.Group();
+  const holder = new GFX.Group();
+  if (d > w) holder.rotation.y = Math.PI / 2;
+  const L = Math.max(w, d) * 0.98, W = Math.min(w, d) * 0.98;
+  const rails = wood(GFX, '#3a2414');
+  const felt = std(GFX, '#1f8a4a', { roughness: 0.95 });
+  const frame = shadowed(new GFX.Mesh(new GFX.BoxGeometry(L, 0.1, W), rails));
+  frame.position.y = rise - 0.05;
+  const baize = new GFX.Mesh(new GFX.BoxGeometry(L - 0.2, 0.02, W - 0.2), felt);
+  baize.position.y = rise + 0.005;
+  const legBase = shadowed(new GFX.Mesh(new GFX.BoxGeometry(L * 0.8, rise - 0.1, W * 0.7), rails));
+  legBase.position.y = (rise - 0.1) / 2;
+  holder.add(legBase, frame, baize);
+  const pocket = std(GFX, '#0a0a0c');
+  for (const [x, z] of [[-1, -1], [0, -1], [1, -1], [-1, 1], [0, 1], [1, 1]]) {
+    const p = new GFX.Mesh(new GFX.CylinderGeometry(0.075, 0.075, 0.03, 12), pocket);
+    p.position.set(x * (L / 2 - 0.1), rise + 0.015, z * (W / 2 - 0.1));
+    holder.add(p);
+  }
+  const colours = ['#ffd23a', '#2a5ad9', '#d9232f', '#7a3ae8', '#ff7a1a', '#1f8a3a', '#8a1a1a', '#101014', '#f4f0e6'];
+  colours.forEach((c, i) => {
+    const row = Math.floor((Math.sqrt(8 * i + 1) - 1) / 2);
+    const col = i - (row * (row + 1)) / 2;
+    const b = shadowed(new GFX.Mesh(new GFX.SphereGeometry(0.035, 10, 8), std(GFX, c, { roughness: 0.1, clearcoat: 1 })));
+    b.position.set(L * 0.22 + row * 0.065, rise + 0.04, (col - row / 2) * 0.075);
+    holder.add(b);
+  });
+  const cue = new GFX.Mesh(new GFX.CylinderGeometry(0.008, 0.014, L * 0.7, 6), std(GFX, '#d9b080', { roughness: 0.4 }));
+  cue.rotation.z = Math.PI / 2;
+  cue.position.set(-L * 0.18, rise + 0.05, W * 0.16);
+  cue.rotation.y = 0.12;
+  holder.add(cue);
+  group.add(holder);
+  return { group };
+}
+
+/** A jukebox: a rounded cabinet of chrome and wood with a lit panel that changes colour, and a bubble of coloured tubes. */
+function jukebox(GFX, { rise = 1.1 }) {
+  const group = new GFX.Group();
+  const chrome = std(GFX, '#d6d9e0', { metalness: 1, roughness: 0.2 });
+  const body = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.8, rise * 0.8, 0.62), wood(GFX, '#7a3a1a')));
+  body.position.y = rise * 0.4;
+  const dome = shadowed(new GFX.Mesh(new GFX.CylinderGeometry(0.4, 0.4, 0.62, 18, 1, false, 0, Math.PI), wood(GFX, '#7a3a1a')));
+  dome.rotation.z = Math.PI / 2;
+  dome.rotation.y = Math.PI / 2;
+  dome.position.y = rise * 0.8;
+  const glowMat = new GFX.MeshBasicMaterial({ color: new GFX.Color('#ffd23a'), toneMapped: false });
+  const panel = new GFX.Mesh(new GFX.BoxGeometry(0.62, rise * 0.46, 0.03), glowMat);
+  panel.position.set(0, rise * 0.55, 0.32);
+  const trim = new GFX.Mesh(new GFX.TorusGeometry(0.34, 0.025, 6, 20, Math.PI), chrome);
+  trim.position.set(0, rise * 0.78, 0.325);
+  group.add(body, dome, panel, trim);
+  const hues = [[1, 0.82, 0.23], [1, 0.18, 0.58], [0.17, 0.89, 1], [0.23, 0.9, 0.5]];
+  return {
+    group,
+    update(time) {
+      const c = hues[Math.floor(time * 1.1) % hues.length];
+      glowMat.color.setRGB(c[0], c[1], c[2]);
+    },
+  };
+}
+
+/** A pinball machine: a sloped glass top, a legs-and-cabinet base, and a back box with a lit backglass. */
+function pinball(GFX, { rise = 0.9 }) {
+  const group = new GFX.Group();
+  const [c, ctx] = canvas(128, 160);
+  const g = ctx.createLinearGradient(0, 0, 0, 160);
+  g.addColorStop(0, '#2a0a4a'); g.addColorStop(0.55, '#ff2d95'); g.addColorStop(1, '#ffd23a');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 160);
+  ctx.fillStyle = '#fff6c8';
+  ctx.beginPath(); ctx.arc(64, 70, 34, 0, 7); ctx.fill();
+  ctx.fillStyle = '#16161c';
+  ctx.font = '700 26px "Anton", Impact, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('ROCK', 64, 78);
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 18; i++) ctx.fillRect(10 + (i * 37) % 110, 12 + (i * 53) % 130, 3, 3);
+  const glass = typeof document === 'undefined' ? null : texture(GFX, c);
+  const art = new GFX.MeshBasicMaterial({ map: glass, color: new GFX.Color('#ffffff'), toneMapped: false });
+  const side = std(GFX, '#1a1a22', { roughness: 0.5 });
+  const cab = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.72, rise * 0.55, 0.9), side));
+  cab.position.y = rise * 0.275;
+  const field = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.7, 0.06, 0.9), std(GFX, '#3a8ad9', { roughness: 0.3 })));
+  field.position.y = rise * 0.58;
+  field.rotation.x = -0.12;
+  const back = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.72, rise * 0.55, 0.08), [side, side, side, side, art, side]));
+  back.position.set(0, rise * 0.8, -0.4);
+  group.add(cab, field, back);
+  return { group };
+}
+
+/** A beer keg: brushed steel, banded, a tap on top. */
+function keg(GFX, { rise = 0.7 }) {
+  const group = new GFX.Group();
+  const steel = std(GFX, '#b8bcc4', { metalness: 1, roughness: 0.35 });
+  for (const [x, z] of [[-0.22, -0.2], [0.22, 0.2]]) {
+    const k = shadowed(new GFX.Mesh(new GFX.CylinderGeometry(0.21, 0.21, rise * 0.8, 18), steel));
+    k.position.set(x, rise * 0.4, z);
+    for (const y of [0.1, 0.72]) {
+      const band = new GFX.Mesh(new GFX.TorusGeometry(0.215, 0.015, 6, 20), std(GFX, '#8a8e98', { metalness: 1, roughness: 0.3 }));
+      band.rotation.x = Math.PI / 2;
+      band.position.set(x, rise * y, z);
+      group.add(band);
+    }
+    const t = new GFX.Mesh(new GFX.CylinderGeometry(0.04, 0.04, 0.07, 8), std(GFX, '#e0b44a', { metalness: 1, roughness: 0.3 }));
+    t.position.set(x, rise * 0.82, z);
+    group.add(k, t);
+  }
+  return { group };
+}
+
+/** A round table with beer glasses and a candle in a jar: nothing to hit but the table. */
+function table(GFX, { rise = 0.62 }) {
+  const group = new GFX.Group();
+  const top = shadowed(new GFX.Mesh(new GFX.CylinderGeometry(0.44, 0.44, 0.05, 20), wood(GFX, '#6a4528')));
+  top.position.y = rise;
+  const stem = shadowed(new GFX.Mesh(new GFX.CylinderGeometry(0.06, 0.1, rise, 10), std(GFX, '#202024', { metalness: 0.7 })));
+  stem.position.y = rise / 2;
+  group.add(top, stem);
+  for (const [x, z] of [[-0.18, 0.1], [0.16, -0.12], [0.1, 0.2]]) {
+    const glass = new GFX.Mesh(new GFX.CylinderGeometry(0.04, 0.032, 0.11, 10), new GFX.MeshPhysicalMaterial({ color: new GFX.Color('#e8a020'), roughness: 0.05, clearcoat: 1, transparent: true, opacity: 0.85 }));
+    glass.position.set(x, rise + 0.08, z);
+    group.add(glass);
+  }
+  const flame = new GFX.Mesh(new GFX.SphereGeometry(0.016, 8, 6), new GFX.MeshBasicMaterial({ color: new GFX.Color('#ffb040'), toneMapped: false }));
+  flame.position.set(0, rise + 0.1, 0);
+  group.add(flame);
+  return { group };
+}
+
+export const PROPS = { amp, case: roadCase, drums, speaker, bar, pool, jukebox, pinball, keg, table };
 
 /**
  * The props of a venue, each over its tiles: { group, update(time, beat) }.

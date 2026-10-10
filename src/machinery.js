@@ -1,7 +1,7 @@
 import { isBaked, ready } from './models/library.js';
 import { createStatic } from './models/model.js';
 import { PROPS } from './models/props/index.js';
-import { gaffTexture, glowTexture, grilleTexture, panelTexture, shutterTexture, tiled } from './textures.js';
+import { floorTexture, gaffTexture, glowTexture, grilleTexture, panelTexture, shutterTexture, tiled } from './textures.js';
 
 /**
  * What moves, and what lies about, as it is drawn: speaker stacks that slam
@@ -13,11 +13,15 @@ import { gaffTexture, glowTexture, grilleTexture, panelTexture, shutterTexture, 
 const dark = (GFX, hex, o = {}) => new GFX.MeshStandardMaterial({ color: new GFX.Color(hex), roughness: 0.6, ...o });
 
 /**
- * A speaker stack: a black cabinet, silver corners, a handle on top, and a
- * big cone behind a grille on each side. It rocks with the beat as it
- * waits at the top.
+ * What comes down on the beat: by default a speaker stack (a black cabinet,
+ * silver corners, a handle, a big cone behind a grille on each side), or,
+ * where the venue says (`look.crusher`), a crate off a crane or a crystal
+ * chandelier. It rocks with the beat as it waits at the top.
  */
-export function createSpeakerMesh(GFX, { w, d, height }) {
+export function createSpeakerMesh(GFX, { w, d, height, venue }) {
+  const style = venue?.look?.crusher ?? 'speaker';
+  if (style === 'chandelier') return createChandelier(GFX, { w, d, height });
+  if (style === 'crate') return createCrate(GFX, { w, d, height });
   const group = new GFX.Group();
   const grille = grilleTexture(GFX);
   const tolex = dark(GFX, '#17171a', { roughness: 0.7 });
@@ -31,7 +35,6 @@ export function createSpeakerMesh(GFX, { w, d, height }) {
   const body = new GFX.Mesh(new GFX.BoxGeometry(w, height, d), mats);
   body.castShadow = body.receiveShadow = true;
   group.add(body);
-  // Corner protectors, and a handle.
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
       const c = new GFX.Mesh(new GFX.BoxGeometry(0.1, 0.1, 0.1), metal);
@@ -42,17 +45,75 @@ export function createSpeakerMesh(GFX, { w, d, height }) {
   const handle = new GFX.Mesh(new GFX.TorusGeometry(0.14, 0.025, 6, 14, Math.PI), metal);
   handle.position.set(0, height / 2 + 0.01, 0);
   group.add(handle);
-  // The chain it hangs from, up into the dark.
   const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.04, 0.04, 8, 8), metal);
   chain.position.y = height / 2 + 4;
   group.add(chain);
   return {
     group,
     update(up, time) {
-      // Waiting up at the top, it pumps a little with the beat.
       body.scale.y = 1 + (up > 0.99 ? Math.sin(time * 9) * 0.012 : 0);
     },
   };
+}
+
+/** A wooden crate on a crane hook: slats, steel bands, stencilled. */
+function createCrate(GFX, { w, d, height }) {
+  const group = new GFX.Group();
+  const plank = floorTexture(GFX, 'planks');
+  const wood = new GFX.MeshStandardMaterial({ color: new GFX.Color('#c8a070'), map: tiled(GFX, plank.map, Math.max(1, Math.round(w)), 1), bumpMap: tiled(GFX, plank.bump, Math.max(1, Math.round(w)), 1), bumpScale: 1.4, roughness: 0.85 });
+  const steel = dark(GFX, '#4a4e58', { metalness: 0.8, roughness: 0.4 });
+  const body = new GFX.Mesh(new GFX.BoxGeometry(w, height, d), wood);
+  body.castShadow = body.receiveShadow = true;
+  group.add(body);
+  // Steel straps round it, and corner plates.
+  for (const y of [-height * 0.32, height * 0.32]) {
+    const strap = new GFX.Mesh(new GFX.BoxGeometry(w + 0.03, 0.07, d + 0.03), steel);
+    strap.position.y = y;
+    group.add(strap);
+  }
+  const hook = new GFX.Mesh(new GFX.TorusGeometry(0.16, 0.035, 8, 16, Math.PI * 1.5), steel);
+  hook.position.y = height / 2 + 0.16;
+  group.add(hook);
+  const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.035, 0.035, 8, 8), steel);
+  chain.position.y = height / 2 + 4.2;
+  group.add(chain);
+  return { group, update() {} };
+}
+
+/** A crystal chandelier: a brass hoop of candles and a spray of crystal drops under it, hung from a chain. */
+function createChandelier(GFX, { w, d, height }) {
+  const group = new GFX.Group();
+  const brass = dark(GFX, '#e0b44a', { metalness: 1, roughness: 0.25, emissive: new GFX.Color('#3a2400'), emissiveIntensity: 0.4 });
+  const crystal = new GFX.MeshPhysicalMaterial({ color: new GFX.Color('#e8f4ff'), roughness: 0.04, metalness: 0.2, clearcoat: 1, emissive: new GFX.Color('#8ab0e0'), emissiveIntensity: 0.55 });
+  const flame = new GFX.MeshBasicMaterial({ color: new GFX.Color('#ffd890'), toneMapped: false });
+  const r = Math.min(w, d) / 2 * 0.95;
+  const hoop = new GFX.Mesh(new GFX.TorusGeometry(r * 0.88, 0.06, 8, 28), brass);
+  hoop.rotation.x = Math.PI / 2;
+  hoop.position.y = height * 0.2;
+  const rim = new GFX.Mesh(new GFX.CylinderGeometry(r, r * 0.8, height * 0.34, 24), brass);
+  rim.position.y = 0.02;
+  group.add(hoop, rim);
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const candle = new GFX.Mesh(new GFX.CylinderGeometry(0.03, 0.03, 0.14, 6), dark(GFX, '#f2ecd8'));
+    candle.position.set(Math.cos(a) * r * 0.88, height * 0.34, Math.sin(a) * r * 0.88);
+    const fl = new GFX.Mesh(new GFX.SphereGeometry(0.035, 8, 6), flame);
+    fl.position.set(candle.position.x, height * 0.34 + 0.11, candle.position.z);
+    group.add(candle, fl);
+    const drop = new GFX.Mesh(new GFX.ConeGeometry(0.05, 0.22 + (i % 3) * 0.05, 6), crystal);
+    drop.rotation.x = Math.PI;
+    drop.position.set(Math.cos(a) * r * 0.78, -height * 0.34 - 0.04, Math.sin(a) * r * 0.78);
+    group.add(drop);
+  }
+  const centre = new GFX.Mesh(new GFX.ConeGeometry(0.1, 0.34, 8), crystal);
+  centre.rotation.x = Math.PI;
+  centre.position.y = -height * 0.4;
+  group.add(centre);
+  const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.03, 0.03, 8, 8), brass);
+  chain.position.y = height / 2 + 4;
+  group.add(chain);
+  group.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  return { group, update() {} };
 }
 
 /** Pyro: a grating in the floor with a pilot light in it; on the beat it bursts into a column of flame. */
@@ -116,24 +177,80 @@ export function createPyroMesh(GFX, { x, z, w, d }) {
   };
 }
 
-/** A lift: a black stage riser with gaff tape round its edge and casters under it; or a raft of upraised arms. */
+/**
+ * A lift: a black stage riser with gaff tape round its edge; or (`style`) a
+ * raft of upraised arms — the crowd carries Rock across — or a forklift
+ * pallet on a pair of forks.
+ */
 export function createLiftMesh(GFX, { w, d, thickness, style }) {
   const group = new GFX.Group();
-  const gaff = gaffTexture(GFX);
-  const rx = Math.max(1, Math.round(w / 2)), ry = Math.max(1, Math.round(d / 2));
-  const deck = new GFX.MeshStandardMaterial({ color: new GFX.Color('#ffffff'), map: tiled(GFX, gaff.map, rx, ry), bumpMap: tiled(GFX, gaff.bump, rx, ry), bumpScale: 1, roughness: 0.75 });
-  const side = dark(GFX, '#101012', { roughness: 0.8 });
-  const slab = new GFX.Mesh(new GFX.BoxGeometry(w, thickness, d), [side, side, deck, side, side, side]);
-  slab.castShadow = slab.receiveShadow = true;
-  group.add(slab);
   const metal = dark(GFX, '#8a8f98', { metalness: 0.9, roughness: 0.35 });
-  // Chains at the corners, up into the dark.
-  for (const [cx, cz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-    const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.03, 0.03, 9, 6), metal);
-    chain.position.set(cx * (w / 2 - 0.12), 4.5, cz * (d / 2 - 0.12));
-    group.add(chain);
+  const side = dark(GFX, '#101012', { roughness: 0.8 });
+  let live = null;
+  if (style === 'crowd') {
+    // A raft of people, bobbing, arms up, shoulder to shoulder, under a dark slab.
+    const slab = new GFX.Mesh(new GFX.BoxGeometry(w, thickness, d), dark(GFX, '#17121e', { roughness: 0.95 }));
+    slab.castShadow = slab.receiveShadow = true;
+    group.add(slab);
+    const shirts = ['#ff2d95', '#2de2ff', '#ffd23a', '#8a4be8', '#3ae88a', '#f2f0ec', '#ff7a1a'].map((c) => dark(GFX, c, { roughness: 0.8 }));
+    const skin = [dark(GFX, '#d9a07c', { roughness: 0.6 }), dark(GFX, '#8a5a3a', { roughness: 0.6 }), dark(GFX, '#f0c8a8', { roughness: 0.6 })];
+    const fans = [];
+    const cols = Math.max(2, Math.round(w * 2.4)), rows = Math.max(2, Math.round(d * 2.4));
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < cols; i++) {
+        const x = (-w / 2) + ((i + 0.5) / cols) * w, z = (-d / 2) + ((j + 0.5) / rows) * d;
+        const person = new GFX.Group();
+        person.position.set(x, thickness / 2, z);
+        const body = new GFX.Mesh(new GFX.CylinderGeometry(0.13, 0.15, 0.3, 8), shirts[(i * 3 + j * 5) % shirts.length]);
+        body.position.y = 0.15;
+        const head = new GFX.Mesh(new GFX.SphereGeometry(0.1, 8, 6), skin[(i + j) % skin.length]);
+        head.position.y = 0.37;
+        person.add(body, head);
+        const arms = [-1, 1].map((m) => {
+          const a = new GFX.Mesh(new GFX.CylinderGeometry(0.035, 0.035, 0.34, 5), skin[(i + j) % skin.length]);
+          a.position.set(m * 0.14, 0.45, 0);
+          person.add(a);
+          return a;
+        });
+        group.add(person);
+        fans.push({ person, arms, seed: i * 1.3 + j * 2.1 });
+      }
+    }
+    live = (time) => {
+      for (const f of fans) {
+        f.person.position.y = thickness / 2 + Math.abs(Math.sin(time * 5 + f.seed)) * 0.05;
+        f.arms.forEach((a, k) => { a.rotation.z = (k ? -1 : 1) * (0.25 + 0.2 * Math.sin(time * 6 + f.seed)); });
+      }
+    };
+  } else if (style === 'forklift') {
+    // A pallet on a pair of forks, and a mast.
+    const pallet = new GFX.Mesh(new GFX.BoxGeometry(w, thickness, d), dark(GFX, '#b8905a', { roughness: 0.9 }));
+    pallet.castShadow = pallet.receiveShadow = true;
+    group.add(pallet);
+    for (const z of [-d / 2 + 0.12, 0, d / 2 - 0.12]) {
+      const slat = new GFX.Mesh(new GFX.BoxGeometry(w + 0.02, 0.04, 0.08), dark(GFX, '#8a6a3a', { roughness: 0.9 }));
+      slat.position.set(0, thickness / 2 + 0.01, z);
+      group.add(slat);
+    }
+    for (const [cx, cz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.03, 0.03, 9, 6), metal);
+      chain.position.set(cx * (w / 2 - 0.12), 4.5, cz * (d / 2 - 0.12));
+      group.add(chain);
+    }
+  } else {
+    const gaff = gaffTexture(GFX);
+    const rx = Math.max(1, Math.round(w / 2)), ry = Math.max(1, Math.round(d / 2));
+    const deck = new GFX.MeshStandardMaterial({ color: new GFX.Color('#ffffff'), map: tiled(GFX, gaff.map, rx, ry), bumpMap: tiled(GFX, gaff.bump, rx, ry), bumpScale: 1, roughness: 0.75 });
+    const slab = new GFX.Mesh(new GFX.BoxGeometry(w, thickness, d), [side, side, deck, side, side, side]);
+    slab.castShadow = slab.receiveShadow = true;
+    group.add(slab);
+    for (const [cx, cz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.03, 0.03, 9, 6), metal);
+      chain.position.set(cx * (w / 2 - 0.12), 4.5, cz * (d / 2 - 0.12));
+      group.add(chain);
+    }
   }
-  return { group, style, update() {} };
+  return { group, style, update(time) { live?.(time); } };
 }
 
 /** A security gate: a roll-up shutter of corrugated steel, stencilled STAFF ONLY. */
@@ -167,7 +284,7 @@ export function createPanelMesh(GFX, { span, height, thickness, across, look }) 
 /** A bumper: a squat chrome post with a glowing ring, which flashes when Rock bounces off it. */
 export function createBumperMesh(GFX, { radius }) {
   const group = new GFX.Group();
-  const chrome = dark(GFX, '#d8dce4', { metalness: 1, roughness: 0.18 });
+  const chrome = dark(GFX, '#eef0f6', { metalness: 0.55, roughness: 0.22, emissive: new GFX.Color('#4a3a58'), emissiveIntensity: 0.7 });
   const ringMat = new GFX.MeshBasicMaterial({ color: new GFX.Color('#ff3a8a'), toneMapped: false });
   const post = new GFX.Mesh(new GFX.CylinderGeometry(radius * 0.8, radius, 0.5, 20), chrome);
   post.position.y = 0.25;

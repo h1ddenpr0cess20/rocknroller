@@ -14,12 +14,6 @@ import { createBand, THEMES } from './music.js';
 
 const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12);
 
-/** The theme each venue plays, by its name, with the tempo the venue says. */
-const THEME_OF = {
-  'The Garage': 'garage', 'The Rehearsal Rooms': 'rehearsal', "Sticky's": 'dive', 'The Club': 'club', 'The Loading Dock': 'dock',
-  'The Studio': 'studio', 'The Opera House': 'theatre', 'The Festival': 'festival', 'The Arena': 'arena', 'The Stadium': 'stadium',
-};
-
 export function createAudio() {
   let ctx = null, master = null, sfx = null, music = null;
   let rollSrc = null, revNode = null, crowd = null;
@@ -332,7 +326,7 @@ export function createAudio() {
      */
     startMusic(venue, { gig = null } = {}) {
       if (!ctx || !band) return;
-      const name = THEME_OF[venue.name] ?? venue.look?.theme ?? 'garage';
+      const name = venue.look?.theme ?? 'garage';
       const beat0 = gig ? (gig.time * venue.tempo) / 60 : 0;
       band.start(THEMES[name] ?? THEMES.garage, venue.tempo, beat0);
     },

@@ -25,7 +25,7 @@ export function garage() {
     name: 'The Garage', act: 1, cols: 100, rows: 118, palette: GARAGE, tempo: 124,
     intro: 'Rock has a band now. Rock did not ask for one.',
     look: {
-      floor: 'concrete', wall: 'plywood', lamp: 'bulb', exitSign: 'GIG', ampName: 'GARAGE',
+      theme: 'garage', floor: 'concrete', wall: 'plywood', lamp: 'bulb', exitSign: 'GIG', ampName: 'GARAGE',
       hemi: ['#d8c8e8', '#5a4a48', 1.05], key: '#fff0e0', keyK: 1.15, lantern: '#ffe6c8',
       skyColors: ['#0a0614', '#140a22', '#220c30', '#34123a', '#4a1a3a'],
       reflect: ['#ff2d95', '#2de2ff', '#ffd23a'], ceiling: '#3a2a48',

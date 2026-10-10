@@ -579,6 +579,7 @@ export function buildVenue(venue) {
   const tileColours = palette.tiles.map(linearRGB);
   const exitColour = linearRGB(palette.exit ?? '#2a2a36');
   const trapColour = linearRGB(palette.trap ?? '#3a3a40');
+  const stickyColour = linearRGB(palette.sticky ?? '#8a6a3a');
   const wallColours = (palette.walls ?? palette.tiles).map(linearRGB);
   const light = bakeLight(venue);
 
@@ -652,6 +653,7 @@ export function buildVenue(venue) {
       if (c.kind === 'exit') base = exitColour;
       else if (c.kind === 'zap') base = [1, 1, 1];
       else if (c.trap) base = trapColour;
+      else if (c.fx === 'sticky') base = stickyColour;
       else base = c.kind === 'wall' ? colourAt(CAP) : colourAt(c.color);
       const vary = palette.vary ?? 0.1;
       const tint = c.kind === 'zap' ? 1 : (checker ? 1 - vary * 0.3 : 1) * (1 - vary * 0.5 + vary * grain(x, z));
