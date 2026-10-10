@@ -653,7 +653,8 @@ export function buildVenue(venue) {
       else if (c.kind === 'zap') base = [1, 1, 1];
       else if (c.trap) base = trapColour;
       else base = c.kind === 'wall' ? colourAt(CAP) : colourAt(c.color);
-      const tint = c.kind === 'zap' ? 1 : (checker ? 0.94 : 1) * (0.84 + 0.22 * grain(x, z));
+      const vary = palette.vary ?? 0.1;
+      const tint = c.kind === 'zap' ? 1 : (checker ? 1 - vary * 0.3 : 1) * (1 - vary * 0.5 + vary * grain(x, z));
       const col = base.map((v) => v * tint);
       const A = [x, h00, z], B = [x + 1, h10, z], C = [x, h01, z + 1], D = [x + 1, h11, z + 1];
       const out = c.kind === 'zap' ? zap : c.fx === 'sticky' ? sticky : c.fx === 'belt' ? belts : layer(floors, c.tex ?? 'floor');

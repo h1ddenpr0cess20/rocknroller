@@ -1,6 +1,6 @@
 /**
  * A turntable for the models (models.html): one or a row of them on a
- * stone floor under dungeon light, to look at while sculpting. Not part of
+ * stage floor under stage light, to look at while sculpting. Not part of
  * the game. ?m=rat,orc&clip=walk&yaw=0.6&pitch=0.3&dist=1.4&time=0
  * (time fixed for a still; no time and it plays; detail=0.5 for the
  * board's mesh; ty=0.6 to look at that height). A model not yet in the cast
@@ -8,9 +8,8 @@
  */
 
 import * as GFX from '../vendor/gfx/index.js';
-import { createRenderer, paintVault } from '../stage.js';
+import { createRenderer, paintRoom } from '../stage.js';
 import { createModel } from './model.js';
-import { BUILT, standUp } from './looks.js';
 import { CAST } from './cast/index.js';
 import { PROPS } from './props/index.js';
 
@@ -40,7 +39,7 @@ scene.add(lantern);
 const torch = new GFX.PointLight(0xff9a4a, 5, 6, 1.7);
 torch.position.set(-1.8, 1.1, -0.8);
 scene.add(torch);
-const room = paintVault();
+const room = paintRoom();
 const texture = new GFX.Texture(room);
 texture.mapping = GFX.EquirectangularReflectionMapping;
 texture.colorSpace = GFX.SRGBColorSpace;
@@ -65,9 +64,9 @@ async function load(name) {
 }
 
 async function place(names, detail = 1) {
-  const list = await Promise.all(names.map((n) => (BUILT[n] ? n : load(n))));
+  const list = await Promise.all(names.map((n) => load(n)));
   for (const m of models) scene.remove(m.group);
-  models = list.map((def, i) => (typeof def === 'string' ? standUp(GFX, def, { detail, hue: i }) : createModel(GFX, def, { detail })));
+  models = list.map((def) => createModel(GFX, def, { detail }));
   let x = 0;
   const box = new GFX.Box3();
   const sizeOf = (m) => {

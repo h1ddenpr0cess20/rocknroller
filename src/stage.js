@@ -20,7 +20,7 @@ import { WebGPUBackend } from './vendor/gfx/webgpu.js';
 import { createView } from './view.js';
 
 /** How far back the camera sits at zoom 1, and its lens. */
-export const LENS = Object.freeze({ distance: 11.5, fov: 36 });
+export const LENS = Object.freeze({ distance: 10, fov: 36 });
 
 /** Where the key light comes from: high, behind the camera's left shoulder. */
 const KEY = new GFX.Vector3(-0.3, 1, 0.6).normalize();

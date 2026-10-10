@@ -154,7 +154,7 @@ function concrete(GFX) {
     const c = pixels(size, (u, v) => {
       const base = 0.8 + n(u, v) * 0.14 + (grit(u, v) - 0.5) * 0.1;
       const oil = smoothstep(0.7, 0.9, stain(u, v)) * 0.16;
-      const joint = Math.min(u, v) < 0.012 ? 0.55 : 1;
+      const joint = Math.min(u, v) < 0.006 ? 0.8 : 1;
       const k = relief ? 0.55 + n(u, v) * 0.4 + (grit(u, v) - 0.5) * 0.2 : base - oil * 0.8;
       return grey(Math.round(255 * k * joint));
     });
@@ -171,33 +171,40 @@ function concrete(GFX) {
   return pair(GFX, 256, paint(false), paint(true));
 }
 
-/** Boards, five to the tile, laid end to end: each its own shade, grain, dark seams and nail heads. Stage decks and barroom floors. */
+/** Boards, three to the tile, laid end to end: each its own shade, a soft grain, dark thin seams and nail heads. Stage decks and barroom floors. */
 function planks(GFX) {
   const rnd = random(23);
-  const boards = Array.from({ length: 5 }, () => ({ tone: 0.72 + rnd() * 0.28, offset: rnd(), butt: 0.2 + rnd() * 0.6 }));
-  const grain = fractal(3, 3, 3);
+  const boards = Array.from({ length: 3 }, () => ({ tone: 0.8 + rnd() * 0.2, offset: rnd() * 5, butt: 0.15 + rnd() * 0.7 }));
+  const grain = fractal(3, 2, 4);
   const paint = (relief) => (size) => {
     const [c, ctx] = canvas(size);
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = relief ? '#000' : '#1a1410';
     ctx.fillRect(0, 0, size, size);
     const w = size / boards.length;
+    const img = ctx.getImageData(0, 0, size, size);
+    boards.forEach((b, i) => {
+      for (let y = 0; y < size; y++) {
+        for (let x = Math.floor(i * w) + 1; x < Math.floor((i + 1) * w) - 1; x++) {
+          // Long soft figure along the board, with a faint fine grain across it.
+          const along = y / size, across = (x - i * w) / w;
+          const g = grain(across * 0.7 + i * 1.3, along * 0.25 + b.offset);
+          const fine = 0.5 + 0.5 * Math.sin((across * 9 + g * 6) * Math.PI);
+          const shade = relief ? 0.55 + g * 0.25 + fine * 0.08 : b.tone * (0.84 + g * 0.2 + fine * 0.04);
+          const edge = Math.min(across, 1 - across) < 0.03 ? 0.78 : 1;
+          const v = Math.round(255 * Math.min(1, shade * edge));
+          const k = (y * size + x) * 4;
+          img.data[k] = v; img.data[k + 1] = v; img.data[k + 2] = v; img.data[k + 3] = 255;
+        }
+      }
+    });
+    ctx.putImageData(img, 0, 0);
     boards.forEach((b, i) => {
       const x = i * w;
-      for (let y = 0; y < size; y++) {
-        const g = grain((x + w / 2) / size * 6, y / size * 0.5 + b.offset);
-        const stripe = 0.85 + 0.15 * Math.sin(y * 0.35 + g * 9);
-        const k = relief ? 0.5 + g * 0.3 : b.tone * (0.78 + g * 0.3) * stripe;
-        const v = Math.round(255 * Math.min(1, k));
-        ctx.fillStyle = `rgb(${v},${v},${v})`;
-        ctx.fillRect(x + 2, y, w - 4, 1);
-      }
-      // The butt joint, partway down.
-      ctx.fillStyle = relief ? '#000' : '#1a1410';
+      ctx.fillStyle = relief ? '#000' : '#14100c';
       ctx.fillRect(x + 1, b.butt * size, w - 2, 2);
-      // Nails.
-      ctx.fillStyle = relief ? '#fff' : '#3a2e24';
-      for (const y of [b.butt * size - 8, b.butt * size + 9]) {
-        ctx.beginPath(); ctx.arc(x + 7, y, 1.6, 0, 7); ctx.arc(x + w - 7, y, 1.6, 0, 7); ctx.fill();
+      ctx.fillStyle = relief ? '#fff' : '#4a3a2c';
+      for (const y of [b.butt * size - 10, b.butt * size + 11]) {
+        ctx.beginPath(); ctx.arc(x + 9, y, 1.8, 0, 7); ctx.arc(x + w - 9, y, 1.8, 0, 7); ctx.fill();
       }
     });
     return c;
@@ -322,10 +329,10 @@ export const FLOORS = { concrete, planks, checker, carpet, plate, grass, panels,
 // ———————————————————————————————————————————————————————————— walls
 
 /** Poster names, for the walls: the bands every venue has had on its walls. */
-const BANDS = ['THE DEAD BATTERIES', 'GRAVEL PIT', 'VELVET HAMMER', 'WET CONCRETE', 'THE FEEDBACKS', 'NO PARKING', 'SKULL & SOCKS', 'CRASH TEST', 'LOUD NEIGHBOURS', 'THE UNPLUGGED', 'DEAD AIR', 'MOSH POTATO', 'SIXTH STRING', 'BIG AMP ENERGY', 'THE RIFFRAFF', 'TREBLE MAKERS'];
+const BANDS = ['THE DEAD BATTERIES', 'GRAVEL PIT', 'VELVET HAMMER', 'WET CONCRETE', 'THE FEEDBACKS', 'SKULL SOCKS', 'CRASH TEST', 'LOUD NEIGHBOURS', 'DEAD AIR', 'MOSH POTATO', 'SIXTH STRING', 'THE RIFFRAFF'];
 const POSTER_COLOURS = ['#e63a6a', '#2ac6e8', '#f5c518', '#8a4be8', '#3ae88a', '#f5f0e6', '#ff7a1a'];
 
-/** Bricks, a tile wide and a tile high: four courses, each set half a brick over from the last. */
+/** Bricks, a tile wide and a tile high: four courses, each set half a brick over from the last. With `posters`, papered with gig flyers. */
 function brick(GFX, { posters = false } = {}) {
   const size = 256;
   const rnd = random(5);
@@ -351,42 +358,46 @@ function brick(GFX, { posters = false } = {}) {
   };
   const poster = (ctx) => {
     const r = random(77);
-    // A flyer or two and a sticker, pasted over the bricks, with tape at the corners.
-    const flyer = (x, y, w, h, colour, name, tilt) => {
+    const pick = (list) => list[Math.floor(r() * list.length)];
+    // A flyer: a bold block of colour, a big shape, a name in poster letters, tape at the corners.
+    const flyer = (x, y, w, h, bg, fg, name, shape, tilt) => {
       ctx.save();
       ctx.translate(x + w / 2, y + h / 2);
       ctx.rotate(tilt);
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
-      ctx.fillRect(-w / 2 + 3, -h / 2 + 3, w, h);
-      ctx.fillStyle = colour;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(-w / 2 + 4, -h / 2 + 5, w, h);
+      ctx.fillStyle = bg;
       ctx.fillRect(-w / 2, -h / 2, w, h);
-      ctx.fillStyle = 'rgba(255,255,255,0.88)';
-      ctx.fillRect(-w / 2 + 5, -h / 2 + 5, w - 10, h * 0.22);
-      ctx.fillStyle = '#101014';
-      ctx.font = `800 ${Math.round(h * 0.17)}px Impact, "Arial Narrow", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(name.split(' ').slice(0, 2).join(' '), 0, -h / 2 + h * 0.18);
-      // A face of stripes in the middle.
-      for (let i = 0; i < 5; i++) {
-        ctx.fillStyle = i % 2 ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.55)';
-        ctx.fillRect(-w / 2 + 8, -h / 2 + h * 0.34 + i * h * 0.11, w - 16, h * 0.06);
+      ctx.fillStyle = fg;
+      if (shape === 'sun') {
+        ctx.beginPath(); ctx.arc(0, -h * 0.08, w * 0.34, 0, 7); ctx.fill();
+        for (let k = 0; k < 12; k++) {
+          ctx.save(); ctx.rotate((k / 12) * Math.PI * 2); ctx.fillRect(-2, -w * 0.5, 4, w * 0.12); ctx.restore();
+        }
+      } else if (shape === 'bolt') {
+        ctx.beginPath(); ctx.moveTo(w * 0.1, -h * 0.42); ctx.lineTo(-w * 0.28, h * 0.02); ctx.lineTo(-w * 0.02, h * 0.02); ctx.lineTo(-w * 0.14, h * 0.3); ctx.lineTo(w * 0.3, -h * 0.08); ctx.lineTo(w * 0.04, -h * 0.08); ctx.closePath(); ctx.fill();
+      } else {
+        for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.arc(0, -h * 0.05, w * (0.36 - k * 0.07), 0, 7); ctx.lineWidth = 5; ctx.strokeStyle = k % 2 ? bg : fg; ctx.fillStyle = k % 2 ? bg : fg; ctx.fill(); }
       }
-      ctx.fillStyle = 'rgba(235,225,190,0.8)';
-      ctx.fillRect(-w / 2 - 4, -h / 2 - 3, 14, 7);
-      ctx.fillRect(w / 2 - 10, -h / 2 - 3, 14, 7);
+      ctx.fillStyle = '#0c0c10';
+      ctx.fillRect(-w / 2, h * 0.28, w, h * 0.22);
+      ctx.fillStyle = fg;
+      ctx.font = `${Math.round(h * 0.15)}px "Anton", Impact, "Arial Narrow", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(name, 0, h * 0.39, w - 8);
+      ctx.fillStyle = 'rgba(240,230,190,0.85)';
+      ctx.fillRect(-w / 2 - 5, -h / 2 - 3, 18, 8);
+      ctx.fillRect(w / 2 - 13, -h / 2 - 3, 18, 8);
       ctx.restore();
     };
-    flyer(14, 20, 92, 120, POSTER_COLOURS[Math.floor(r() * 7)], BANDS[Math.floor(r() * BANDS.length)], -0.05);
-    flyer(138, 100, 100, 130, POSTER_COLOURS[Math.floor(r() * 7)], BANDS[Math.floor(r() * BANDS.length)], 0.04);
-    ctx.fillStyle = POSTER_COLOURS[Math.floor(r() * 7)];
-    ctx.beginPath(); ctx.arc(150, 54, 22, 0, 7); ctx.fill();
-    ctx.fillStyle = '#101014';
-    ctx.font = '800 22px Impact, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('LIVE', 150, 62);
+    const names = BANDS.map((b) => b.split(' ').slice(0, 2).join(' '));
+    flyer(10, 18, 104, 138, pick(['#e63a6a', '#2ac6e8', '#f5c518']), '#ffffff', pick(names), 'sun', -0.05);
+    flyer(134, 96, 112, 142, pick(['#8a4be8', '#3ae88a', '#ff7a1a']), '#101014', pick(names), 'bolt', 0.04);
+    flyer(150, 8, 80, 78, '#f5f0e6', '#d9232f', 'LIVE', 'rings', 0.06);
   };
   return {
-    map: texture(GFX, paint('#e2ddd4', '#3a342e', true, posters ? poster : null)),
+    map: texture(GFX, paint(posters ? '#b8a89a' : '#e2ddd4', '#3a342e', true, posters ? poster : null)),
     bump: texture(GFX, paint('#ffffff', '#000000', false), { srgb: false }),
   };
 }

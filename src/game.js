@@ -1,7 +1,7 @@
 import { createEffects } from './effects.js';
 import { createGig, putBack, resultOf, STEP, stepGig, toGround } from './gig.js';
 import { comboAt, earn, windowLeft } from './hype.js';
-import { HARM, cracked } from './integrity.js';
+import { HARM } from './integrity.js';
 import { createLightshow } from './lightshow.js';
 import { createProps } from './decor.js';
 import { readyAll } from './models/library.js';
@@ -65,7 +65,6 @@ export function createGame({ stage, hud, input, audio, storage }) {
   let baking = false;
   let revHeld = false;
   let lastHp = 100;
-  let lastCarried = '';
   let currentIndex = 0;
   let zapTiles = [];
   const playZoom = { value: 1 };
@@ -90,7 +89,6 @@ export function createGame({ stage, hud, input, audio, storage }) {
     effects.setVenue(venue);
     accumulator = 0;
     rock.group.visible = true;
-    rock.setCracks(0);
     const b = gig.ball;
     stage.target.set(b.x, b.y, b.z);
     hud.map(gig);
@@ -160,7 +158,6 @@ export function createGame({ stage, hud, input, audio, storage }) {
     setVenue(index);
     playTime = 0;
     lastCombo = 0;
-    lastCarried = '';
     hud.paused(false);
     if (state === 'title') view.aim.zoom = playZoom.value;
     storage.reached(index);
@@ -457,13 +454,9 @@ export function createGame({ stage, hud, input, audio, storage }) {
         break;
     }
 
-    // Rock, and the cracks as he takes damage.
+    // Rock, turned as he rolls.
     const speed = Math.hypot(b.vx, b.vz);
-    rock.setCracks(cracked(gig.rock));
-    rock.update(dt, {
-      q: gig.roll.q, position: [b.x, b.y, b.z], velocity: [b.vx, b.vy, b.vz],
-      yaw: view.yaw, pitch: view.pitch, rev: gig.revving, falling: !b.grounded && b.vy < -6,
-    });
+    rock.update(dt, { q: gig.roll.q, position: [b.x, b.y, b.z] });
 
     // The light show keeps the beat; the page flashes with the strobes.
     show.update({ time: stage.time, beat: beatNow(), rock: [b.x, b.y, b.z], lights: stage.fixtureLights, flashing: flashing() });

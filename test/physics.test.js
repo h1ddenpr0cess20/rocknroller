@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { buildDungeon as buildCourse, Dungeon as Course } from '../src/dungeon.js';
+import { buildVenue as buildCourse, Venue as Course } from '../src/venue.js';
 import {
   BREAK_SPEED, closestOnTriangle, collideBalls, createBall, GRAVITY, placeBall, rollSpin, stepBall, turn,
 } from '../src/physics.js';

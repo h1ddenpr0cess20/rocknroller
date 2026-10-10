@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { digger } from '../src/dig.js';
-import { Dungeon } from '../src/dungeon.js';
+import { Venue } from '../src/venue.js';
 
-const make = () => new Dungeon({ name: 't', cols: 40, rows: 40, palette: { tiles: ['#808080'] } });
+const make = () => new Venue({ name: 't', cols: 40, rows: 40, palette: { tiles: ['#808080'] } });
 
 test('a piece knows its tiles by where they are along it and across it, whichever way it heads', () => {
   for (const heading of ['+x', '-x', '+z', '-z']) {

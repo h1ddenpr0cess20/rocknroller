@@ -23,7 +23,7 @@ export function createSpeakerMesh(GFX, { w, d, height }) {
   const tolex = dark(GFX, '#17171a', { roughness: 0.7 });
   const side = (across) => {
     const n = Math.max(1, Math.round(across));
-    return new GFX.MeshStandardMaterial({ color: new GFX.Color('#ffffff'), map: tiled(GFX, grille.map, n, 1), bumpMap: tiled(GFX, grille.bump, n, 1), bumpScale: 1.4, roughness: 0.6, metalness: 0.2 });
+    return new GFX.MeshStandardMaterial({ color: new GFX.Color('#ffffff'), map: tiled(GFX, grille.map, n, 1), bumpMap: tiled(GFX, grille.bump, n, 1), bumpScale: 1.4, roughness: 0.92, metalness: 0 });
   };
   const metal = dark(GFX, '#b8bcc4', { metalness: 0.9, roughness: 0.3 });
   // BoxGeometry's material order: +x, -x, +y, -y, +z, -z.

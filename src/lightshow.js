@@ -108,11 +108,11 @@ function sparkleTexture(GFX, seed) {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, size, size);
     const mid = size / 2;
-    for (let k = 0; k < 520; k++) {
+    for (let k = 0; k < 1500; k++) {
       const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * mid * 0.96;
       const edge = 1 - (r / mid) ** 2;
-      if (rnd() > edge * 1.2) continue;
-      const w = 4 + rnd() * 9;
+      if (rnd() > edge * 1.1) continue;
+      const w = 2 + rnd() * 5;
       const x = mid + Math.cos(a) * r, y = mid + Math.sin(a) * r;
       ctx.save();
       ctx.translate(x, y);
@@ -392,11 +392,11 @@ export function createLightshow(GFX, venue) {
     const rnd = random(Math.floor(f.x * 31 + f.z * 7));
     const colors = new Float32Array(geometry.attributes.position.count * 3);
     for (let i = 0; i < colors.length; i += 9) {
-      const v = 0.55 + rnd() * 0.45;
-      for (let k = 0; k < 9; k += 3) { colors[i + k] = v; colors[i + k + 1] = v; colors[i + k + 2] = v * 1.04; }
+      const v = 0.4 + rnd() * 0.6;
+      for (let k = 0; k < 9; k += 3) { colors[i + k] = v; colors[i + k + 1] = v * 0.98; colors[i + k + 2] = v * 1.06; }
     }
     geometry.setAttribute('color', new GFX.BufferAttribute(colors, 3));
-    const mat = new GFX.MeshStandardMaterial({ name: 'mirror-ball', vertexColors: true, metalness: 1, roughness: 0.1, flatShading: true, emissive: new GFX.Color('#222233'), emissiveIntensity: 0.6 });
+    const mat = new GFX.MeshStandardMaterial({ name: 'mirror-ball', vertexColors: true, metalness: 0.9, roughness: 0.15, flatShading: true, emissive: new GFX.Color('#9aa0c0'), emissiveIntensity: 0.55 });
     const sphere = new GFX.Mesh(geometry, mat);
     sphere.castShadow = true;
     const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.012, 0.012, 6, 6), iron);
