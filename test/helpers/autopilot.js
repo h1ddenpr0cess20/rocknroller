@@ -265,7 +265,9 @@ export function drive(index, { limit = 1200, sample = null, records = true, duel
   const goal = () => {
     const left = goals.filter((p) => !p.taken);
     const upstream = left.filter((p) => !left.some((q) => q !== p && canReach(q, p)));
-    const nearest = upstream
+    // Two that can each be reached from the other (a pass, and what its gate shuts in): whichever can be got to now.
+    const pool = upstream.length ? upstream : left;
+    const nearest = pool
       .map((p) => ({ p, m: plan(gig, net, here(), tileOf(p), gig.passes) }))
       .filter((c) => c.m)
       .sort((a, c) => a.m.length - c.m.length)[0];

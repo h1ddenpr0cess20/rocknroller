@@ -1,19 +1,21 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, branch, centre, flat, wallTile, wash } from './helpers.js';
+import { backTile, branch, centre, flat, wallTile, wash } from './helpers.js';
 
 /**
- * Act 10: The Stadium. The last night of the tour. Floodlights, a sky full
- * of stars and a stage the size of a block, with a Headliner on it who has
- * a flying V, a smoke machine and no idea who Rock is. Everything the tour
- * has thrown at Rock is here at once: the PA coming down, pyro, moving
- * walkways, a lift down into the pit, a chicane of live cable, the crowd to
- * carry him over the moat, and a gate and its pass. Then the stage, and the
- * show.
+ * Act 10: The Stadium. The last night of the tour. Floodlights, a sky
+ * full of stars, and a long way down: Rock starts in the gods, at the top
+ * of the stands, and comes down the stadium's ramps — three long flights
+ * of switchback, fast enough at the bottom to go through a wall. Then the
+ * pitch, the biggest floor on the tour, the stands along it, the crowd on
+ * it, and the sound-desk tower in the middle (its gate needs the pass from
+ * the family stand). The way to the stage is the thrust catwalk, out over
+ * the pit; and on the stage, with a flying V and platform boots, the
+ * Headliner, who stamps.
  */
 
 export const STADIUM = {
-  tiles: ['#9a96a6', '#848092', '#a89870', '#767286'],
+  tiles: ['#9a96a6', '#848092', '#a89870', '#4e9a44', '#767286'],
   walls: ['#6a5a86', '#5a4c76', '#7a5a7a', '#52467a'],
   ambient: [0.95, 0.9, 1.15], lamp: '#fff0d0', trap: '#22182e', lift: '#3a3050', exit: '#ffd23a', zapHue: 0.4, vary: 0.06,
 };
@@ -23,10 +25,10 @@ const SHOW = ['#ff2d95', '#2de2ff', '#ffd23a', '#7cff3a', '#a23aff'];
 
 export function stadium() {
   const g = new Venue({
-    name: 'The Stadium', act: 10, cols: 180, rows: 170, palette: STADIUM, tempo: 128,
+    name: 'The Stadium', act: 10, cols: 150, rows: 150, palette: STADIUM, tempo: 128,
     intro: 'Last night of the tour. The rock is the show.',
     look: {
-      theme: 'stadium', floor: 'concrete', wall: 'block', lamp: 'spot', exitSign: 'GIG', ampName: 'HEADLINER', stars: 160,
+      theme: 'stadium', floor: 'concrete', wall: 'block', lamp: 'bulb', exitSign: 'GIG', ampName: 'HEADLINER', stars: 160,
       hemi: ['#d8d0ff', '#3a2a5a', 1.2], key: '#f0e8ff', keyK: 1.2, lantern: '#fff0d0',
       skyColors: ['#02020a', '#06061a', '#0e0e34', '#1c1a58', '#38206e'],
       reflect: SHOW, ceiling: '#1a1440',
@@ -34,149 +36,108 @@ export function stadium() {
     },
   });
   const sign = (p, along, text, color, height = 1.6, size = 0.7) => g.light('neon', ...wallTile(p, along), { text, color, height, size });
-  const facing = (p) => (p.back > 0 ? Math.PI / 2 : -Math.PI / 2);
 
-  // The gates.
-  g.room(2, 4, 5, 5, 50, { lamps: 3 });
+  // The gods: the top of the stands, the stadium laid out below.
+  g.room(2, 4, 5, 5, 96, { lamps: 3 });
   g.start = { x: 4, z: 6 };
-  const d = digger(g, { x: 7, z: 6, h: 50, heading: '+x' });
-  const gates = d.hall(13);
-  g.foe('scalper', ...gates.tile(7, 0), { range: 5, path: [gates.tile(4, 0), gates.tile(10, 0)] });
-  g.pick(...gates.tile(3, 0), 5).pick(...gates.tile(4, 1), 5).pick(...gates.tile(5, -1), 5).pick(...gates.tile(11, 0), 10);
-  sign(gates, 4, 'FINAL', GOLD, 1.6, 0.8);
-  sign(gates, 9, 'NIGHT', SHOW[0], 1.6, 0.8);
-  d.turn('+z');
-  g.tape(...d.hall(3).tile(1, 0));
-  d.stairs(4, 2);
+  const d = digger(g, { x: 7, z: 6, h: 96, heading: '+x' });
+  const gods = d.hall(8, { width: 4 });
+  g.foe('phone', ...gods.tile(5, 0), { range: 4 });
+  g.pick(...gods.tile(2, 0), 5).pick(...gods.tile(3, 1), 5).pick(...gods.tile(6, -1), 5);
+  sign(gods, 4, 'GATE 7', GOLD, 1.6, 0.6);
 
-  // The plaza: walkways, stands, and the whole tour's worth of people.
-  const plaza = d.room(21, 15, { floor: 'checker' });
-  g.belt(...plaza.rect(5, 6, plaza.lo + 3, 9), plaza.back > 0 ? '+x' : '-x');
-  g.belt(...plaza.rect(13, 6, plaza.lo + 3, 9), plaza.back > 0 ? '-x' : '+x');
-  for (const k of [2, 6, 10, 14, 18]) g.pillar(...backTile(plaza, k), 0.9, { prop: 'table', rot: facing(plaza) });
-  for (const [a, b] of [[3, -4], [3, 4], [11, 0], [19, -4]]) g.pillar(...plaza.tile(a, b), 0.7, { prop: 'case', rot: facing(plaza) });
-  g.foe('security', ...plaza.tile(3, 0), { range: 6 }).foe('merch', ...plaza.tile(9, -3), { range: 6 });
-  g.foe('mascot', ...plaza.tile(12, 3), { range: 5 }).foe('phone', ...plaza.tile(18, 0), { range: 6 });
-  g.pick(...plaza.tile(2, 0), 10).pick(...plaza.tile(8, 2), 10).pick(...plaza.tile(11, -4), 10).pick(...plaza.tile(17, 3), 10);
-  g.road(...plaza.tile(19, 5), 50).tape(...plaza.tile(20, 0));
-  g.light('spot', ...centre(plaza), { colors: ['#fff0d0'], height: 3.2, reach: 10 });
-  wash(g, plaza, [SHOW[0], SHOW[1]], { cans: 4, program: 'chase', every: 1 });
-  sign(plaza, 5, 'MERCH', SHOW[2], 1.6, 0.8);
-  sign(plaza, 14, 'GATE 9', SHOW[1], 1.6, 0.8);
-  const shop = branch(d, plaza, 8);
-  const shopHall = shop.hall(9);
-  flat(g, shopHall, 8, { breakAt: 6.5, look: 'flat' });
-  const store = shop.room(5, 5);
-  g.tape(...store.tile(3, 0)).road(...store.tile(1, 1), 60);
-  g.pick(...store.tile(1, -1), 10).pick(...store.tile(3, 2), 10);
-  d.hall(4);
-  d.turn('+x');
+  // The ramps: three long flights, switching back, a landing at each turn.
+  const RAMP = { width: 4, wall: 'block' };
+  const flights = [];
+  const ways = ['+z', '-z', '+z'];
+  for (let i = 0; i < ways.length; i++) {
+    d.turn(i === 0 ? '+z' : '+x', { width: 4 });
+    if (i > 0) {
+      d.hall(1, { width: 4 });
+      d.turn(ways[i], { width: 4 });
+    }
+    const ramp = d.ramp(12, 3, RAMP);
+    flights.push(ramp);
+    g.pick(...ramp.tile(3, 0), 5).pick(...ramp.tile(6, 1), 5).pick(...ramp.tile(9, -1), 5);
+  }
+  g.foe('scalper', ...flights[0].tile(8, 0), { range: 4 });
+  g.foe('drone', ...flights[1].tile(6, 0), { path: [flights[1].tile(1, 0), flights[1].tile(11, 0)] });
+  g.foe('merch', ...flights[2].tile(8, 1), { range: 4 });
+  // Straight on at the foot of the last flight, with all that speed: through the hoarding, and a record behind it.
+  const foot = d.fork();
+  const hoarding = foot.hall(7, { width: 4 });
+  flat(g, hoarding, 5, { breakAt: 6.5, look: 'flat' });
+  const cache = foot.room(5, 6);
+  g.record(...cache.tile(3, 0));
+  g.road(...cache.tile(1, 1), 70);
+  d.turn('+x', { width: 4 });
+  d.hall(3, { width: 4 });
+  d.stairs(3, 1.5, { width: 4 });
 
-  // The service tunnel: PA and pyro on the beat, and a lift down into the pit.
-  const tunnel = d.hall(21);
-  g.speaker(...across(tunnel, 4, { beats: 4 }));
-  g.pyro(...across(tunnel, 9, { beats: 4, offset: 0.5 }));
-  g.speaker(...across(tunnel, 14, { beats: 4 }));
-  g.pyro(...across(tunnel, 18, { beats: 4, offset: 0.25 }));
-  g.pick(...tunnel.tile(2, 0), 5).pick(...tunnel.tile(6, 1), 5).pick(...tunnel.tile(6, -1), 5).pick(...tunnel.tile(11, 0), 10).pick(...tunnel.tile(16, 0), 10);
-  g.light('strobe', ...wallTile(tunnel, 7), { colors: ['#ffffff'], reach: 8, height: 1.3 });
-  g.light('laser', ...wallTile(tunnel, 12), { colors: [SHOW[1]], aim: [0, -tunnel.back * 3], height: 1.8 });
-  g.foe('security', ...tunnel.tile(11, 0), { range: 3 });
-  g.tape(...tunnel.tile(20, 0));
-  d.hall(3);
+  // The pitch: grass, the crowd, the stands along the back, floodlights, and the sound-desk tower in the middle.
+  const pitch = d.room(31, 25, { floor: 'grass', color: 3 });
+  g.block(...pitch.rect(3, 25, pitch.lo, 4), 2.4, { prop: 'stands' });
+  const tower = pitch.rect(13, 5, 1, 5);
+  g.block(tower[0], tower[1], tower[2], 1, 2.6, { wall: 'block' });
+  g.block(tower[0], tower[1] + tower[3] - 1, tower[2], 1, 2.6, { wall: 'block' });
+  g.block(...pitch.rect(17, 1, 1, 5), 2.6, { wall: 'block' });
+  // The tower's gate faces back down the pitch; inside, on the sound desk, the second record.
+  g.gate(...pitch.rect(13, 1, 2, 3), { axis: pitch.dir[0] ? 'x' : 'z' });
+  g.pillar(...pitch.tile(16, 4), 0.82, { prop: 'console' });
+  g.record(...pitch.tile(15, 3));
+  for (const [a, b] of [[6, 3], [9, 9], [22, 4], [25, 10]]) g.block(...pitch.rect(a, 1, b, 2), 1.0, { prop: 'barrier' });
+  g.foe('mosher', ...pitch.tile(7, 0), { range: 7 }).foe('mosher', ...pitch.tile(11, 8), { range: 7 }).foe('metalhead', ...pitch.tile(20, 2), { range: 7 });
+  g.foe('security', ...pitch.tile(19, 9), { range: 6 }).foe('mascot', ...pitch.tile(25, 0), { range: 7 }).foe('influencer', ...pitch.tile(5, 9), { range: 6 });
+  g.foe('diver', ...pitch.tile(16, 6), { path: [pitch.tile(8, -1), pitch.tile(26, -1), pitch.tile(26, 11), pitch.tile(8, 11)] });
+  g.pick(...pitch.tile(2, 0), 10).pick(...pitch.tile(8, 6), 10).pick(...pitch.tile(12, 11), 10).pick(...pitch.tile(20, -1), 10).pick(...pitch.tile(24, 7), 10);
+  g.tape(...pitch.tile(10, 11)).tape(...pitch.tile(28, 11)).lighter(...pitch.tile(28, -2));
+  for (const k of [3, 15, 27]) g.light('spot', ...pitch.tile(k, 12), { colors: ['#fff6e0'], radius: 5, height: 3.6 });
+  g.light('laser', ...pitch.tile(30, -1), { colors: [SHOW[3]], aim: [-14, 8], height: 3 });
+  g.light('laser', ...pitch.tile(30, 11), { colors: [SHOW[0]], aim: [-14, -8], height: 3 });
+  wash(g, pitch, SHOW, { cans: 4, program: 'rainbow', every: 6 });
+  sign(pitch, 15, 'LAST NIGHT OF THE TOUR', SHOW[1], 2.6, 0.7);
+  // The family stand, off the front of the pitch: the pass, with a bouncer who takes it very seriously.
+  const family = branch(d, pitch, 8, 'front', 13);
+  family.hall(3);
+  const box = family.room(7, 7, { floor: 'carpet' });
+  g.pass(...box.tile(4, 0));
+  g.foe('bouncer', ...box.tile(3, 1), { range: 4 });
+  g.pick(...box.tile(5, -2), 10).pick(...box.tile(5, 2), 10);
   d.hall(2);
-  d.shaft(2.5, { size: 3, period: 8 });
-  d.hall(3);
 
-  // The pit: a chicane of live cable across the floor, the whole rig over it, and people crowd-surfing with no crowd.
-  const pit = d.room(21, 17, { floor: 'panels' });
-  const run = (along, gapAcross) => {
-    const lo = pit.lo, hi = pit.lo + pit.width;
-    const left = gapAcross - 2, right = gapAcross + 2;
-    if (left > lo) g.zap(...pit.rect(along, 2, lo, left - lo), pit.h);
-    if (hi > right) g.zap(...pit.rect(along, 2, right, hi - right), pit.h);
-  };
-  run(6, 5);
-  run(10, -5);
-  run(14, 5);
-  g.foe('mosher', ...pit.tile(3, -3), { range: 6 }).foe('mosher', ...pit.tile(8, 0), { range: 6 }).foe('hipster', ...pit.tile(12, 3), { range: 6 });
-  g.foe('diver', ...pit.tile(10, 0), { path: [pit.tile(5, -5), pit.tile(16, -5), pit.tile(16, 5), pit.tile(5, 5)] });
-  g.foe('drone', ...pit.tile(12, 0), { path: [pit.tile(8, 0), pit.tile(17, 0)] });
-  g.pick(...pit.tile(2, 3), 10).pick(...pit.tile(6, 5), 10).pick(...pit.tile(10, -5), 10).pick(...pit.tile(15, 5), 10).pick(...pit.tile(18, 0), 10);
-  g.tape(...pit.tile(18, -5)).tape(...pit.tile(1, 0)).tape(...pit.tile(19, 0));
-  g.light('ball', ...centre(pit), { colors: SHOW, radius: 9, height: 3.4 });
-  g.light('laser', ...wallTile(pit, 5), { colors: [SHOW[3]], aim: [3, -pit.back * 7], height: 2.4 });
-  g.light('laser', ...wallTile(pit, 16), { colors: [SHOW[0]], aim: [-3, -pit.back * 7], height: 2.4 });
-  g.light('strobe', ...wallTile(pit, 10), { colors: ['#ffffff'], reach: 10, height: 1.3 });
-  wash(g, pit, [SHOW[0], SHOW[4], SHOW[1]], { cans: 4, program: 'chase', every: 1 });
-  sign(pit, 10, 'THE PIT', SHOW[0], 1.7, 0.9);
-  const merch = branch(d, pit, 8, 'front', 8);
-  const merchHall = merch.hall(9);
-  flat(g, merchHall, 8, { breakAt: 6.5, look: 'steel' });
-  const cage = merch.room(5, 5);
-  g.record(...cage.tile(3, 0));
-  g.road(...cage.tile(1, 1), 70);
-  d.hall(4);
-  d.turn('+x');
+  // The thrust: a catwalk out over the pit, live cable all round, pyro either side on the beat.
+  const thrust = d.bridge(14, { width: 2, floor: 'plate' });
+  g.zap(...thrust.rect(0, 14, thrust.lo - 4, 10), d.h - 1.6, { fill: true });
+  for (const k of [4, 9]) {
+    const [x, z, w, dd] = thrust.span(k);
+    g.pyro(x, z, { w, d: dd, beats: 4, offset: k === 9 ? 0.5 : 0 });
+  }
+  g.foe('diver', ...thrust.tile(7, 0), { path: [thrust.tile(1, 0), thrust.tile(12, 0)] });
+  // Off the side of the thrust, down the camera track: the last record, in the pit camera's dolly.
+  const track = branch(d, thrust, 6, 'front', 1);
+  const rail = track.bridge(6, { floor: 'plate' });
+  void rail;
+  const dolly = track.room(4, 4, { floor: 'plate' });
+  g.record(...dolly.tile(2, 0));
 
-  // The moat: the way across is on the crowd's hands.
-  d.hall(3);
-  const moat = d.ferry(11, { size: 3, period: 8, style: 'crowd' });
-  g.zap(...moat.rect(0, 11, moat.lo - 2, 7), d.h - 1.6, { fill: true });
-  d.hall(3);
-
-  // Backstage: a gate, the pass in the production office, and a record over the rigging on a plank.
-  const back = d.room(15, 13);
-  for (const k of [2, 6, 10]) g.pillar(...backTile(back, k), 1.0, { prop: 'case', rot: facing(back) });
-  g.foe('bouncer', ...back.tile(5, 0), { range: 6 }).foe('influencer', ...back.tile(9, 3), { range: 6 }).foe('roadie', ...back.tile(11, -3), { range: 6 });
-  g.pick(...back.tile(2, 0), 10).pick(...back.tile(7, -3), 10).pick(...back.tile(10, 5), 10);
-  g.lighter(...back.tile(13, -5));
-  g.tape(...back.tile(3, 5));
-  wash(g, back, [SHOW[2], SHOW[0]], { cans: 3, program: 'chase', every: 2 });
-  g.light('ball', ...centre(back), { colors: SHOW, radius: 6, height: 2.8 });
-  sign(back, 7, 'BACKSTAGE', GOLD, 1.6, 0.9);
-  const office = branch(d, back, 7, 'front', 7);
-  office.hall(3);
-  const production = office.room(7, 7);
-  g.pass(...production.tile(4, 0));
-  g.foe('security', ...production.tile(3, 1), { range: 5 });
-  g.pick(...production.tile(5, -2), 10);
-  const plankSide = branch(d, back, 12, 'back', 7);
-  plankSide.hall(2);
-  const plank = plankSide.bridge(7);
-  g.zap(...plank.rect(0, 7, plank.lo - 2, 5), plankSide.h - 1.6, { fill: true });
-  g.foe('diver', ...plank.tile(3, 0), { path: [plank.tile(1, 0), plank.tile(5, 0)] });
-  const rigging = plankSide.room(5, 5);
-  g.record(...rigging.tile(2, 0));
-  d.hall(4);
-  const door = d.hall(6);
-  barred(g, door, 3);
-  d.turn('+z');
+  // The stage: the size of a block, speaker towers either side, and the Headliner.
+  const stage = d.room(21, 19, { floor: 'planks' });
+  for (const k of [2, 18]) g.block(...stage.rect(k, 2, stage.back * 8 - (stage.back > 0 ? 1 : 0), 2), 2.0, { prop: 'speaker' });
+  g.block(...stage.rect(8, 6, stage.back * 7 - (stage.back > 0 ? 1 : 0), 3), 0.4, { prop: 'drums', rot: stage.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  for (const k of [5, 15]) g.pillar(...backTile(stage, k), 1.2, { prop: 'amp', rot: stage.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  g.foe('headliner', ...stage.tile(11, 0), { range: 7 });
+  g.foe('roadie', ...stage.tile(18, 6), { range: 4 });
+  g.pick(...stage.tile(2, 0), 10).pick(...stage.tile(6, -6), 10).pick(...stage.tile(6, 6), 10).pick(...stage.tile(15, -6), 10).pick(...stage.tile(15, 6), 10);
+  g.tape(...stage.tile(3, -7)).tape(...stage.tile(3, 7));
+  g.light('strobe', ...wallTile(stage, 10), { colors: ['#ffffff'], reach: 12, height: 2.2 });
+  for (const [k, c] of [[4, SHOW[0]], [10, SHOW[1]], [16, SHOW[2]]]) g.light('spot', ...wallTile(stage, k), { colors: [c, SHOW[4]], radius: 6, height: 3.6, shift: k });
+  g.light('laser', ...stage.tile(20, -8), { colors: [SHOW[3]], aim: [-12, 8], height: 3.4 });
+  g.light('laser', ...stage.tile(20, 8), { colors: [SHOW[4]], aim: [-12, -8], height: 3.4 });
+  wash(g, stage, SHOW, { cans: 4, program: 'rainbow', every: 4 });
+  sign(stage, 10, 'ROCK', GOLD, 2.8, 1.4);
+  void centre;
+  d.hall(2, { floor: 'planks' });
   d.stairs(3, 1.5);
-
-  // The stage: the Headliner, far end of a long, long stage, with the whole of the rig coming down on it.
-  const stage = d.room(25, 17, { floor: 'planks', wall: 'curtain' });
-  g.foe('headliner', ...stage.tile(18, 0), { range: 3 });
-  g.pick(...stage.tile(2, 4), 10).pick(...stage.tile(7, 0), 10).pick(...stage.tile(9, -5), 10).tape(...stage.tile(4, 0));
-  g.tape(...stage.tile(3, -6)).tape(...stage.tile(3, 6)).tape(...stage.tile(10, 6));
-  for (const k of [3, 8, 13]) g.pillar(...backTile(stage, k), 1.0, { prop: 'amp', rot: facing(stage) });
-  for (const k of [18, 21]) g.pillar(...backTile(stage, k), 1.0, { prop: 'amp', rot: facing(stage) });
-  g.light('ball', ...stage.tile(8, 0), { colors: SHOW, radius: 9, height: 3.4 });
-  g.light('laser', ...wallTile(stage, 6), { colors: [SHOW[0]], aim: [3, -stage.back * 7], height: 2.4 });
-  g.light('laser', ...wallTile(stage, 12), { colors: [SHOW[1]], aim: [-3, -stage.back * 7], height: 2.4 });
-  g.light('laser', ...wallTile(stage, 18), { colors: [SHOW[3]], aim: [3, -stage.back * 7], height: 2.4 });
-  g.light('strobe', ...wallTile(stage, 14), { colors: ['#ffffff'], reach: 12, height: 1.3 });
-  wash(g, stage, SHOW, { cans: 5, program: 'chase', every: 1 });
-  sign(stage, 12, 'HEADLINER', GOLD, 1.8, 1.0);
-  const wings = branch(d, stage, 7, 'front', 8);
-  const wingsHall = wings.hall(9);
-  flat(g, wingsHall, 8, { breakAt: 6.5, look: 'curtain' });
-  const green = wings.room(5, 5);
-  g.record(...green.tile(3, 0));
-  g.road(...green.tile(1, 1), 70);
-  d.hall(3);
-  d.stairs(3, 1.5);
-  d.hall(2);
   d.exit(3);
   return g;
 }
