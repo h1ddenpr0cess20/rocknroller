@@ -218,3 +218,5 @@ console, `rocknroller.debug` has `venue(i)` to jump to a venue and
 Rock is [h1ddenpr0cess20/rock](https://github.com/h1ddenpr0cess20/rock). The
 engine is [h1ddenpr0cess20/dungeon-roller](https://github.com/h1ddenpr0cess20/dungeon-roller).
 Type is Anton and Barlow Condensed, from [Fontsource](https://fontsource.org).
+
+More games like this one are listed in [docs/other-games.md](docs/other-games.md).
