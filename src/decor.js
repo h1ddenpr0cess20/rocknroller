@@ -227,6 +227,35 @@ function bar(GFX, { w = 3, d = 1, rise = 0.9, venue }) {
   const strip = new GFX.Mesh(new GFX.BoxGeometry(length * 0.9, 0.025, 0.012), new GFX.MeshBasicMaterial({ color: new GFX.Color(glowColour), toneMapped: false }));
   strip.position.set(0, rise * 0.55, 0.436);
   holder.add(body, top, rail, strip);
+  // The front in panels: raised frames a tile apart, and a kick plate along the floor.
+  // Both long sides alike, so it looks right whichever way it is turned.
+  const frame = wood(GFX, '#5a3820');
+  const brass = std(GFX, '#e0b44a', { metalness: 1, roughness: 0.25 });
+  for (const side of [1, -1]) {
+    for (let i = 0; i < Math.round(length); i++) {
+      const x = -length / 2 + i + 0.5;
+      const panel = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.78, rise * 0.42, 0.03), frame));
+      panel.position.set(x, rise * 0.32, side * 0.44);
+      holder.add(panel);
+    }
+    const kick = new GFX.Mesh(new GFX.BoxGeometry(length * 0.96, 0.08, 0.04), std(GFX, '#1a120c'));
+    kick.position.set(0, 0.04, side * 0.44);
+    holder.add(kick);
+    if (side < 0) {
+      const back = new GFX.Mesh(rail.geometry, brass);
+      back.rotation.z = Math.PI / 2;
+      back.position.set(0, 0.22, -0.46);
+      const backStrip = new GFX.Mesh(strip.geometry, strip.material);
+      backStrip.position.set(0, rise * 0.55, -0.436);
+      holder.add(back, backStrip);
+    }
+    // Rail posts, every couple of tiles.
+    for (let x = -length / 2 + 0.5; x < length / 2; x += 2) {
+      const post = new GFX.Mesh(new GFX.CylinderGeometry(0.015, 0.015, 0.22, 6), brass);
+      post.position.set(x, 0.11, side * 0.46);
+      holder.add(post);
+    }
+  }
   // Taps and bottles along the top.
   const metal = std(GFX, '#d6d9e0', { metalness: 1, roughness: 0.2 });
   for (let i = 0; i < Math.floor(length * 1.5); i++) {
@@ -242,7 +271,17 @@ function bar(GFX, { w = 3, d = 1, rise = 0.9, venue }) {
       const colour = ['#2a7a3a', '#8a4a1a', '#3a5aa8', '#a8802a'][i % 4];
       const bottle = shadowed(new GFX.Mesh(new GFX.CylinderGeometry(0.03, 0.035, 0.2, 10), new GFX.MeshPhysicalMaterial({ color: new GFX.Color(colour), roughness: 0.1, clearcoat: 1 })));
       bottle.position.set(x, rise + 0.1, -0.1 + (i % 2) * 0.1);
-      holder.add(bottle);
+      const neck = new GFX.Mesh(new GFX.CylinderGeometry(0.012, 0.022, 0.08, 8), bottle.material);
+      neck.position.set(x, rise + 0.24, -0.1 + (i % 2) * 0.1);
+      const label = new GFX.Mesh(new GFX.CylinderGeometry(0.0355, 0.0355, 0.07, 10, 1, true), std(GFX, ['#f2ead8', '#e8c860', '#f0f0f0'][i % 3]));
+      label.position.set(x, rise + 0.09, -0.1 + (i % 2) * 0.1);
+      holder.add(bottle, neck, label);
+      if (i % 4 === 1) {
+        // A pint, half gone.
+        const glass = new GFX.Mesh(new GFX.CylinderGeometry(0.035, 0.028, 0.13, 10), new GFX.MeshPhysicalMaterial({ color: new GFX.Color('#e0a030'), roughness: 0.05, transmission: 0.3, clearcoat: 1 }));
+        glass.position.set(x + 0.12, rise + 0.065, 0.28);
+        holder.add(glass);
+      }
     }
   }
   group.add(holder);

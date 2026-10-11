@@ -333,7 +333,7 @@ export class Venue {
 
   /**
    * One of the light rig (lightshow.js), set over tile (x, z): `kind` is
-   * 'par', 'spot', 'strobe', 'ball', 'laser', 'neon' or 'bulb'. `colors` are
+   * 'par', 'spot', 'strobe', 'ball', 'laser', 'neon', 'bulb', 'chandelier' or 'festoon'. `colors` are
    * what it cycles through; `reach` how far it is baked into the stone.
    */
   light(kind, x, z, opts = {}) {
