@@ -5,8 +5,8 @@
  * song and shared by every strum in it), a lead, and synths for the
  * clubs, all in a small room of reverb. Each plays its part in a style the
  * venue picks — its tempo, its key, a chord progression, a drum pattern and a
- * way of strumming — over eight-bar phrases: the verse, then the chorus with
- * the lead on top, with a fill into every change.
+ * way of strumming — as a song (`FORM`): an intro, verses, choruses with the
+ * lead on top, a breakdown and a solo, with a fill into every change.
  *
  * The band keeps time for everything else in the game. `beatAt(now)` is how
  * many beats from the downbeat the music is, and the light show and the
@@ -109,6 +109,23 @@ export const THEMES = {
   },
 };
 
+/** Each mode's notes, semitones above the key: for keeping a chord's third in the key. */
+const KEYS = {
+  minor: [0, 2, 3, 5, 7, 8, 10],
+  major: [0, 2, 4, 5, 7, 9, 11],
+  blues: [0, 2, 3, 5, 7, 8, 10],
+  dorian: [0, 2, 3, 5, 7, 9, 10],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+};
+
+/**
+ * A song, in bars: an intro that builds, a verse, the chorus, a second verse
+ * with the riff answered, the chorus again, a half-time breakdown, a solo, and
+ * the chorus once more, the riff up an octave. Then round again.
+ */
+const FORM = [['intro', 4], ['verse', 8], ['chorus', 8], ['verse', 8], ['chorus', 8], ['break', 4], ['solo', 4], ['chorus', 8]];
+const FORM_LENGTH = FORM.reduce((n, [, l]) => n + l, 0);
+
 /** A distortion: a soft clip that gets harder as `k` goes up. */
 function distortion(k = 40) {
   const n = 1024;
@@ -131,9 +148,18 @@ function room(ctx, seconds = 0.9, decay = 3) {
   return buffer;
 }
 
+/**
+ * How far ahead of the audio clock the band's bars are scheduled, in
+ * seconds. The scheduler runs on the page's main thread, which can be held up
+ * by a long frame or a background bake; this much in hand rides that out.
+ */
+export const LOOKAHEAD = 4;
+
 export function createBand(ctx, out, noise) {
   // The bus: everything through a compressor, a little of it through the room.
   const bus = ctx.createGain();
+  // A little headroom into the compressor, so the busiest choruses don't touch the ceiling.
+  bus.gain.value = 0.85;
   const glue = ctx.createDynamicsCompressor();
   glue.threshold.value = -16;
   glue.knee.value = 12;
@@ -370,70 +396,141 @@ export function createBand(ctx, out, noise) {
   let playing = null;
 
   /** Bar `bar` of `theme` from time `when`, at `tempo`. */
+  /** Where bar `bar` falls in the song: its section, how far into it, and which time round that section is. */
+  function placeOf(bar) {
+    let at = bar % FORM_LENGTH;
+    const seen = {};
+    for (const [name, length] of FORM) {
+      if (at < length) return { name, of: at, length, time: seen[name] ?? 0 };
+      seen[name] = (seen[name] ?? 0) + 1;
+      at -= length;
+    }
+    return { name: 'verse', of: 0, length: 8, time: 0 };
+  }
+
+  /** Bar `bar` of `theme` from time `when`, at `tempo`: what each of the band plays, by where it is in the song. */
   function playBar(theme, tempo, bar, when) {
     const beat = 60 / tempo;
     const step = beat / 4;
-    const phrase = bar % 8;
-    const chorus = phrase >= 4;
+    const { name, of, length, time } = placeOf(bar);
+    const phrase = of % 8;
+    const last = of === length - 1;
+    const loud = name === 'chorus' || name === 'solo';
     const drums = DRUMS[theme.drums] ?? DRUMS.rock;
-    const root = theme.key + (theme.prog[phrase] ?? 0);
+    const shift = theme.prog[phrase] ?? 0;
+    const root = theme.key + shift;
     const level = theme.gain ?? 1;
+    const key = KEYS[theme.scale] ?? KEYS.minor;
+    // The third of this bar's chord, major or minor, whichever is in the key.
+    const third = key.includes((shift + 4) % 12) ? 4 : 3;
 
-    // Drums: the pattern, a crash on the top of every phrase, a fill into every fourth bar.
-    const fill = phrase === 3 || phrase === 7;
-    for (let i = 0; i < 16; i++) {
-      const t = when + step * i;
-      if (fill && i >= 12) {
-        // A roll down the toms into the next bar.
-        if (i % 2 === 0) tom(t, [190, 150, 120, 95][(i - 12) / 2], 0.9);
-        if (i === 12) kick(t);
-        continue;
+    // ——— drums.
+    if (name === 'intro') {
+      // A build: kick and hats, the snare joining halfway, a snare roll into the verse.
+      for (let i = 0; i < 16; i++) {
+        const t = when + step * i;
+        if (last && i >= 8) { snare(t, 0.4 + ((i - 8) / 8) * 0.7); continue; }
+        if (i % 4 === 0) kick(t, 0.9);
+        if (i % 2 === 0) hat(t, i % 4 === 0 ? 0.8 : 0.55);
+        if (of >= length / 2 && (i === 4 || i === 12)) snare(t, 0.85);
       }
-      if (drums.kick.includes(i) || (chorus && drums.kicksLate.includes(i))) kick(t, i === 0 ? 1 : 0.85);
-      if (drums.snare.includes(i)) snare(t, 1);
-      if (drums.clap?.includes(i)) clap(t, 0.9);
-      if (drums.hat.includes(i)) hat(t, i % 4 === 0 ? 1 : 0.7, drums.open.includes(i) && chorus);
+    } else if (name === 'break') {
+      // Half time: the kick on one, the snare on three, the ride on the quarters.
+      for (let i = 0; i < 16; i++) {
+        const t = when + step * i;
+        if (last && i >= 12) { if (i % 2 === 0) tom(t, [170, 120][(i - 12) / 2]); continue; }
+        if (i === 0 || i === 10) kick(t, 1);
+        if (i === 8) snare(t, 1.05);
+        if (i % 4 === 0) hat(t, 0.75, i === 4);
+      }
+    } else {
+      for (let i = 0; i < 16; i++) {
+        const t = when + step * i;
+        if (last && i >= 12) {
+          // A roll down the toms into the next section.
+          if (i % 2 === 0) tom(t, [190, 150, 120, 95][(i - 12) / 2], 0.9);
+          if (i === 12) kick(t);
+          continue;
+        }
+        if (drums.kick.includes(i) || (loud && drums.kicksLate.includes(i))) kick(t, i === 0 ? 1 : 0.85);
+        if (drums.snare.includes(i)) snare(t, loud ? 1.05 : 0.95);
+        if (drums.clap?.includes(i)) clap(t, 0.9);
+        if (drums.hat.includes(i)) hat(t, i % 4 === 0 ? 1 : 0.7, drums.open.includes(i) && loud);
+      }
     }
-    if (phrase === 0) crash(when, 0.9);
-    if (phrase === 4) crash(when, 0.7);
+    if (of === 0 && name !== 'intro') crash(when, loud ? 1 : 0.8);
+    if (of === 4 && loud) crash(when, 0.7);
+    if (bar % FORM_LENGTH === 0) crash(when, 0.6);
 
-    // The bass.
+    // ——— bass.
     const bassNote = root + 12;
-    if (theme.bass === 'octave') {
+    if (name === 'intro' && of < length / 2) {
+      // Not yet.
+    } else if (name === 'break') {
+      bass(when, bassNote, beat * 3.5, 1);
+    } else if (theme.bass === 'octave') {
       for (let i = 0; i < 16; i += 2) bass(when + step * i, bassNote + (i % 4 === 2 ? 12 : 0), step * 2, 0.95);
     } else if (theme.bass === 'walk') {
-      const walk = [0, 0, 3, 5, 7, 5, 3, 0];
+      const walk = [0, 0, third, 5, 7, 5, third, 0];
       for (let i = 0; i < 8; i++) bass(when + step * 2 * i, bassNote + walk[i], step * 2, 1);
     } else {
       for (let i = 0; i < 16; i += 2) bass(when + step * i, bassNote, step * 1.6, i === 0 ? 1.05 : 0.9);
     }
 
-    // Two guitars, double-tracked, a hair apart and panned either side.
-    const strum = STRUMS[theme.strum] ?? STRUMS.chug;
-    for (let i = 0; i < 16; i++) {
-      const hit = strum[i];
-      if (!hit) continue;
-      const len = hit === 2 ? step * (theme.strum === 'anthem' ? 5 : 3.2) : step * 0.9;
-      const t = when + step * i;
-      guitar(t, root + 12, len, { open: hit === 2, side: 0, level: level * (chorus ? 1.05 : 0.95) });
-      guitar(t + 0.007, root + 12, len, { open: hit === 2, side: 1, level: level * (chorus ? 1.05 : 0.95) });
-    }
-
-    // The lead takes the choruses, and plays the riff over two bars.
-    if (chorus && bar % 2 === 0) {
-      const scale = SCALES[theme.scale] ?? SCALES.minor;
-      for (const [s, degree, len] of theme.riff) {
-        if (s >= 32) continue;
-        lead(when + step * s, theme.key + 36 + scale[degree % scale.length] + (theme.prog[phrase] ?? 0) * 0, step * len, theme.lead, level);
+    // ——— two guitars, double-tracked, a hair apart and panned either side.
+    const both = (t, len, open, g) => {
+      guitar(t, root + 12, len, { open, side: 0, level: level * g });
+      guitar(t + 0.007, root + 12, len, { open, side: 1, level: level * g });
+    };
+    if (name === 'intro') {
+      // One chord, left to ring, on the first bar of each half.
+      if (of % 2 === 0) both(when, beat * 7.5, true, 0.85);
+    } else if (name === 'break') {
+      both(when, beat * 3.8, true, 0.8);
+    } else {
+      const strum = STRUMS[theme.strum] ?? STRUMS.chug;
+      const g = loud ? 1.05 : 0.9;
+      for (let i = 0; i < 16; i++) {
+        const hit = strum[i];
+        if (!hit) continue;
+        const len = hit === 2 ? step * (theme.strum === 'anthem' ? 5 : 3.2) : step * 0.9;
+        both(when + step * i, len, hit === 2, g);
       }
     }
 
-    // Synths: an arpeggio round the chord, a pad under it.
-    if (theme.arp) {
-      const chord = [0, 3, 7, 12];
-      for (let i = 0; i < 16; i++) arp(when + step * i, root + 36 + chord[i % 4] + (i % 8 >= 4 ? 12 : 0), step * 0.9, level);
+    // ——— the lead.
+    const scale = SCALES[theme.scale] ?? SCALES.minor;
+    const riff = (up, g, from = 0) => {
+      for (const [s, degree, len] of theme.riff) {
+        if (s < from * 16 || s >= from * 16 + 16) continue;
+        lead(when + step * (s - from * 16), theme.key + 36 + up + scale[degree % scale.length], step * len, theme.lead, level * g);
+      }
+    };
+    if (name === 'chorus') {
+      // The riff, over two bars; the last time round, an octave up.
+      riff(time >= 2 ? 12 : 0, 1, of % 2);
+    } else if (name === 'verse' && time >= 1 && of >= 4) {
+      // The second verse: the riff answered, down an octave and quiet.
+      riff(-12, 0.55, of % 2);
+    } else if (name === 'solo') {
+      // A solo: a run up and down the scale, a different shape every bar, bending into the long notes.
+      let seed = (bar * 7919 + theme.key * 31) % 233280;
+      const rand = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+      let degree = 3 + Math.floor(rand() * 3);
+      for (let i = 0; i < 16;) {
+        const len = rand() < 0.3 ? 4 : rand() < 0.6 ? 2 : 1;
+        degree = Math.max(0, Math.min(scale.length - 1, degree + (rand() < 0.5 ? -1 : 1) * (rand() < 0.25 ? 2 : 1)));
+        lead(when + step * i, theme.key + 36 + scale[degree] + (rand() < 0.15 ? 12 : 0), step * len, theme.lead, level * 0.95);
+        i += len;
+      }
     }
-    if (theme.pad && phrase % 2 === 0) pad(when, [root + 36, root + 43, root + 48], beat * 8, level);
+
+    // ——— synths: an arpeggio round the chord, a pad under it.
+    if (theme.arp && name !== 'intro' && name !== 'break') {
+      const chord = [0, third, 7, 12];
+      for (let i = 0; i < 16; i++) arp(when + step * i, root + 36 + chord[i % 4] + (i % 8 >= 4 ? 12 : 0), step * 0.9, level * (loud ? 1 : 0.7));
+    }
+    if (theme.pad && (loud || name === 'break') && of % 2 === 0) pad(when, [root + 36, root + 36 + third, root + 43], beat * 8, level);
   }
 
   return {
@@ -445,16 +542,25 @@ export function createBand(ctx, out, noise) {
     start(theme, tempo, beat0 = 0) {
       this.stop();
       fresh();
-      const beat = 60 / tempo;
-      const t0 = ctx.currentTime - beat0 * beat;
-      const firstBar = Math.max(0, Math.ceil((beat0 * beat + 0.12) / (beat * 4)));
+      const beat = 60 / tempo, barLength = beat * 4;
+      // From the top, the count-in is short; picking up a clock that kept running, in step with it.
+      const t0 = beat0 > 0 ? ctx.currentTime - beat0 * beat : ctx.currentTime + 0.12;
+      const firstBar = beat0 > 0 ? Math.max(0, Math.ceil((beat0 * beat + 0.12) / barLength)) : 0;
       const state = { theme, tempo, t0, bar: firstBar, out: target };
-      state.timer = setInterval(() => {
-        while (t0 + state.bar * beat * 4 < ctx.currentTime + 0.7) {
-          playBar(theme, tempo, state.bar, t0 + state.bar * beat * 4);
+      // Bars are scheduled well ahead of the clock, so the page can stall (a model baking, shaders
+      // compiling, a slow frame) for seconds and the band plays on regardless. A bar whose start has
+      // already gone is skipped, not crammed in late: the band picks up again on the next downbeat.
+      const fill = () => {
+        const now = ctx.currentTime;
+        const behind = Math.floor((now - t0) / barLength) + 1;
+        if (state.bar < behind) state.bar = behind;
+        while (t0 + state.bar * barLength < now + LOOKAHEAD) {
+          playBar(theme, tempo, state.bar, t0 + state.bar * barLength);
           state.bar++;
         }
-      }, 90);
+      };
+      fill();
+      state.timer = setInterval(fill, 250);
       playing = state;
     },
 
