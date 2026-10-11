@@ -1,6 +1,6 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, branch, wallTile, wash } from './helpers.js';
+import { across, backTile, barred, branch, facingRot, toBack, wallTile, wash } from './helpers.js';
 
 /**
  * Act 6: The Studio. A recording studio at the hour when everyone has
@@ -34,7 +34,6 @@ export function studio() {
     },
   });
   const sign = (p, along, text, color, height = 1.5, size = 0.7) => g.light('neon', ...wallTile(p, along), { text, color, height, size });
-  const side = (p) => (p.back > 0 ? Math.PI / 2 : -Math.PI / 2);
 
   // Reception: gold records on the wall, and a receptionist who is in no way impressed.
   g.room(2, 4, 5, 5, 60, { lamps: 3, wall: 'posters', floor: 'carpet' });
@@ -64,7 +63,7 @@ export function studio() {
   };
   const a = booth(5, 'back', 'BOOTH A', LIGHTS[2]);
   g.record(...a.tile(3, 0));
-  g.pillar(...a.tile(4, 1), 0.9, { prop: 'amp', rot: Math.PI });
+  g.pillar(...a.tile(4, 1), 0.9, { prop: 'amp' });
   const bb = booth(13, 'front', 'BOOTH B', LIGHTS[1]);
   g.pass(...bb.tile(3, 0));
   g.foe('security', ...bb.tile(2, 1), { range: 3 });
@@ -84,9 +83,9 @@ export function studio() {
   // The live room: kit and amps along the back, a chicane of live cable, kick drums on their sides to bounce off.
   const live = d.room(21, 15, { floor: 'planks' });
   const deck = live.back * 6 - (live.back > 0 ? 1 : 0);
-  g.block(...live.rect(15, 4, deck, 2), 0.35, { prop: 'drums', rot: side(live) });
-  for (const k of [2, 4, 7, 10]) g.pillar(...backTile(live, k), 1.0, { prop: 'amp', rot: side(live) });
-  for (const k of [12, 13]) g.pillar(...backTile(live, k), 1.1, { prop: 'rack', rot: side(live) });
+  g.block(...live.rect(15, 4, deck, 2), 0.35, { prop: 'drums' });
+  for (const k of [2, 4, 7, 10]) g.pillar(...backTile(live, k), 1.0, { prop: 'amp' });
+  for (const k of [12, 13]) g.pillar(...backTile(live, k), 1.1, { prop: 'rack' });
   // Cable: whole-width runs with a gap to get through, each on the other side from the last.
   const run = (along, gapAcross) => {
     const lo = live.lo, hi = lo + live.width;
@@ -111,9 +110,9 @@ export function studio() {
 
   // The control room: the desk across the back, racks, and the people who say "love it, but".
   const control = d.room(15, 13, { wall: 'plywood' });
-  g.block(...control.rect(4, 7, control.back * 5 - (control.back > 0 ? 1 : 0), 2), 0.82, { prop: 'console', rot: side(control) });
-  for (const k of [1, 2, 12, 13]) g.pillar(...backTile(control, k), 1.1, { prop: 'rack', rot: side(control) });
-  for (const [al, ac] of [[4, 2], [10, -1]]) g.pillar(...control.tile(al, ac), 0.8, { prop: 'seat' });
+  g.block(...control.rect(4, 7, control.back * 5 - (control.back > 0 ? 1 : 0), 2), 0.82, { prop: 'console' });
+  for (const k of [1, 2, 12, 13]) g.pillar(...backTile(control, k), 1.1, { prop: 'rack' });
+  for (const [al, ac] of [[4, 2], [10, -1]]) g.pillar(...control.tile(al, ac), 0.8, { prop: 'seat', rot: facingRot(toBack(control)) });
   g.foe('suit', ...control.tile(4, -1), { range: 6 }).foe('critic', ...control.tile(9, 3), { range: 6 }).foe('suit', ...control.tile(12, -3), { range: 6 });
   g.pick(...control.tile(2, 3), 10).pick(...control.tile(7, -2), 10).pick(...control.tile(11, 4), 10);
   g.tape(...control.tile(13, 4));

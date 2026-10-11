@@ -450,26 +450,48 @@ export const PROPS = { amp, case: roadCase, drums, speaker, bar, pool, jukebox, 
 /**
  * Props with a front: built facing +z, `w` across the front and `d` deep.
  * Wherever they are put they are turned to face the most open floor
- * beside them, and their footprint is handed over the right way round.
+ * beside them, or the way the venue's `face` ([dx, dz]) says, and their
+ * footprint is handed over the right way round. A desk's front is the side
+ * its operator stands at.
  */
-const FACING = new Set(['amp', 'drums', 'speaker', 'console', 'rack', 'jukebox', 'pinball', 'loo']);
+const FACING = new Set(['amp', 'drums', 'speaker', 'console', 'rack', 'jukebox', 'pinball', 'loo', 'dome']);
 
-/** The way out of a footprint with the most floor in front of it (two tiles deep): [dx, dz]. */
+/**
+ * The way out of a footprint with the most open floor in front of it: [dx, dz].
+ * Each tile along a side counts the floor straight out from it, up to three
+ * tiles, until a wall or a change of level stops it (or another prop right
+ * up against it); one with its back to a wall faces away from it. So a row
+ * of amps along a wall faces into the room, not along the wall at its
+ * neighbour's back.
+ */
 export function openSide(venue, { x, z, w, d, base }) {
-  const floorAt = (i, j) => {
+  const open = (i, j, near) => {
     const c = venue.cell(i, j);
-    return c && c.kind !== 'wall' && Math.abs(Math.max(...c.h) - base) < 0.6 ? 1 : 0;
+    return Boolean(c) && c.kind !== 'wall' && !(near && c.prop) && Math.abs(Math.max(...c.h) - base) < 0.6;
+  };
+  const reach = (i, j, dx, dz) => {
+    let n = 0;
+    while (n < 3 && open(i + dx * (n + 1), j + dz * (n + 1), n === 0)) n++;
+    return n;
+  };
+  const backed = (dx, dz) => {
+    const wallAt = (i, j) => venue.cell(i, j)?.kind === 'wall' && !venue.cell(i, j).prop;
+    if (dx) { for (let j = z; j < z + d; j++) if (!wallAt(dx > 0 ? x - 1 : x + w, j)) return false; }
+    else for (let i = x; i < x + w; i++) if (!wallAt(i, dz > 0 ? z - 1 : z + d)) return false;
+    return true;
   };
   // Toward the camera first when it's a tie: +z, +x, then the back.
   const sides = [[0, 1], [1, 0], [-1, 0], [0, -1]];
   let best = sides[0], most = -1;
   for (const [dx, dz] of sides) {
     let n = 0;
-    for (let k = 1; k <= 2; k++) {
-      if (dx) for (let j = z; j < z + d; j++) n += floorAt(dx > 0 ? x + w - 1 + k : x - k, j);
-      else for (let i = x; i < x + w; i++) n += floorAt(i, dz > 0 ? z + d - 1 + k : z - k);
-    }
-    if (n > most) { most = n; best = [dx, dz]; }
+    if (dx) for (let j = z; j < z + d; j++) n += reach(dx > 0 ? x + w - 1 : x, j, dx, 0);
+    else for (let i = x; i < x + w; i++) n += reach(i, dz > 0 ? z + d - 1 : z, 0, dz);
+    // A long side has more tiles to count: what matters is how open it is.
+    n /= dx ? d : w;
+    // And a prop backed against a wall faces away from it.
+    if (backed(dx, dz)) n += 0.5;
+    if (n > most + 1e-9) { most = n; best = [dx, dz]; }
   }
   return best;
 }
@@ -488,7 +510,7 @@ export function createProps(GFX, venue, extra = {}) {
     const make = library[spec.kind] ?? plain;
     let shape = spec, rot = spec.rot ?? 0;
     if (FACING.has(spec.kind)) {
-      const [dx, dz] = openSide(venue, spec);
+      const [dx, dz] = spec.face ?? openSide(venue, spec);
       rot = Math.atan2(dx, dz);
       // Facing along x, what is across its front runs along z.
       if (dx) shape = { ...spec, w: spec.d, d: spec.w };

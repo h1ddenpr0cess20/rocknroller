@@ -69,7 +69,7 @@ export function rehearsal() {
 
   /** A room's band, out of the way of the doors: amps in the top corners, a kit in the bottom left, a coloured light on it. */
   const band = (i, j, colour, { kit = true } = {}) => {
-    for (const a of [0, 6]) g.pillar(...tile(i, j, a, 0), 1.0, { prop: 'amp', rot: 0 });
+    for (const a of [0, 6]) g.pillar(...tile(i, j, a, 0), 1.0, { prop: 'amp' });
     if (kit) g.block(...tile(i, j, 0, 5), 2, 2, 0.35, { prop: 'drums' });
     g.light('par', ...tile(i, j, 6, 6), { colors: [colour], program: 'pulse', every: 1, aim: [-3, -3], height: 1.7, glow: 0.7, reach: 7 });
   };

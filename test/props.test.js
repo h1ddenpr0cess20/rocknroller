@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import * as GFX from '../src/vendor/gfx/index.js';
+import { openSide } from '../src/decor.js';
 import { createGig, STEP, stepGig } from '../src/gig.js';
+import { VENUES, loadVenue } from '../src/venues/index.js';
 
 /** Rock rolled at the middle of `prop`'s near side from `back` tiles off, going `speed`. */
 function charge(gig, prop, speed, back = 0.9) {
@@ -49,5 +51,47 @@ test('the building is not furniture: crowd barriers and the stands do not break'
     const sturdy = gig.venue.props.filter((p) => p.kind === 'barrier' || p.kind === 'stands');
     assert.ok(sturdy.length > 0);
     assert.ok(sturdy.every((p) => !p.breakAt), `${gig.venue.name}: no breakable barriers or stands`);
+  }
+});
+
+const tilesOf = (p) => Array.from({ length: p.w * p.d }, (_, k) => [p.x + (k % p.w), p.z + Math.floor(k / p.w)]);
+
+test('a prop with a front faces open floor, and one against a wall turns its back to it', () => {
+  const garage = loadVenue(0);
+  const amps = garage.props.filter((p) => p.kind === 'amp');
+  assert.ok(amps.length > 1);
+  for (const a of amps) assert.deepEqual(openSide(garage, a), [1, 0], `the amp at ${a.x},${a.z} faces into the band room`);
+  for (let i = 0; i < VENUES.length; i++) {
+    const v = loadVenue(i);
+    for (const p of v.props.filter((q) => ['amp', 'drums', 'speaker', 'rack', 'jukebox', 'pinball', 'loo'].includes(q.kind))) {
+      const [dx, dz] = p.face ?? openSide(v, p);
+      const ahead = dx ? Array.from({ length: p.d }, (_, j) => [dx > 0 ? p.x + p.w : p.x - 1, p.z + j]) : Array.from({ length: p.w }, (_, k) => [p.x + k, dz > 0 ? p.z + p.d : p.z - 1]);
+      assert.ok(ahead.some(([x, z]) => v.cell(x, z) && v.cell(x, z).kind !== 'wall'), `${v.name}: the ${p.kind} at ${p.x},${p.z} faces a wall`);
+    }
+  }
+});
+
+test('nothing is stood where a speaker stack comes down, pyro goes up or a gate shuts', () => {
+  for (let i = 0; i < VENUES.length; i++) {
+    const v = loadVenue(i);
+    for (const p of v.props.filter((q) => !q.free)) {
+      for (const [x, z] of tilesOf(p)) {
+        const c = v.cell(x, z);
+        assert.ok(!c?.crush && !c?.trap && !c?.door, `${v.name}: the ${p.kind} at ${p.x},${p.z} is in the way of a hazard at ${x},${z}`);
+      }
+    }
+  }
+});
+
+test('gates and panels close off the whole way: no getting round the ends', () => {
+  for (let i = 0; i < VENUES.length; i++) {
+    const v = loadVenue(i);
+    for (const g of v.doors) {
+      const ends = g.axis === 'x' ? [[g.x, g.z - 1], [g.x, g.z + g.d]] : [[g.x - 1, g.z], [g.x + g.w, g.z]];
+      for (const [x, z] of ends) {
+        const c = v.cell(x, z);
+        assert.ok(!c || c.kind === 'wall' || (c.prop && !c.breakable), `${v.name}: the ${g.kind} at ${g.x},${g.z} can be got round at ${x},${z}`);
+      }
+    }
   }
 });

@@ -48,8 +48,8 @@ export function garage() {
 
   // The band room: amps along the back, a drum kit on a riser, two little brothers.
   const room = d.room(15, 11, { floor: 'planks', wall: 'posters' });
-  for (const k of [1, 3, 5, 7, 9]) g.pillar(...backTile(room, k), 1.0, { prop: 'amp', rot: Math.PI / 2 });
-  g.block(...room.rect(11, 2, room.back * 5 - (room.back > 0 ? 1 : 0), 2), 0.35, { prop: 'drums', rot: Math.PI / 2 });
+  for (const k of [1, 3, 5, 7, 9]) g.pillar(...backTile(room, k), 1.0, { prop: 'amp' });
+  g.block(...room.rect(11, 2, room.back * 5 - (room.back > 0 ? 1 : 0), 2), 0.35, { prop: 'drums' });
   g.foe('brother', ...room.tile(5, -2), { range: 6 }).foe('brother', ...room.tile(8, 2), { range: 6 });
   g.pick(...room.tile(3, 3), 10).pick(...room.tile(12, -3), 10).pick(...room.tile(6, 0), 5);
   g.road(...room.tile(13, -4), 50);

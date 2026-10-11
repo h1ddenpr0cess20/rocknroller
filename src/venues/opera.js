@@ -1,6 +1,6 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { backTile, branch, centre, flat, frontHeading, wallTile, wash } from './helpers.js';
+import { backTile, branch, centre, facingRot, flat, frontHeading, toBack, wallTile, wash } from './helpers.js';
 
 /**
  * Act 7: The Opera House. Red velvet, gold leaf, damask on the walls and
@@ -36,7 +36,6 @@ export function opera() {
     },
   });
   const MARBLE = { floor: 'checker', wall: 'damask' };
-  const facing = (p) => Math.atan2(p.dir[0], p.dir[1]);
 
   // The portico: steps up from the street between the columns.
   g.room(2, 8, 5, 5, 80, { lamps: 3, ...MARBLE });
@@ -48,7 +47,7 @@ export function opera() {
 
   // The foyer: marble, a champagne bar, ushers, and the great chandelier.
   const foyer = d.room(13, 15, MARBLE);
-  g.block(...foyer.rect(3, 7, foyer.back * 6 - (foyer.back > 0 ? 0 : 0), 1), 0.9, { prop: 'bar', rot: foyer.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  g.block(...foyer.rect(3, 7, foyer.back * 6, 1), 0.9, { prop: 'bar' });
   for (const [a, b] of [[3, -3], [3, 3], [9, -3], [9, 3]]) g.pillar(...foyer.tile(a, b), 2.2, { wall: 'block' });
   g.foe('usher', ...foyer.tile(6, -4), { range: 6 }).foe('critic', ...foyer.tile(5, 4), { range: 6 }).foe('suit', ...foyer.tile(10, 0), { range: 5 });
   g.pick(...foyer.tile(2, 0), 10).pick(...foyer.tile(6, 0), 10).pick(...foyer.tile(11, -5), 10).pick(...foyer.tile(11, 5), 10);
@@ -62,7 +61,7 @@ export function opera() {
 
   // The dress circle: a balcony along the auditorium, the dark in front of it; seats along the back.
   const circle = d.ledge(22, { width: 3, wallTex: 'damask' });
-  for (const [from, n] of [[1, 5], [8, 4], [15, 5]]) g.block(...circle.rect(from, n, circle.back, 1), 0.8, { prop: 'seat', rot: facing(circle) + (circle.back > 0 ? -Math.PI / 2 : Math.PI / 2) });
+  for (const [from, n] of [[1, 5], [8, 4], [15, 5]]) g.block(...circle.rect(from, n, circle.back, 1), 0.8, { prop: 'seat', rot: facingRot(toBack(circle).map((v) => -v)) });
   g.foe('usher', ...circle.tile(6, 0), { range: 4, path: [circle.tile(2, 0), circle.tile(12, 0)] });
   g.foe('critic', ...circle.tile(18, 0), { range: 4 });
   g.pick(...circle.tile(4, 0), 5).pick(...circle.tile(10, 0), 5).pick(...circle.tile(13, 0), 5).pick(...circle.tile(20, 0), 10);
@@ -73,7 +72,8 @@ export function opera() {
   flat(g, boxDoor, 5, { breakAt: 4, look: 'curtain' });
   const box5 = box.room(5, 5, { wall: 'damask' });
   g.record(...box5.tile(3, 0));
-  g.block(...box5.rect(1, 3, -2, 1), 0.8, { prop: 'seat', rot: 0 });
+  // A row of chairs across the back of the box, looking out through the curtain.
+  g.block(...box5.rect(4, 1, -1, 3), 0.8, { prop: 'seat', rot: facingRot(box5.dir.map((v) => -v)) });
   g.light('neon', ...wallTile(boxDoor, 2), { text: 'BOX 5', color: GOLD, height: 1.5, size: 0.4 });
   d.stairs(4, 2, MARBLE);
   d.hall(5, MARBLE);
@@ -88,8 +88,8 @@ export function opera() {
   for (const [along, aisle] of rows) {
     const lo = stalls.lo, hi = lo + stalls.width;
     const left = aisle - 1, right = aisle + 2;
-    if (left > lo) g.block(...stalls.rect(along, 1, lo, left - lo), 0.7, { prop: 'seat', rot: facing(stalls) });
-    if (hi > right) g.block(...stalls.rect(along, 1, right, hi - right), 0.7, { prop: 'seat', rot: facing(stalls) });
+    if (left > lo) g.block(...stalls.rect(along, 1, lo, left - lo), 0.7, { prop: 'seat', rot: facingRot(stalls.dir) });
+    if (hi > right) g.block(...stalls.rect(along, 1, right, hi - right), 0.7, { prop: 'seat', rot: facingRot(stalls.dir) });
   }
   // Chandeliers on loose chains over three of the aisles, coming down on the beat.
   for (const [i, [along, aisle]] of [[0, rows[1]], [1, rows[3]], [2, rows[5]]]) g.speaker(...stalls.tile(along + 1, aisle), { w: 2, d: 2, beats: 4, offset: i * 0.33 });
@@ -108,7 +108,8 @@ export function opera() {
 
   // The stage: boards, the backdrop, the grand piano, and the Maestro.
   const stage = d.room(19, 15, { floor: 'planks', wall: 'curtain' });
-  g.block(...stage.rect(13, 4, stage.back * 6 - (stage.back > 0 ? 1 : 0), 2), 0.88, { prop: 'piano', rot: stage.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  // Upstage, clear of the cases and of the ladder up to the flies.
+  g.block(...stage.rect(8, 4, stage.back * 6 - (stage.back > 0 ? 1 : 0), 2), 0.88, { prop: 'piano' });
   for (const [a, b] of [[4, -5], [4, 5], [14, -5], [14, 5]]) g.pillar(...stage.tile(a, b), 0.8, { prop: 'case' });
   g.foe('maestro', ...stage.tile(11, 0), { range: 6 });
   g.foe('usher', ...stage.tile(16, 5), { range: 4 });

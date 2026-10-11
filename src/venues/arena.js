@@ -35,7 +35,6 @@ export function arena() {
     },
   });
   const sign = (p, along, text, color, height = 1.5, size = 0.6) => g.light('neon', ...wallTile(p, along), { text, color, height, size });
-  const side = (p) => (p.back > 0 ? Math.PI / 2 : -Math.PI / 2);
 
   // The plaza and the turnstiles: brass posts to thread between, and the scalpers working the line.
   g.room(2, 24, 5, 5, 72, { lamps: 3, floor: 'concrete' });
@@ -54,7 +53,7 @@ export function arena() {
   g.belt(...ring.rect(7, 13, -9, 3), ring.heading);
   g.belt(...ring.rect(7, 13, 7, 3), ring.heading);
   // Hot-dog stands and the merch stand against the outer wall.
-  for (const k of [4, 12, 20]) g.block(...ring.rect(k, 3, ring.back * 10, 1), 0.95, { prop: 'bar', rot: side(ring) });
+  for (const k of [4, 12, 20]) g.block(...ring.rect(k, 3, ring.back * 10, 1), 0.95, { prop: 'bar' });
   for (const [a, b] of [[2, -7], [24, 7], [24, -7]]) g.pillar(...ring.tile(a, b), 0.62, { prop: 'table' });
   g.foe('security', ...ring.tile(3, 0), { range: 5 }).foe('merch', ...ring.tile(12, -8), { range: 5 }).foe('scalper', ...ring.tile(15, 8), { range: 5 });
   g.foe('mascot', ...ring.tile(23, 0), { range: 5 }).foe('phone', ...ring.tile(8, 8), { range: 5 });
@@ -79,7 +78,7 @@ export function arena() {
   const desk = office.room(7, 7, { floor: 'carpet' });
   g.pass(...desk.tile(4, 0));
   g.foe('bouncer', ...desk.tile(3, 1), { range: 4 });
-  g.block(...desk.rect(1, 3, -3, 1), 0.82, { prop: 'console', rot: 0 });
+  g.block(...desk.rect(1, 3, -3, 1), 0.82, { prop: 'console' });
   g.pick(...desk.tile(5, -2), 10);
 
   // The vomitory: a gate, and a tunnel of steps down through the seats onto the floor.
@@ -93,7 +92,8 @@ export function arena() {
   const floor = d.room(25, 21, { floor: 'panels' });
   const stageAt = 21;
   g.block(...floor.rect(stageAt, 4, floor.lo, 21), 1.2, { prop: 'speaker' });
-  for (const k of [0, 20]) g.pillar(...floor.tile(stageAt - 1, floor.lo + k), 1.4, { prop: 'speaker' });
+  // The wings' PA, either end of the stage, turned out to the crowd like the rest.
+  for (const k of [0, 20]) g.pillar(...floor.tile(stageAt - 1, floor.lo + k), 1.4, { prop: 'speaker', face: [-floor.dir[0], -floor.dir[1]] });
   g.block(...floor.rect(stageAt - 3, 1, floor.lo, 8), 1.0, { prop: 'barrier' });
   g.block(...floor.rect(stageAt - 3, 1, 3, 8), 1.0, { prop: 'barrier' });
   g.block(...floor.rect(8, 1, -6, 5), 1.0, { prop: 'barrier' });
