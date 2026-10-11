@@ -87,7 +87,6 @@ export function rehearsal() {
   // Room 4, a singer-songwriter and his friend; room 5, the big room, the covers band and its crowd; room 6, a record.
   band(0, 1, '#3aff7a', { kit: false });
   g.foe('freebird', ...tile(0, 1, 3, 3), { range: 4 });
-  g.tape(...tile(0, 1, 1, 5));
   band(1, 1, '#2a8aff');
   g.foe('mosher', ...tile(1, 1, 2, 4), { range: 4 }).foe('roadie', ...tile(1, 1, 5, 3), { range: 4 });
   g.pick(...tile(1, 1, 1, 3), 10).pick(...tile(1, 1, 3, 5), 10);
@@ -96,13 +95,14 @@ export function rehearsal() {
   g.foe('metalhead', ...tile(2, 1, 3, 4), { range: 4 });
   g.record(...tile(2, 1, 5, 4));
   g.road(...tile(2, 1, 3, 5), 50);
-  // Room 7, where the A&R man is, and the pass; room 8, the bassist alone; room 9, the fire door.
+  // Room 7, where the A&R man is, and the pass; room 8, the bassist alone, and tape for after the big room and its stack; room 9, the fire door.
   band(0, 2, '#c83aff', { kit: false });
   g.foe('suit', ...tile(0, 2, 3, 3), { range: 4 });
   g.pass(...tile(0, 2, 2, 5));
   band(1, 2, '#3ad8ff', { kit: false });
   g.foe('roadie', ...tile(1, 2, 3, 4), { range: 4 });
   g.pick(...tile(1, 2, 2, 5), 10).pick(...tile(1, 2, 5, 5), 10);
+  g.tape(...tile(1, 2, 1, 5));
   band(2, 2, '#ff6a2a');
   g.foe('mosher', ...tile(2, 2, 3, 3), { range: 4 });
 

@@ -49,3 +49,57 @@ test('everything lying about can be got to, from where Rock starts, and leaves h
     }
   }
 });
+
+/**
+ * How far along the way from the start to the stage door each tile of a venue
+ * is: the step of that way it is nearest, so a side room counts from where it
+ * leads off.
+ */
+function along(gig, net) {
+  const v = gig.venue;
+  const key = (x, z) => z * v.cols + x;
+  let exit = null;
+  for (let z = 0; z < v.rows && !exit; z++) for (let x = 0; x < v.cols && !exit; x++) if (v.cell(x, z)?.kind === 'exit') exit = [x, z];
+  const way = [[v.start.x, v.start.z], ...plan(gig, net, [v.start.x, v.start.z], exit, 99).map((m) => [m.x, m.z])];
+  const step = new Map();
+  let front = [];
+  way.forEach(([x, z], i) => {
+    if (step.has(key(x, z))) return;
+    step.set(key(x, z), i);
+    front.push([x, z]);
+  });
+  while (front.length) {
+    const next = [];
+    for (const [x, z] of front) {
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const c = v.cell(x + dx, z + dz);
+        if (!c || c.kind === 'wall' || step.has(key(x + dx, z + dz))) continue;
+        step.set(key(x + dx, z + dz), step.get(key(x, z)));
+        next.push([x + dx, z + dz]);
+      }
+    }
+    front = next;
+  }
+  return (x, z) => step.get(key(Math.floor(x), Math.floor(z)));
+}
+
+test('tape lies after something that can hurt Rock and before something that still can, and a lighter before something that could finish him', () => {
+  for (let i = 0; i < VENUES.length; i++) {
+    const gig = createGig(GFX, i);
+    const v = gig.venue, at = along(gig, graph(v));
+    // What does him real harm: speaker stacks, pyro, live cable, and anyone who hits back harder than a little brother.
+    const harm = [
+      ...v.crushers.map((c) => at(c.x + c.w / 2, c.z + c.d / 2)),
+      ...v.spikes.map((s) => at(s.x + s.w / 2, s.z + s.d / 2)),
+      ...v.foes.filter((f) => FOES[f.kind].power > FOES.brother.power).map((f) => at(f.x, f.z)),
+    ];
+    for (let z = 0; z < v.rows; z++) for (let x = 0; x < v.cols; x++) if (v.cell(x, z)?.kind === 'zap') harm.push(at(x, z));
+    for (const p of gig.actors.pickups) {
+      if (p.kind !== 'tape' && p.kind !== 'lighter') continue;
+      const here = at(p.x, p.z);
+      const where = `${v.name}: the ${p.kind} at ${[Math.floor(p.x), Math.floor(p.z)]}`;
+      if (p.kind === 'tape') assert.ok(harm.some((h) => h < here), `${where} is picked up before anything can have hurt him`);
+      assert.ok(harm.some((h) => h > here), `${where} is picked up after the last thing that can`);
+    }
+  }
+});

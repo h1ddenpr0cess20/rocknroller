@@ -98,8 +98,8 @@ export function festival() {
   g.foe('diver', ...field.tile(14, 0), { path: [field.tile(9, -5), field.tile(19, -5), field.tile(19, 5), field.tile(9, 5)] });
   g.pick(...field.tile(2, 0), 10).pick(...field.tile(8, -6), 10).pick(...field.tile(11, 3), 10).pick(...field.tile(15, -2), 10).pick(...field.tile(19, 8), 10);
   g.road(...field.tile(21, -8), 60);
-  // The lighter a tile short of the pyro along the barrier, not in it.
-  g.tape(...field.tile(9, 8)).lighter(...field.tile(21, 8));
+  // The lighter on the way into the crowd; the tape on the way out of it, a tile short of the pyro along the barrier, not in it.
+  g.lighter(...field.tile(9, 8)).tape(...field.tile(21, 8));
   // The barrier: right across the field, pyro in front of it on the beat, and the gate in the middle of it.
   const bar = 23;
   const fire = (from, n, offset) => {

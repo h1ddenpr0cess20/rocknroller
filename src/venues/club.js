@@ -64,7 +64,6 @@ export function club() {
   for (const a of [2, 5]) rope(leg2, a, 0);
   g.foe('scalper', ...leg2.tile(4, 1), { range: 5 });
   g.pick(...leg2.tile(1, 0), 5).pick(...leg2.tile(3, -1), 5).pick(...leg2.tile(7, 0), 5);
-  g.tape(...leg2.tile(6, 1));
   d.turn('+z', STREET);
   const door = d.hall(3, STREET);
   g.foe('hipster', ...door.tile(1, 0), { range: 3 });
@@ -109,7 +108,9 @@ export function club() {
   g.zap(...pit.rect(0, 11, pit.lo - 2, 7), d.h - 1.6, { fill: true });
   // Stood down among the cables, tall enough to reach up past the crowd's hands.
   g.light('strobe', ...pit.tile(5, -3), { colors: ['#ffffff'], reach: 9, height: 2.8 });
-  d.hall(2);
+  // Off the crowd's hands on the far side, tape for what the dance floor and the pit took.
+  const landing = d.hall(2);
+  g.tape(...landing.tile(1, 1));
   d.turn('+z');
   d.stairs(3, 1.2);
 
