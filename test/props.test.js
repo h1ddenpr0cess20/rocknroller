@@ -71,7 +71,7 @@ test('a prop with a front faces open floor, and one against a wall turns its bac
   }
 });
 
-test('nothing is stood where a speaker stack comes down, pyro goes up or a gate shuts', () => {
+test('nothing is stood or left lying where a speaker stack comes down, pyro goes up or a gate shuts', () => {
   for (let i = 0; i < VENUES.length; i++) {
     const v = loadVenue(i);
     for (const p of v.props.filter((q) => !q.free)) {
@@ -79,6 +79,10 @@ test('nothing is stood where a speaker stack comes down, pyro goes up or a gate 
         const c = v.cell(x, z);
         assert.ok(!c?.crush && !c?.trap && !c?.door, `${v.name}: the ${p.kind} at ${p.x},${p.z} is in the way of a hazard at ${x},${z}`);
       }
+    }
+    for (const p of v.pickups) {
+      const c = v.cell(Math.floor(p.x), Math.floor(p.z));
+      assert.ok(!c?.crush && !c?.trap && !c?.door, `${v.name}: the ${p.kind} at ${p.x},${p.z} lies in a hazard`);
     }
   }
 });

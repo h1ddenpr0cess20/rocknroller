@@ -220,7 +220,8 @@ export function createExit(GFX, venue, { last = false } = {}) {
   const frame = new GFX.MeshStandardMaterial({ name: 'frame', color: new GFX.Color('#1a1a20'), roughness: 0.45, metalness: 0.8 });
   const glow = new GFX.MeshStandardMaterial({ name: 'door-lamp', color: new GFX.Color(colour), emissive: new GFX.Color(colour), emissiveIntensity: 2.2 });
   const sign = doorSign(GFX, width, last ? 'OUT' : (venue.look.exitSign ?? 'GIG'), colour);
-  const face = new GFX.MeshStandardMaterial({ name: 'door-sign', color: new GFX.Color('#ffffff'), map: sign, roughness: 0.6, emissive: new GFX.Color('#ffffff'), emissiveMap: sign, emissiveIntensity: 0.9 });
+  // Lit by itself, as it is painted: the renderer has no emissive maps, and a plain emissive glow turns the whole board white.
+  const face = new GFX.MeshBasicMaterial({ name: 'door-sign', color: new GFX.Color('#ffffff'), map: sign, toneMapped: false });
   const place = (mesh, a, up) => {
     if (side.along === 'x') mesh.position.set(a, up, side.at);
     else mesh.position.set(side.at, up, a);

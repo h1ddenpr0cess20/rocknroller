@@ -1,6 +1,6 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, branch, flat, wallTile } from './helpers.js';
+import { across, backTile, barred, branch, flat, toBack, wallTile } from './helpers.js';
 
 /**
  * Act 3: Sticky's. A dive bar with a floor that has never been mopped:
@@ -33,8 +33,8 @@ export function dive() {
   });
   /** A neon sign on the back wall of a piece, `along` it. */
   const neon = (p, along, text, color, height = 1.5, size = 0.6) => g.light('neon', ...wallTile(p, along), { text, color, height, size });
-  /** A light of the bar's, over a piece. */
-  const glowAt = (p, along, color) => g.light('par', ...wallTile(p, along), { colors: [color], program: 'static', glow: 0.8, reach: 7, aim: [p.back * 0, 0].map(() => 0), height: 1.4 });
+  /** A light of the bar's, on the back wall of a piece, shining down onto the floor a few tiles out from it. */
+  const glowAt = (p, along, color) => g.light('par', ...wallTile(p, along), { colors: [color], program: 'static', glow: 0.8, reach: 7, aim: toBack(p).map((v) => -3 * v), height: 1.4 });
 
   // The alley the bar's door is down.
   g.room(2, 4, 5, 5, 60, { lamps: 3 });
@@ -60,8 +60,9 @@ export function dive() {
   neon(bar, 3, 'COLD', NEONS[1], 1.5, 0.6);
   neon(bar, 7, 'BEER', NEONS[0], 1.6, 0.7);
   neon(bar, 11, 'OPEN', NEONS[3], 1.5, 0.6);
+  // Between the signs, so their beams don't cross them; the second on the jukebox.
   glowAt(bar, 5, NEONS[0]);
-  glowAt(bar, 12, NEONS[1]);
+  glowAt(bar, 14, NEONS[1]);
   // Off the front, behind a sheet of ply, the first record: the beer cooler.
   const cooler = branch(d, bar, 6);
   const coolHall = cooler.hall(9);
@@ -78,9 +79,10 @@ export function dive() {
   g.sticky(...pool.rect(7, 4, 0, 5));
   g.foe('poolball', ...pool.tile(4, -2), { range: 7 }).foe('poolball', ...pool.tile(9, 3), { range: 7 }).foe('drunk', ...pool.tile(12, 0), { range: 6 }).foe('bouncer', ...pool.tile(11, -3), { range: 5 });
   g.pick(...pool.tile(2, 3), 10).pick(...pool.tile(8, -4), 10).pick(...pool.tile(13, 4), 10);
-  neon(pool, 4, 'POOL', NEONS[3], 1.5, 0.7);
-  neon(pool, 10, 'DARTS', NEONS[2], 1.5, 0.6);
-  glowAt(pool, 7, NEONS[3]);
+  // The pool room is open to the bar along the start of its back wall: the signs are where the wall is, POOL over the table.
+  neon(pool, 7, 'POOL', NEONS[3], 1.5, 0.7);
+  neon(pool, 11, 'DARTS', NEONS[2], 1.5, 0.6);
+  glowAt(pool, 9, NEONS[3]);
   // The staff door is locked, and its pass is in the stock room off the pool room, with a bouncer standing on it.
   const stock = branch(d, pool, 6, 'front', 7);
   stock.hall(3);
@@ -104,7 +106,7 @@ export function dive() {
   g.lighter(...arcade.tile(13, 4));
   neon(arcade, 6, 'PINBALL', NEONS[0], 1.5, 0.7);
   neon(arcade, 11, 'HI-SCORE', NEONS[1], 1.5, 0.6);
-  glowAt(arcade, 8, '#ff2d95');
+  glowAt(arcade, 9, '#ff2d95');
   d.hall(5);
   d.turn('+x');
 
@@ -130,9 +132,10 @@ export function dive() {
   for (const [a, b] of [[2, 3], [2, -3]]) g.pillar(...stage.tile(a, b), 0.6, { prop: 'table' });
   g.foe('bouncer', ...stage.tile(5, 0), { range: 6 }).foe('drunk', ...stage.tile(9, 3), { range: 6 }).foe('mosher', ...stage.tile(10, -3), { range: 6 });
   g.pick(...stage.tile(3, 0), 10).pick(...stage.tile(8, 4), 10);
-  g.light('strobe', ...wallTile(stage, 6), { colors: ['#ffffff'], reach: 8, height: 1.3 });
+  // Either side of the way up to the cellar, through the back wall.
+  g.light('strobe', ...wallTile(stage, 8), { colors: ['#ffffff'], reach: 8, height: 1.3 });
   neon(stage, 3, 'LIVE', NEONS[0], 1.5, 0.8);
-  neon(stage, 9, 'MUSIC', NEONS[1], 1.5, 0.7);
+  neon(stage, 10, 'MUSIC', NEONS[1], 1.5, 0.7);
   const lastRecord = branch(d, stage, 6, 'back', 6);
   const lrHall = lastRecord.hall(9);
   flat(g, lrHall, 8, { look: 'wood', breakAt: 6.5 });

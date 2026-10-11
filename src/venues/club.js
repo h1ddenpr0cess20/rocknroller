@@ -107,7 +107,8 @@ export function club() {
   // The mosh pit: no floor to speak of, live cable under it, and the way across is on the crowd's hands.
   const pit = d.ferry(11, { size: 3, period: 8, style: 'crowd' });
   g.zap(...pit.rect(0, 11, pit.lo - 2, 7), d.h - 1.6, { fill: true });
-  g.light('strobe', ...pit.tile(5, -4), { colors: ['#ffffff'], reach: 9, height: 1.2 });
+  // Stood down among the cables, tall enough to reach up past the crowd's hands.
+  g.light('strobe', ...pit.tile(5, -3), { colors: ['#ffffff'], reach: 9, height: 2.8 });
   d.hall(2);
   d.turn('+z');
   d.stairs(3, 1.2);
@@ -126,7 +127,7 @@ export function club() {
   g.lighter(...bar.tile(15, -2));
   sign(bar, 4, 'BAR', NEON[1], 1.6, 0.8);
   sign(bar, 11, 'SHOTS', NEON[0], 1.6, 0.6);
-  g.light('par', ...wallTile(bar, 8), { colors: [NEON[2]], program: 'static', glow: 0.8, reach: 7, aim: [0, 0], height: 1.4 });
+  g.light('par', ...wallTile(bar, 8), { colors: [NEON[2]], program: 'static', glow: 0.8, reach: 7, aim: toBack(bar).map((v) => -3 * v), height: 1.4 });
   // The toilets, off the front of the bar: the VIP pass is in there, and so is a bouncer.
   const loo = branch(d, bar, 9, 'front', 3);
   loo.hall(3);
@@ -138,7 +139,8 @@ export function club() {
   const vip = d.hall(6, { wall: 'curtain', floor: 'carpet' });
   barred(g, vip, 3);
   rope(vip, 1, -1);
-  sign(vip, 2, 'VIP', NEON[0], 1.6, 0.9);
+  // Past the shutter, over the VIP end: before it the wall is the bar's low one.
+  sign(vip, 4, 'VIP', NEON[0], 1.6, 0.8);
 
   // The office: the promoter, his desk and his safe; tables to put between him and you.
   const office = d.room(17, 15, { floor: 'carpet', wall: 'damask' });

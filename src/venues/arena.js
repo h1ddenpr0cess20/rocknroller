@@ -1,6 +1,6 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { backTile, branch, centre, flat, wallTile, wash } from './helpers.js';
+import { backTile, branch, centre, flat, toBack, wallTile, wash } from './helpers.js';
 
 /**
  * Act 9: The Arena. Twenty thousand seats, and Rock has to go round all of
@@ -61,9 +61,10 @@ export function arena() {
   g.pick(...ring.tile(9, 8), 5).pick(...ring.tile(11, 8), 5).pick(...ring.tile(13, 8), 5).pick(...ring.tile(15, 8), 5);
   g.road(...ring.tile(25, -9), 50);
   g.tape(...ring.tile(2, 9));
-  sign(ring, 4, 'HOT DOGS', TEAM[1], 1.6, 0.6);
-  sign(ring, 12, 'MERCH', RIG[0], 1.6, 0.7);
-  sign(ring, 20, 'BEER', RIG[2], 1.6, 0.7);
+  // Over the middle of each stand; the merch stand's just past its end, where the wall behind it stands tall again past the stock-room door.
+  sign(ring, 5, 'HOT DOGS', TEAM[1], 1.6, 0.6);
+  sign(ring, 15.5, 'MERCH', RIG[0], 1.6, 0.7);
+  sign(ring, 21, 'BEER', RIG[2], 1.6, 0.7);
   g.light('spot', ...centre(ring), { colors: [TEAM[2]], radius: 3, height: 3.4 });
   // Behind the merch stand, through the stock-room door: a record in among the shirts.
   const stock = branch(d, ring, 12, 'back', 11);
@@ -104,7 +105,8 @@ export function arena() {
   g.foe('drone', ...floor.tile(6, 0), { path: [floor.tile(3, -6), floor.tile(3, 6)] });
   g.pick(...floor.tile(3, 0), 10).pick(...floor.tile(10, -8), 10).pick(...floor.tile(10, 8), 10).pick(...floor.tile(16, -5), 10).pick(...floor.tile(16, 5), 10);
   g.lighter(...floor.tile(19, -8)).tape(...floor.tile(19, 8));
-  for (const [k, c] of [[4, RIG[0]], [10, RIG[1]], [16, RIG[2]]]) g.light('spot', ...wallTile(floor, k), { colors: [c, RIG[3]], radius: 6, height: 3.2, shift: k });
+  // Between the wash's cans (at 5, 10, 15 and 20), not on top of them, and far enough along that they sweep the floor and not the way in.
+  for (const [k, c] of [[6, RIG[0]], [11, RIG[1]], [16, RIG[2]]]) g.light('spot', ...wallTile(floor, k), { colors: [c, RIG[3]], radius: 6, aim: toBack(floor).map((v) => -7 * v), height: 3.2, shift: k });
   g.light('laser', ...floor.tile(stageAt - 1, -6), { colors: [RIG[3]], aim: [-12, 4], height: 2.8 });
   g.light('laser', ...floor.tile(stageAt - 1, 6), { colors: [RIG[0]], aim: [-12, -4], height: 2.8 });
   g.light('strobe', ...floor.tile(stageAt - 1, 0), { colors: ['#ffffff'], reach: 10, height: 1.8 });

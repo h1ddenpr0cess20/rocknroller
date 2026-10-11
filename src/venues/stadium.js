@@ -1,6 +1,6 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { backTile, branch, centre, flat, wallTile, wash } from './helpers.js';
+import { backTile, branch, centre, flat, toBack, wallTile, wash } from './helpers.js';
 
 /**
  * Act 10: The Stadium. The last night of the tour. Floodlights, a sky
@@ -35,7 +35,7 @@ export function stadium() {
       rig: { colors: SHOW.slice(0, 4), program: 'rainbow', every: 6 },
     },
   });
-  const sign = (p, along, text, color, height = 1.6, size = 0.7) => g.light('neon', ...wallTile(p, along), { text, color, height, size });
+  const sign = (p, along, text, color, height = 1.6, size = 0.7, more = {}) => g.light('neon', ...wallTile(p, along), { text, color, height, size, ...more });
 
   // The gods: the top of the stands, the stadium laid out below.
   g.room(2, 4, 5, 5, 96, { lamps: 3 });
@@ -91,11 +91,13 @@ export function stadium() {
   g.foe('diver', ...pitch.tile(16, 6), { path: [pitch.tile(8, -1), pitch.tile(26, -1), pitch.tile(26, 11), pitch.tile(8, 11)] });
   g.pick(...pitch.tile(2, 0), 10).pick(...pitch.tile(8, 6), 10).pick(...pitch.tile(12, 11), 10).pick(...pitch.tile(20, -1), 10).pick(...pitch.tile(24, 7), 10);
   g.tape(...pitch.tile(10, 11)).tape(...pitch.tile(28, 11)).lighter(...pitch.tile(28, -2));
-  for (const k of [3, 15, 27]) g.light('spot', ...pitch.tile(k, 12), { colors: ['#fff6e0'], radius: 5, height: 3.6 });
+  // Floodlights along the front of the pitch, turned in over it, far enough from the ends not to sweep off them.
+  for (const k of [5, 15, 25]) g.light('spot', ...pitch.tile(k, 12), { colors: ['#fff6e0'], radius: 5, aim: pitch.across.map((v) => -6 * v), height: 3.6 });
   g.light('laser', ...pitch.tile(30, -1), { colors: [SHOW[3]], aim: [-14, 8], height: 3 });
   g.light('laser', ...pitch.tile(30, 11), { colors: [SHOW[0]], aim: [-14, -8], height: 3 });
   wash(g, pitch, SHOW, { cans: 4, program: 'rainbow', every: 6 });
-  sign(pitch, 15, 'LAST NIGHT OF THE TOUR', SHOW[1], 2.6, 0.7);
+  // A banner on posts along the top of the back wall, over the stands, facing the pitch.
+  sign(pitch, 15, 'LAST NIGHT OF THE TOUR', SHOW[1], 2.6, 0.7, { stand: true });
   // The family stand, off the front of the pitch: the pass, with a bouncer who takes it very seriously.
   const family = branch(d, pitch, 8, 'front', 13);
   family.hall(3);
@@ -130,7 +132,8 @@ export function stadium() {
   g.pick(...stage.tile(2, 0), 10).pick(...stage.tile(6, -6), 10).pick(...stage.tile(6, 6), 10).pick(...stage.tile(15, -6), 10).pick(...stage.tile(15, 6), 10);
   g.tape(...stage.tile(4, -5)).tape(...stage.tile(4, 5));
   g.light('strobe', ...wallTile(stage, 10), { colors: ['#ffffff'], reach: 12, height: 2.2 });
-  for (const [k, c] of [[4, SHOW[0]], [10, SHOW[1]], [16, SHOW[2]]]) g.light('spot', ...wallTile(stage, k), { colors: [c, SHOW[4]], radius: 6, height: 3.6, shift: k });
+  // Either side of the strobe, and clear of the wash's cans (at 4, 8, 13 and 17).
+  for (const [k, c] of [[6, SHOW[0]], [11, SHOW[1]], [15, SHOW[2]]]) g.light('spot', ...wallTile(stage, k), { colors: [c, SHOW[4]], radius: 6, aim: toBack(stage).map((v) => -7 * v), height: 3.6, shift: k });
   g.light('laser', ...stage.tile(20, -8), { colors: [SHOW[3]], aim: [-12, 8], height: 3.4 });
   g.light('laser', ...stage.tile(20, 8), { colors: [SHOW[4]], aim: [-12, -8], height: 3.4 });
   wash(g, stage, SHOW, { cans: 4, program: 'rainbow', every: 4 });

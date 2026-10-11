@@ -51,23 +51,30 @@ export function studio() {
   g.speaker(...across(hall, 20, { beats: 4, offset: 0.5 }));
   g.foe('critic', ...hall.tile(4, 0), { range: 4 }).foe('suit', ...hall.tile(15, 0), { range: 4 }).foe('hipster', ...hall.tile(26, 0), { range: 4 });
   g.pick(...hall.tile(2, 0), 5).pick(...hall.tile(11, 0), 5).pick(...hall.tile(13, 0), 5).pick(...hall.tile(22, 0), 5).pick(...hall.tile(24, 0), 5);
-  g.light('par', ...wallTile(hall, 9), { colors: [LIGHTS[0]], program: 'pulse', aim: [0, 0], glow: 0.8, reach: 7, height: 1.4 });
-  g.light('par', ...wallTile(hall, 20), { colors: [LIGHTS[0]], program: 'pulse', aim: [0, 0], glow: 0.8, reach: 7, height: 1.4, shift: 2 });
-  /** A booth off the corridor, `along` it, on `which` side: a short way in and a small foam room. */
-  const booth = (along, which, label, color) => {
+  // Over each of the wedges, shining down the middle of the corridor where it comes down.
+  const down = toBack(hall).map((v) => -2 * v);
+  g.light('par', ...wallTile(hall, 9), { colors: [LIGHTS[0]], program: 'pulse', aim: down, glow: 0.8, reach: 7, height: 1.4 });
+  g.light('par', ...wallTile(hall, 20), { colors: [LIGHTS[0]], program: 'pulse', aim: down, glow: 0.8, reach: 7, height: 1.4, shift: 2 });
+  /**
+   * A booth off the corridor, `along` it, on `which` side: a short way in and
+   * a small foam room. Its sign is on the corridor's back wall, the tall one:
+   * across from the door of a booth on the front, beside it at `signAt` for
+   * one on the back, whose door is through that wall.
+   */
+  const booth = (along, which, label, color, signAt = along) => {
     const b = branch(d, hall, along, which, 2);
     b.hall(2, { floor: 'carpet' });
     const room = b.room(5, 5, { floor: 'carpet' });
-    sign(hall, along, label, color, 1.4, 0.45);
+    sign(hall, signAt, label, color, 1.4, 0.45);
     return room;
   };
-  const a = booth(5, 'back', 'BOOTH A', LIGHTS[2]);
+  const a = booth(5, 'back', 'BOOTH A', LIGHTS[2], 2);
   g.record(...a.tile(3, 0));
   g.pillar(...a.tile(4, 1), 0.9, { prop: 'amp' });
   const bb = booth(13, 'front', 'BOOTH B', LIGHTS[1]);
   g.pass(...bb.tile(3, 0));
   g.foe('security', ...bb.tile(2, 1), { range: 3 });
-  const c = booth(18, 'back', 'BOOTH C', LIGHTS[2]);
+  const c = booth(18, 'back', 'BOOTH C', LIGHTS[2], 22);
   g.road(...c.tile(3, 0), 50);
   g.foe('drum', ...c.tile(2, 0), { path: [c.tile(1, -1), c.tile(3, -1), c.tile(3, 1), c.tile(1, 1)] });
   const dd = booth(25, 'front', 'VOX', LIGHTS[0]);
@@ -76,7 +83,8 @@ export function studio() {
   g.tape(...dd.tile(1, 1));
   const door = d.hall(4, { floor: 'carpet' });
   barred(g, door, 2);
-  sign(door, 1, 'ON AIR', LIGHTS[0], 1.6, 0.8);
+  // Beside the studio door, this side of it.
+  sign(door, 0, 'ON AIR', LIGHTS[0], 1.6, 0.8);
   d.hall(5, { floor: 'carpet' });
   d.turn('+x');
 

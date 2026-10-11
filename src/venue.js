@@ -31,6 +31,9 @@ export const CAP = -1;
 /** Corner order: (x, z), (x + 1, z), (x, z + 1), (x + 1, z + 1). */
 const H00 = 0, H10 = 1, H01 = 2, H11 = 3;
 
+/** The lights of the rig that stand on a post (lightshow.js). */
+const POSTED = new Set(['bulb', 'par', 'spot', 'strobe', 'laser']);
+
 /** Props that are part of the building, not furniture: they don't break. */
 const STURDY = new Set(['barrier', 'stands']);
 
@@ -64,7 +67,7 @@ export class Venue {
     this.crushers = [];
     this.spikes = [];
     this.lifts = [];
-    this.lamps = [];
+    this._lamps = [];
     this.fixtures = [];
     this.props = [];
     this.bumpers = [];
@@ -336,14 +339,32 @@ export class Venue {
 
   /** A lamp on top of the wall at (x, z): a bulb, a stage light, a neon tube, as the palette's `lamp` says. */
   lamp(x, z) {
-    this.lamps.push({ x, z });
+    this._lamps.push({ x, z });
     return this;
+  }
+
+  /**
+   * The lamps, one to a tile, on walls that are still there: a lamp is put
+   * up with its wall, and a doorway cut through the wall later, or floor
+   * laid where the wall was never built, takes it down again. One gives way
+   * to a light of the rig on a post on the same tile.
+   */
+  get lamps() {
+    const seen = new Set(this.fixtures.filter((f) => POSTED.has(f.kind)).map((f) => Math.floor(f.z) * this.cols + Math.floor(f.x)));
+    return this._lamps.filter(({ x, z }) => {
+      const c = this.cell(x, z), key = z * this.cols + x;
+      if (c?.kind !== 'wall' || c.prop || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   /**
    * One of the light rig (lightshow.js), set over tile (x, z): `kind` is
    * 'par', 'spot', 'strobe', 'ball', 'laser', 'neon', 'bulb', 'chandelier' or 'festoon'. `colors` are
-   * what it cycles through; `reach` how far it is baked into the stone.
+   * what it cycles through; `reach` how far it is baked into the stone;
+   * `height` how high it is over the floor under it, or over `floor` where
+   * there is none (a chandelier out over the dark).
    */
   light(kind, x, z, opts = {}) {
     this.fixtures.push({ kind, x: x + 0.5, z: z + 0.5, ...opts });
@@ -528,7 +549,7 @@ export function bakeLight(venue) {
   });
   const rig = venue.fixtures.filter((f) => f.reach !== 0).map((f) => {
     const c = venue.cell(Math.floor(f.x), Math.floor(f.z));
-    const y = (c ? Math.max(...c.h) : 0) + (f.height ?? 1.2);
+    const y = (f.floor ?? (c ? Math.max(...c.h) : 0)) + (f.height ?? 1.2);
     const colour = linearRGB((f.colors?.[0]) ?? '#ffffff');
     const k = f.glow ?? 0.5;
     return { pos: [f.x, y, f.z], reach: f.reach ?? 6, colour: colour.map((v) => v * k) };

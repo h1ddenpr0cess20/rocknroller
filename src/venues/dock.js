@@ -1,6 +1,6 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, branch, centre, flat, frontHeading, wallTile, wash } from './helpers.js';
+import { across, backTile, barred, branch, centre, flat, frontHeading, toBack, wallTile, wash } from './helpers.js';
 
 /**
  * Act 5: The Loading Dock. The back of the house, where the gear comes in
@@ -35,8 +35,8 @@ export function dock() {
       rig: { colors: BEACON.slice(0, 2), program: 'pulse', every: 2 },
     },
   });
-  /** An amber beacon on the wall, turning. */
-  const beacon = (p, along, color = BEACON[0]) => g.light('spot', ...wallTile(p, along), { colors: [color], radius: 2.2, height: 1.3, angle: 0.22 });
+  /** An amber beacon on the back wall of a piece, turning, its beam sweeping the floor `reach` either way of a tile further out than that. */
+  const beacon = (p, along, color = BEACON[0], reach = 2.2) => g.light('spot', ...wallTile(p, along), { colors: [color], radius: reach, aim: toBack(p).map((v) => -(reach + 1) * v), height: 1.3, angle: 0.22 });
   const sign = (p, along, text, color, size = 0.55) => g.light('neon', ...wallTile(p, along), { text, color, height: 1.5, size });
 
   // The back of the trailer, and its tail-lift down to the apron.
@@ -56,8 +56,9 @@ export function dock() {
   g.foe('roadie', ...apron.tile(8, 0), { range: 4 });
   g.pick(...apron.tile(5, apron.back), 5).pick(...apron.tile(12, apron.back), 5).pick(...apron.tile(16, 0), 10);
   g.tape(...apron.tile(18, apron.back));
-  beacon(apron, 8);
-  beacon(apron, 15, BEACON[1]);
+  // The apron is only four tiles out to the edge.
+  beacon(apron, 8, BEACON[0], 1.5);
+  beacon(apron, 15, BEACON[1], 1.5);
   sign(apron, 3, 'BAY 1', BEACON[0]);
   d.turn('+z');
   d.hall(2);
