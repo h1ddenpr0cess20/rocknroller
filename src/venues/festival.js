@@ -98,7 +98,8 @@ export function festival() {
   g.foe('diver', ...field.tile(14, 0), { path: [field.tile(9, -5), field.tile(19, -5), field.tile(19, 5), field.tile(9, 5)] });
   g.pick(...field.tile(2, 0), 10).pick(...field.tile(8, -6), 10).pick(...field.tile(11, 3), 10).pick(...field.tile(15, -2), 10).pick(...field.tile(19, 8), 10);
   g.road(...field.tile(21, -8), 60);
-  g.tape(...field.tile(9, 8)).lighter(...field.tile(22, 8));
+  // The lighter a tile short of the pyro along the barrier, not in it.
+  g.tape(...field.tile(9, 8)).lighter(...field.tile(21, 8));
   // The barrier: right across the field, pyro in front of it on the beat, and the gate in the middle of it.
   const bar = 23;
   const fire = (from, n, offset) => {
@@ -122,7 +123,8 @@ export function festival() {
   festoon(field.tile(2, 9), field.tile(21, 9), [FEST[0], FEST[2]]);
   g.light('laser', ...field.tile(26, -6), { colors: [FEST[3]], aim: [-10, 6], height: 2.6 });
   g.light('laser', ...field.tile(26, 6), { colors: [FEST[0]], aim: [-10, -6], height: 2.6 });
-  g.light('spot', ...field.tile(25, 0), { colors: [FEST[1], FEST[2]], radius: 6, height: 3.2 });
+  // On the stage, sweeping back over the crowd.
+  g.light('spot', ...field.tile(25, 0), { colors: [FEST[1], FEST[2]], radius: 6, aim: field.dir.map((v) => -6 * v), height: 3.2 });
   wash(g, field, [FEST[0], FEST[1], FEST[2]], { cans: 4, program: 'chase', every: 2, glow: 0.6 });
 
   // Backstage: under the stage's scaffolding, the generators, and the last record in a flight case behind a ply wall.

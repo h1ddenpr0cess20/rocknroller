@@ -1,6 +1,6 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { across, branch } from './helpers.js';
+import { across, branch, wallTile } from './helpers.js';
 
 /**
  * Act 2: The Rehearsal Rooms. A converted warehouse cut up into practice
@@ -105,13 +105,15 @@ export function rehearsal() {
   g.pick(...tile(1, 2, 2, 5), 10).pick(...tile(1, 2, 5, 5), 10);
   band(2, 2, '#ff6a2a');
   g.foe('mosher', ...tile(2, 2, 3, 3), { range: 4 });
-  g.light('neon', ...tile(2, 2, 6, 0), { text: 'FIRE EXIT', color: '#3aff7a', height: 1.5, size: 0.4 });
 
   // The fire door, at the bottom of room 9, and the fire escape: down the banked stairs, outside, to the loading bay.
   const [fx, fz] = tile(2, 2, 3, S);
   const out = digger(g, { x: fx, z: fz, h: H, heading: '+z' });
   const fire = out.hall(3, FOAM);
   g.gate(...fire.span(1), { axis: 'z' });
+  // The block's walls are all low: the sign is on the tall side of the way out, up over the shutter.
+  const [sx, sz] = wallTile(fire, 1);
+  g.light('neon', sx + fire.dir[0] / 2, sz + fire.dir[1] / 2, { text: 'FIRE EXIT', color: '#3aff7a', height: 1.75, size: 0.32 });
   const escape = out.chute(9, 3);
   g.pick(...escape.tile(2, 0), 5).pick(...escape.tile(4, 0), 5).pick(...escape.tile(6, 0), 5);
   out.turn('+x', { wall: 'block' });

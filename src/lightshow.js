@@ -6,7 +6,9 @@ import { canvas, cached, copyOf, glowTexture, random, texture } from './textures
  *   bulb     a caged bulb: warm, steady, with a little flicker.
  *   par      a PAR can: a coloured wash and a shaft of haze, changing colour
  *            on the beat (`program`: 'chase', 'pulse', 'rainbow', 'static').
- *   spot     a moving head: a beam and a pool of light that wander the floor.
+ *   spot     a moving head: a beam and a pool of light that wander the floor,
+ *            `radius` either way of the fixture, or of `aim` (an offset in
+ *            tiles) for one on a wall, so it sweeps the room, not the wall.
  *   strobe   flashes white on the beat. Never more than three times a
  *            second, and where `flashing` is off it only glows.
  *   ball     a mirror ball: it turns, and throws a field of sparkles across
@@ -51,7 +53,8 @@ export function colorAt(f, beat) {
   const colors = f.colors.map(rgb);
   if (colors.length === 1 || f.program === 'static') return colors[0];
   if (f.program === 'rainbow') {
-    const h = ((beat / (f.every ?? 8)) + (f.shift ?? 0) * 0.17) % 1;
+    // Round the wheel either way: the beat is a little below nought as the band counts in.
+    const h = ((((beat / (f.every ?? 8)) + (f.shift ?? 0) * 0.17) % 1) + 1) % 1;
     const k = h * 6, i = Math.floor(k), t = k - i;
     const [r, g, b] = [[1, t, 0], [1 - t, 1, 0], [0, 1, t], [0, 1 - t, 1], [t, 0, 1], [1, 0, 1 - t]][i % 6];
     return [r, g, b];
@@ -69,6 +72,13 @@ export function levelAt(f, beat) {
     return 0.35 + 0.65 * Math.pow(1 - u, 2.2);
   }
   return 1;
+}
+
+/** Where a moving head's beam lands at `beat`, as [x, z]: a Lissajous `radius` either way of the fixture, or of `aim` from it. */
+export function spotTarget(f, beat) {
+  const reach = f.radius ?? 3.5, [ax, az] = f.aim ?? [0, 0];
+  const t = beat * 0.5 + (f.shift ?? 0) * 1.9 + f.x * 0.3;
+  return [f.x + ax + Math.sin(t * 0.9) * reach, f.z + az + Math.cos(t * 0.63 + 1) * reach];
 }
 
 /**
@@ -129,13 +139,28 @@ function sparkleTexture(GFX, seed) {
   });
 }
 
-/** A word in neon tube: bright letters with a glow round them, on nothing. */
+const NEON_FONT = '700 84px "Anton", Impact, "Arial Narrow", sans-serif';
+/** A neon word's canvas: this high, and this much wider than the word, for the glow either side of it. */
+const NEON_H = 128, NEON_PAD = 90;
+const neonPixels = (text) => Math.max(160, text.length * 46 + NEON_PAD);
+
+/**
+ * How wide a neon sign `size` high is, at most, for `text`. Its word is
+ * measured as it is drawn, and is never wider than 46 px of the 84 px type
+ * a letter: Anton runs to about 40.
+ */
+export const neonWidth = (text, size) => (size * neonPixels(text)) / NEON_H;
+
+/** A word in neon tube: bright letters with a glow round them, on nothing, on a canvas as wide as the word. */
 function neonTexture(GFX, text, colour) {
   return cached(`neon:${text}:${colour}`, () => {
-    const h = 128, w = Math.max(160, Math.round(text.length * 78 + 60));
-    const [c, ctx] = canvas(w, h);
-    ctx.clearRect(0, 0, w, h);
-    ctx.font = '700 84px "Anton", Impact, "Arial Narrow", sans-serif';
+    const h = NEON_H, most = neonPixels(text);
+    const [c, ctx] = canvas(most, h);
+    ctx.font = NEON_FONT;
+    const w = Math.min(most, Math.max(160, Math.ceil(ctx.measureText(text).width) + NEON_PAD));
+    // Resizing the canvas clears it, and the pen with it.
+    c.width = w;
+    ctx.font = NEON_FONT;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineJoin = 'round';
@@ -145,15 +170,70 @@ function neonTexture(GFX, text, colour) {
       ctx.strokeStyle = colour;
       ctx.lineWidth = 5;
       ctx.globalAlpha = alpha;
-      ctx.strokeText(text, w / 2, h / 2);
+      ctx.strokeText(text, w / 2, h / 2, w - NEON_PAD);
     }
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.8;
-    ctx.strokeText(text, w / 2, h / 2);
+    ctx.strokeText(text, w / 2, h / 2, w - NEON_PAD);
     return { map: texture(GFX, c), bump: null, aspect: w / h };
   });
+}
+
+/**
+ * Where a neon sign `size` high goes, as { at, turn, base, face }: `at` its
+ * middle, `turn` its rotation about y (it faces +z unturned), `base` what its
+ * legs stand on if it has legs, and `face` the wall it is fixed to, if it is
+ * ([x, z] of the wall tile and [dx, dz] out of it).
+ *
+ * On a wall with floor in front of it on the camera's side (+x or +z), it is
+ * fixed flat to that face, its middle `f.height` up from the floor but never
+ * so high it sticks up past the wall's top. Over floor with a wall behind it,
+ * the same, on that wall. Along the wall it stays where it was put, so a sign
+ * can sit between two tiles. With `f.stand`, it stands on legs on top of the
+ * wall instead, along it, facing the camera's side: a banner over the back of
+ * the stands. Anywhere else it stands on legs on the floor.
+ */
+export function mountSign(venue, f, size) {
+  const i = Math.floor(f.x), j = Math.floor(f.z);
+  const c = venue.cell(i, j);
+  const top = (cell) => Math.max(...cell.h);
+  const floorAt = (x, z) => {
+    const n = venue.cell(x, z);
+    return n && n.kind !== 'wall' ? top(n) : null;
+  };
+  const height = f.height ?? 1.2;
+  const fixed = (wallX, wallZ, dx, dz, floor) => {
+    const y = Math.min(floor + height, top(venue.cell(wallX, wallZ)) - size / 2 - 0.08);
+    const at = [dx ? wallX + 0.5 + dx * 0.53 : f.x, Math.max(floor + size / 2 + 0.1, y), dz ? wallZ + 0.5 + dz * 0.53 : f.z];
+    return { at, turn: Math.atan2(dx, dz), face: { x: wallX, z: wallZ, dx, dz } };
+  };
+  if (c?.kind === 'wall' && f.stand) {
+    // Along whichever way the wall runs.
+    const wall = (x, z) => venue.cell(x, z)?.kind === 'wall';
+    const turn = wall(i - 1, j) || wall(i + 1, j) ? 0 : Math.PI / 2;
+    // High enough on its legs to clear a lamp on the wall under it.
+    return { at: [f.x, top(c) + size / 2 + 0.75, f.z], turn, base: top(c) };
+  }
+  if (c?.kind === 'wall') {
+    for (const [dx, dz] of [[0, 1], [1, 0]]) {
+      const floor = floorAt(i + dx, j + dz);
+      if (floor !== null && top(c) - floor > 1) return fixed(i, j, dx, dz, floor);
+    }
+    // A low wall, or one with the room behind it: the sign stands on top of it.
+    return { at: [f.x, top(c) + size / 2 + 0.05, f.z], turn: Math.PI / 4 };
+  }
+  if (c) {
+    const floor = top(c);
+    for (const [dx, dz] of [[0, -1], [-1, 0]]) {
+      const w = venue.cell(i + dx, j + dz);
+      if (w?.kind === 'wall' && top(w) - floor > 1) return fixed(i + dx, j + dz, -dx, -dz, floor);
+    }
+    return { at: [f.x, floor + height, f.z], turn: Math.PI / 4, base: floor };
+  }
+  const floor = venue.heightAt(f.x, f.z) ?? venue.lowest;
+  return { at: [f.x, floor + height, f.z], turn: Math.PI / 4 };
 }
 
 // ———————————————————————————————————————————————————————————— the rig
@@ -222,7 +302,9 @@ export function createLightshow(GFX, venue) {
 
   // ——— a chandelier: a brass hoop in two tiers of arms, candle bulbs on them, crystal drops hanging below.
   function chandelier(f) {
-    const y = heightOf(f.x, f.z);
+    // Over the dark, it hangs from as high as the floor it is beside (`floor`), and lights no floor.
+    const over = venue.cell(Math.floor(f.x), Math.floor(f.z)) !== null;
+    const y = f.floor ?? heightOf(f.x, f.z);
     const high = f.height ?? 3.2;
     const centre = [f.x, y + high, f.z];
     const colour = rgb(f.color ?? '#ffd59a');
@@ -283,6 +365,7 @@ export function createLightshow(GFX, venue) {
     const p = pool(colour);
     p.mesh.position.set(f.x, y + 0.04, f.z);
     p.mesh.scale.setScalar(f.radius ?? 3.2);
+    p.mesh.visible = over;
     group.add(p.mesh);
     sources.push({ pos: centre, colour, reach: f.reach ?? 8, strength: 1 });
     const seed = f.x * 1.3 + f.z * 0.7;
@@ -441,7 +524,7 @@ export function createLightshow(GFX, venue) {
     };
   }
 
-  // ——— a moving head: the same, but the beam wanders.
+  // ——— a moving head: the same, but the beam wanders, round `aim` from it.
   function spot(f) {
     const y = heightOf(f.x, f.z);
     const high = f.height ?? 2.1;
@@ -462,15 +545,11 @@ export function createLightshow(GFX, venue) {
     group.add(b.mesh);
     const p = pool([1, 1, 1]);
     group.add(p.mesh);
-    const reach = f.radius ?? 3.5;
-    const seed = (f.shift ?? 0) * 1.9 + f.x * 0.3;
     const target = [0, 0, 0];
     sources.push({ pos: lens, colour: rgb(f.colors?.[0] ?? defaults.colors[0]), reach: f.reach ?? 6, strength: 0.6 });
     return {
       update(time, beat, ctx) {
-        // A Lissajous round the fixture.
-        const t = beat * 0.5 + seed;
-        const tx = f.x + Math.sin(t * 0.9) * reach, tz = f.z + Math.cos(t * 0.63 + 1) * reach;
+        const [tx, tz] = spotTarget(f, beat);
         const ty = heightOf(tx, tz);
         target[0] = tx; target[1] = ty + 0.03; target[2] = tz;
         const c = colorAt(f, beat), l = levelAt(f, beat);
@@ -629,52 +708,15 @@ export function createLightshow(GFX, venue) {
     };
   }
 
-  /**
-   * Where a sign hangs. On a wall with floor in front of it on the camera's
-   * side (+x or +z), it is fixed flat to that face, its middle `height` up
-   * from the floor but never above the wall's top. Over floor with a wall
-   * behind it, the same, on that wall. Otherwise it stands on whatever is
-   * under it — a wall top, the floor — facing the camera's corner.
-   */
-  function mount(f, height, size) {
-    const i = Math.floor(f.x), j = Math.floor(f.z);
-    const c = venue.cell(i, j);
-    const floorAt = (x, z) => {
-      const n = venue.cell(x, z);
-      return n && n.kind !== 'wall' ? Math.max(...n.h) : null;
-    };
-    const face = (wallX, wallZ, dx, dz, floor) => {
-      const top = Math.max(...venue.cell(wallX, wallZ).h);
-      const y = Math.min(floor + height, top - size / 2 - 0.08);
-      return { at: [wallX + 0.5 + dx * 0.53, Math.max(floor + size / 2 + 0.1, y), wallZ + 0.5 + dz * 0.53], turn: Math.atan2(dx, dz) };
-    };
-    if (c?.kind === 'wall') {
-      for (const [dx, dz] of [[0, 1], [1, 0]]) {
-        const floor = floorAt(i + dx, j + dz);
-        if (floor !== null && Math.max(...c.h) - floor > 1) return face(i, j, dx, dz, floor);
-      }
-      // A low wall, or one with the room behind it: the sign stands on top of it.
-      return { at: [f.x, Math.max(...c.h) + size / 2 + 0.05, f.z], turn: Math.PI / 4 };
-    }
-    if (c) {
-      const floor = Math.max(...c.h);
-      for (const [dx, dz] of [[0, -1], [-1, 0]]) {
-        const w = venue.cell(i + dx, j + dz);
-        if (w?.kind === 'wall' && Math.max(...w.h) - floor > 1) return face(i + dx, j + dz, -dx, -dz, floor);
-      }
-      return { at: [f.x, floor + height, f.z], turn: Math.PI / 4, standing: true };
-    }
-    return { at: [f.x, heightOf(f.x, f.z) + height, f.z], turn: Math.PI / 4 };
-  }
-
   // ——— a neon sign: a word, in tube, on a wall.
   function neon(f) {
     const colour = f.color ?? f.colors?.[0] ?? '#ff3a8a';
-    const tex = neonTexture(GFX, f.text ?? 'LIVE', colour);
+    const text = f.text ?? 'LIVE';
+    const tex = neonTexture(GFX, text, colour);
     const c = rgb(colour);
     const height = f.size ?? 0.55;
-    const width = height * (tex.aspect ?? 3);
-    const { at, turn, standing } = mount(f, f.height ?? 1.2, height);
+    const width = tex.aspect ? height * tex.aspect : neonWidth(text, height);
+    const { at, turn, base } = mountSign(venue, f, height);
     const material = new GFX.MeshBasicMaterial({ map: tex.map, color: new GFX.Color(1, 1, 1), side: GFX.DoubleSide, ...additive });
     const sign = new GFX.Mesh(new GFX.PlaneGeometry(width, height), material);
     sign.position.set(...at);
@@ -687,11 +729,11 @@ export function createLightshow(GFX, venue) {
     board.position.set(at[0] - fwd[0] * 0.03, at[1], at[2] - fwd[1] * 0.03);
     board.rotation.y = turn;
     group.add(board);
-    if (standing) {
-      // Free-standing: on two legs.
+    if (base !== undefined) {
+      // Free-standing: on two legs, from what it stands on up behind the board.
       for (const m of [-1, 1]) {
-        const leg = new GFX.Mesh(new GFX.CylinderGeometry(0.025, 0.03, at[1] - heightOf(f.x, f.z), 6), iron);
-        leg.position.set(at[0] + right[0] * m * width * 0.4, (at[1] + heightOf(f.x, f.z)) / 2 - height / 4, at[2] + right[1] * m * width * 0.4);
+        const leg = new GFX.Mesh(new GFX.CylinderGeometry(0.025, 0.03, at[1] - base, 6), iron);
+        leg.position.set(at[0] + right[0] * m * width * 0.4 - fwd[0] * 0.07, (at[1] + base) / 2, at[2] + right[1] * m * width * 0.4 - fwd[1] * 0.07);
         group.add(leg);
       }
     }

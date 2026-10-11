@@ -65,7 +65,8 @@ export function opera() {
   g.foe('usher', ...circle.tile(6, 0), { range: 4, path: [circle.tile(2, 0), circle.tile(12, 0)] });
   g.foe('critic', ...circle.tile(18, 0), { range: 4 });
   g.pick(...circle.tile(4, 0), 5).pick(...circle.tile(10, 0), 5).pick(...circle.tile(13, 0), 5).pick(...circle.tile(20, 0), 10);
-  g.light('chandelier', ...circle.tile(11, -circle.back * 4), { height: 2.6, radius: 3, reach: 7 });
+  // Out over the auditorium in front of the balcony, level with it.
+  g.light('chandelier', ...circle.tile(11, -circle.back * 4), { height: 2.6, floor: circle.h, radius: 3, reach: 7 });
   // Box 5, at the back of the circle, behind its curtain: the first record.
   const box = branch(d, circle, 7, 'back', 2);
   const boxDoor = box.hall(6, { wall: 'damask' });
@@ -117,7 +118,7 @@ export function opera() {
   g.tape(...stage.tile(2, -5)).tape(...stage.tile(2, 5));
   g.light('chandelier', ...centre(stage), { height: 3.6, radius: 4.5 });
   wash(g, stage, ['#ffd890', '#ff8a5a'], { cans: 3, program: 'static' });
-  g.light('spot', ...wallTile(stage, 9), { colors: ['#fff4e0'], radius: 3, height: 2.4 });
+  g.light('spot', ...wallTile(stage, 9), { colors: ['#fff4e0'], radius: 3, aim: toBack(stage).map((v) => -4 * v), height: 2.4 });
   // Under the stage, through a trap the prompter left open: the second record.
   const trap = branch(d, stage, 5, 'front', 7);
   const prompt = trap.hall(8, { wall: 'block', floor: 'planks' });
