@@ -10,6 +10,8 @@ export default person({
   name: 'merch',
   scale: 1.42,
   b: 1.18,
+  shape: { legs: 0.94, girth: 1.14, head: 1.04 },
+  belly: 1.5,
   skin: '#dca480',
   look: { torso: '#f2f0ec', sleeve: '#f2f0ec', cuff: '#dca480', legs: cloth('#3a4a6a'), boot: '#f4f4f4' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'skin', legs: 'denim', boot: 'rubber' },

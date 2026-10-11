@@ -13,6 +13,7 @@ export default person({
   name: 'hippie',
   scale: 1.42,
   b: 1.15,
+  shape: { legs: 1.04, girth: 0.92, head: 1.02 },
   skin: '#d9a07a',
   look: { torso: dye, sleeve: dye, cuff: '#d9a07a', legs: cloth('#5a7a4a'), boot: '#d9a07a' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'skin', legs: 'cloth', boot: 'skin' },

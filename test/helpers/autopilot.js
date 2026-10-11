@@ -25,7 +25,6 @@ const NEIGHBOURS = [
   [1, 0, (c) => [c.h[1], c.h[3]], (n) => [n.h[0], n.h[2]]],
 ];
 
-const walkable = (c) => c && c.kind !== 'wall' && c.kind !== 'zap';
 
 /**
  * The ways from tile to tile: a step to a neighbour that isn't higher at the
@@ -35,16 +34,19 @@ const walkable = (c) => c && c.kind !== 'wall' && c.kind !== 'zap';
  */
 export function graph(venue) {
   const key = (x, z) => z * venue.cols + x;
+  // Round bumpers, not into them: the tile one stands on is no way through.
+  const posts = new Set(venue.bumpers.map((b) => key(Math.floor(b.x), Math.floor(b.z))));
+  const walkable = (c, x, z) => c && c.kind !== 'wall' && c.kind !== 'zap' && !posts.has(key(x, z));
   const steps = new Map();
   const rides = new Map();
   for (let z = 0; z < venue.rows; z++) {
     for (let x = 0; x < venue.cols; x++) {
       const c = venue.cell(x, z);
-      if (!walkable(c)) continue;
+      if (!walkable(c, x, z)) continue;
       const out = [];
       for (const [dx, dz, mine, theirs] of NEIGHBOURS) {
         const n = venue.cell(x + dx, z + dz);
-        if (!walkable(n)) continue;
+        if (!walkable(n, x + dx, z + dz)) continue;
         const [a0, a1] = mine(c), [b0, b1] = theirs(n);
         const up = Math.max(b0 - a0, b1 - a1);
         const down = Math.max(a0 - b0, a1 - b1);

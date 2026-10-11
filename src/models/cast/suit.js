@@ -12,6 +12,8 @@ export default person({
   name: 'suit',
   scale: 1.45,
   b: 1.08,
+  shape: { legs: 1.06, girth: 1.04 },
+  belly: 0.5,
   skin: '#d8a888',
   look: { torso: navy, sleeve: navy, cuff: navy, legs: navy, boot: '#101014' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'cloth', legs: 'cloth', boot: 'leather' },

@@ -12,6 +12,7 @@ export default person({
   name: 'bouncer',
   scale: 1.7,
   b: 1.55,
+  shape: { torso: 1.14, girth: 1.32, hips: 1.0, head: 0.84, legs: 1.04 },
   skin: '#b8805e',
   look: { torso: suit, sleeve: suit, cuff: suit, legs: suit, boot: '#0a0a0c' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'cloth', legs: 'cloth', boot: 'leather' },

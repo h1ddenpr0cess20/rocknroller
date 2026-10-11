@@ -12,6 +12,7 @@ export default person({
   name: 'hipster',
   scale: 1.4,
   b: 0.95,
+  shape: { legs: 1.15, girth: 0.84, torso: 1.04 },
   skin: '#e8b898',
   look: { torso: cardigan, sleeve: cardigan, cuff: cardigan, legs: cloth('#3a3f50'), boot: '#b8844a' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'cloth', legs: 'denim', boot: 'leather' },

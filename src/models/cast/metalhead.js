@@ -12,6 +12,7 @@ export default person({
   name: 'metalhead',
   scale: 1.45,
   b: 1.18,
+  shape: { legs: 1.06, torso: 1.06, girth: 0.94 },
   skin: '#e0a888',
   look: { torso: black, sleeve: black, cuff: '#e0a888', legs: cloth('#1a1a20'), boot: black },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'skin', legs: 'denim', boot: 'leather' },

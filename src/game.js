@@ -303,6 +303,12 @@ export function createGame({ stage, hud, input, audio, storage }) {
       audio.slam(near);
       effects.dust(e.x, e.y, e.z);
       stage.shake = Math.max(stage.shake, 0.05 * near);
+    } else if (e.type === 'stomp') {
+      audio.slam(near);
+      effects.dust(e.x, e.y, e.z);
+      effects.dust(e.x + 1, e.y, e.z);
+      effects.dust(e.x - 1, e.y, e.z);
+      stage.shake = Math.max(stage.shake, 0.25 * near);
     } else audio.burst(near);
   }
 

@@ -23,7 +23,8 @@ export const MATERIALS = {
   metal: { roughness: 0.28, metalness: 1 },
   plastic: { roughness: 0.34, clearcoat: 0.6, clearcoatRoughness: 0.2 },
   rubber: { roughness: 0.8 },
-  glow: { roughness: 0.4, emissive: '#ffffff', emissiveIntensity: 1.6 },
+  glow: { roughness: 0.4, emissive: '#ff9a4a', emissiveIntensity: 1.4 },
+  screen: { roughness: 0.4, emissive: '#ffffff', emissiveIntensity: 1.4 },
   glass: { roughness: 0.04, clearcoat: 1, metalness: 0.2 },
   paper: { roughness: 0.9 },
 };

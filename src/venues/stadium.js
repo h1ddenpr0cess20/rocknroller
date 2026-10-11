@@ -101,7 +101,7 @@ export function stadium() {
   run(14, 5);
   g.foe('mosher', ...pit.tile(3, -3), { range: 6 }).foe('mosher', ...pit.tile(8, 0), { range: 6 }).foe('hipster', ...pit.tile(12, 3), { range: 6 });
   g.foe('diver', ...pit.tile(10, 0), { path: [pit.tile(5, -5), pit.tile(16, -5), pit.tile(16, 5), pit.tile(5, 5)] });
-  g.foe('ball', ...pit.tile(12, 0), { path: [pit.tile(8, 0), pit.tile(17, 0)] });
+  g.foe('drone', ...pit.tile(12, 0), { path: [pit.tile(8, 0), pit.tile(17, 0)] });
   g.pick(...pit.tile(2, 3), 10).pick(...pit.tile(6, 5), 10).pick(...pit.tile(10, -5), 10).pick(...pit.tile(15, 5), 10).pick(...pit.tile(18, 0), 10);
   g.tape(...pit.tile(18, -5)).tape(...pit.tile(1, 0)).tape(...pit.tile(19, 0));
   g.light('ball', ...centre(pit), { colors: SHOW, radius: 9, height: 3.4 });

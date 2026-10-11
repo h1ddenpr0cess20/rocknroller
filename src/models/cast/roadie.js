@@ -13,6 +13,8 @@ export default person({
   name: 'roadie',
   scale: 1.45,
   b: 1.2,
+  shape: { legs: 0.92, girth: 1.18 },
+  belly: 1.1,
   skin: '#c88c6a',
   look: { torso: black, sleeve: black, cuff: '#c88c6a', legs: cargo, boot: black },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'skin', legs: 'cloth', boot: 'leather' },

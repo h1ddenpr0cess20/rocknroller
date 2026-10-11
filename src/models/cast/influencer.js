@@ -11,6 +11,7 @@ export default person({
   name: 'influencer',
   scale: 1.4,
   b: 0.98,
+  shape: { legs: 1.14, girth: 0.86, head: 1.06 },
   skin: '#e8b090',
   look: { torso: cloth('#ff5ab0', '#c0307a'), sleeve: cloth('#ff5ab0', '#c0307a'), cuff: cloth('#ff5ab0', '#c0307a'), legs: '#f2f0ec', boot: '#ffffff' },
   mats: { torso: 'plastic', sleeve: 'plastic', cuff: 'plastic', legs: 'cloth', boot: 'rubber' },
@@ -37,7 +38,7 @@ export default person({
     });
     s.part('fine', () => {
       // The ring light round it: a torus that glows white.
-      s.torus([h[0] + 0.02, h[1] + 0.3, h[2] + 0.075], 0.075, 0.011, { color: '#ffffff', mat: 'glow', bone: 'handR', k: 0.002, rot: [Math.PI / 2, 0, 0] });
+      s.torus([h[0] + 0.02, h[1] + 0.3, h[2] + 0.075], 0.075, 0.011, { color: '#ffffff', mat: 'screen', bone: 'handR', k: 0.002, rot: [Math.PI / 2, 0, 0] });
     });
   },
 });

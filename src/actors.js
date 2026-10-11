@@ -25,6 +25,10 @@ const STILL = new Set(['pick', 'case']);
 /** How long a foe that has taken a knock can't be hit again, and how hard a knock throws it. */
 const GUARD = Object.freeze({ foe: 0.9, boss: 1.5 });
 
+/** The Promoter's lunge and the Headliner's stomp: how often, from how far, how hard. */
+const LUNGE = Object.freeze({ every: 4.6, reach: 7, crouch: 0.55, rush: 0.55, winded: 1.5 });
+const STOMP = Object.freeze({ every: 4.2, reach: 4.5, windup: 0.6, throw: 9 });
+
 const smooth = (t) => t * t * (3 - 2 * t);
 const cycleOf = (time, period, phase) => ((((time + phase) / period) % 1) + 1) % 1;
 
@@ -247,6 +251,48 @@ export function createActors(GFX, venue, world, { killY }) {
   place(0);
   events.length = 0;
 
+  /**
+   * What a boss's tactic does to how it moves this step: a multiple of its
+   * push and its top speed (0 holds it still). A stomp lands here too: Rock
+   * is thrown back from it, and the game hears of it.
+   */
+  function tactic(m, b, rock, toRock, time) {
+    const how = m.stats.tactic;
+    if (!how || !m.chasing) return { push: 1, top: 1 };
+    if (how === 'lunge') {
+      if (time - (m.lungeAt ?? -99) > LUNGE.every && toRock < LUNGE.reach) m.lungeAt = time;
+      const t = time - m.lungeAt;
+      // A crouch, the rush, and then he has to get his breath back: that is the time to hit him.
+      if (t < LUNGE.crouch) return { push: 1, top: 0 };
+      if (t < LUNGE.crouch + LUNGE.rush) return { push: 4, top: 2.8 };
+      if (t < LUNGE.crouch + LUNGE.rush + LUNGE.winded) return { push: 1, top: 0.25 };
+      return { push: 1, top: 1 };
+    }
+    if (how === 'tempo') {
+      const beat = (time * venue.tempo) / 60;
+      const u = beat - Math.floor(beat);
+      return { push: 3, top: 0.15 + 2.6 * Math.pow(1 - u, 3) };
+    }
+    if (how === 'stomp') {
+      if (m.stompAt === undefined && toRock < STOMP.reach && time - (m.stompedAt ?? -99) > STOMP.every) m.stompAt = time;
+      if (m.stompAt === undefined) return { push: 1, top: 1 };
+      if (time - m.stompAt < STOMP.windup) return { push: 1, top: 0 };
+      // Down it comes: everything near enough is thrown back, the nearer the harder.
+      m.stompAt = undefined;
+      m.stompedAt = time;
+      events.push({ type: 'stomp', x: b.x, y: b.y - m.stats.radius, z: b.z });
+      if (rock && toRock < STOMP.reach && Math.abs(rock.y - b.y) < 1.6) {
+        const k = 1 - toRock / STOMP.reach;
+        const dx = (rock.x - b.x) / (toRock || 1), dz = (rock.z - b.z) / (toRock || 1);
+        rock.vx += dx * STOMP.throw * k;
+        rock.vz += dz * STOMP.throw * k;
+        rock.vy += 2.5 * k;
+      }
+      return { push: 1, top: 0 };
+    }
+    return { push: 1, top: 1 };
+  }
+
   /** Is the ground ahead of a walker, going (dx, dz), somewhere it would go? */
   const footing = (b, dx, dz) => {
     const here = venue.heightAt(b.x, b.z);
@@ -341,7 +387,9 @@ export function createActors(GFX, venue, world, { killY }) {
               az = v > 1e-3 ? -b.vz / v : 0;
             }
           }
-          stepBall(b, world, ax, az, dt, { push: PUSH * 0.6, topSpeed: kind.speed });
+          const { push, top } = tactic(m, b, rock, toRock, time);
+          if (top === 0) { ax = 0; az = 0; }
+          stepBall(b, world, ax, az, dt, { push: PUSH * 0.6 * push, topSpeed: kind.speed * top });
           if (Math.hypot(b.vx, b.vz) > 0.15) m.heading = Math.atan2(b.vx, b.vz);
           m.moving = Math.hypot(b.vx, b.vz) > 0.3;
           m.x = b.x; m.y = b.y - kind.radius; m.z = b.z;

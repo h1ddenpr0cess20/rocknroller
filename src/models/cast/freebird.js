@@ -13,6 +13,8 @@ export default person({
   name: 'freebird',
   scale: 1.42,
   b: 1.1,
+  shape: { legs: 0.96, girth: 1.1 },
+  belly: 1.0,
   skin: '#e0a888',
   look: { torso: black, sleeve: black, cuff: '#e0a888', legs: cloth('#3a4a6a'), boot: black },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'skin', legs: 'denim', boot: 'leather' },

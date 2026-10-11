@@ -13,6 +13,7 @@ export default person({
   name: 'brother',
   scale: 1.0,
   b: 0.92,
+  shape: { head: 1.12, legs: 0.86, torso: 0.94 },
   skin: '#f0bd98',
   look: { torso: stripes, sleeve: stripes, cuff: '#f0bd98', legs: cloth('#2e5fa8'), boot: '#f0bd98' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'skin', legs: 'denim', boot: 'skin' },

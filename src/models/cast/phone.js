@@ -13,6 +13,7 @@ export default person({
   name: 'phone',
   scale: 1.4,
   b: 1.02,
+  shape: { legs: 1.1, girth: 0.88, torso: 1.04 },
   skin: '#d9a07c',
   look: { torso: hood, sleeve: hood, cuff: hood, legs: cloth('#3a5a8a'), boot: '#e8e8ee' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'cloth', legs: 'denim', boot: 'rubber' },
@@ -45,7 +46,7 @@ export default person({
       s.box([hand[0], hand[1] + 0.03, hand[2] + 0.02], [0.034, 0.062, 0.006], 0.006, { color: '#101014', mat: 'plastic', bone: 'handR', k: 0.003, rot: [-0.4, 0, 0] });
     });
     s.part('fine', () => {
-      s.box([hand[0], hand[1] + 0.036, hand[2] + 0.026], [0.03, 0.056, 0.003], 0.003, { color: '#cfeaff', mat: 'glow', bone: 'handR', k: 0.001, rot: [-0.4, 0, 0] });
+      s.box([hand[0], hand[1] + 0.036, hand[2] + 0.026], [0.03, 0.056, 0.003], 0.003, { color: '#cfeaff', mat: 'screen', bone: 'handR', k: 0.001, rot: [-0.4, 0, 0] });
     });
     // The drink in the left hand: a red cup.
     const l = J.handL;

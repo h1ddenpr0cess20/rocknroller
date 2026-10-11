@@ -10,6 +10,7 @@ export default person({
   name: 'usher',
   scale: 1.4,
   b: 1.0,
+  shape: { legs: 1.02, girth: 0.92, head: 0.96 },
   skin: '#e8b898',
   look: { torso: '#f2f0ec', sleeve: '#f2f0ec', cuff: '#e8b898', legs: cloth('#1a1a20'), boot: '#0a0a0c' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'skin', legs: 'cloth', boot: 'leather' },
@@ -40,7 +41,7 @@ export default person({
     });
     s.part('fine', () => {
       const h = J.handR;
-      s.cylinder([h[0], h[1], h[2] + 0.16], 0.026, 0.005, { color: '#fff6c8', mat: 'glow', bone: 'handR', k: 0.001, rot: [Math.PI / 2, 0, 0] });
+      s.cylinder([h[0], h[1], h[2] + 0.16], 0.026, 0.005, { color: '#fff6c8', mat: 'screen', bone: 'handR', k: 0.001, rot: [Math.PI / 2, 0, 0] });
     });
   },
 });
