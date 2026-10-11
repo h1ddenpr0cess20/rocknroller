@@ -242,6 +242,7 @@ export class Venue {
     const cell = this.cell(x, z);
     if (prop && cell) {
       cell.prop = prop;
+      cell.base = h;
       this.props.push({ kind: prop, x, z, w: 1, d: 1, rot, base: h, rise, ...more });
     }
     return this;
@@ -261,7 +262,7 @@ export class Venue {
         this.cells[j * this.cols + i] = null;
         this.wall(i, j, 1, 1, h + rise, { tex: wall });
         const cell = this.cell(i, j);
-        if (prop && cell) cell.prop = prop;
+        if (prop && cell) Object.assign(cell, { prop, base: h });
       }
     }
     if (prop) this.props.push({ kind: prop, x, z, w, d, rot, base: h, rise, ...more });
@@ -682,6 +683,13 @@ export function buildVenue(venue) {
       if (!c.prop) {
         face(out, A, C, B, normalOf(A, C, B), [shadeOf(A), shadeOf(C), shadeOf(B)], [uv([0, 1]), uv([0, 0]), uv([1, 1])]);
         face(out, B, C, D, normalOf(B, C, D), [shadeOf(B), shadeOf(C), shadeOf(D)], [uv([1, 1]), uv([0, 0]), uv([1, 0])]);
+      } else if (c.base !== undefined) {
+        // Under a prop, the floor it stands on, for wherever the prop doesn't cover its tile.
+        const y = c.base + 0.002, floorCol = colourAt(0).map((v) => v * tint);
+        const a = [x, y, z], b = [x + 1, y, z], cc = [x, y, z + 1], dd = [x + 1, y, z + 1];
+        const under = layer(floors, 'floor'), up = [0, 1, 0];
+        face(under, a, cc, b, up, [lit(floorCol, a), lit(floorCol, cc), lit(floorCol, b)], [uv([0, 1]), uv([0, 0]), uv([1, 1])]);
+        face(under, b, cc, dd, up, [lit(floorCol, b), lit(floorCol, cc), lit(floorCol, dd)], [uv([1, 1]), uv([0, 0]), uv([1, 0])]);
       }
       world.addTriangle(...A, ...C, ...B);
       world.addTriangle(...B, ...C, ...D);

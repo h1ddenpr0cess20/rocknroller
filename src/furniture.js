@@ -259,4 +259,51 @@ function racking(GFX, { w = 1, d = 1, rise = 1.3 }) {
   return { group };
 }
 
-export const FURNITURE = { console: desk, rack, seat, piano, bale, loo, tent, racking };
+/** A camping tent: a dome of nylon in a colour of its own, a darker door, guy lines out to pegs. */
+function dome(GFX, { w = 2, d = 2, rise = 0.9, seed = 0 }) {
+  const group = new GFX.Group();
+  const colours = ['#e0384a', '#2a8ad8', '#f0b02a', '#3aa858', '#8a4ad0', '#f06a2a'];
+  const colour = colours[Math.abs(Math.round(seed * 7)) % colours.length];
+  const nylon = std(GFX, colour, { roughness: 0.55 });
+  const shell = shadowed(new GFX.Mesh(new GFX.SphereGeometry(1, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), nylon));
+  shell.scale.set(w * 0.46, rise * 1.1, d * 0.46);
+  const door = new GFX.Mesh(new GFX.SphereGeometry(1, 10, 6, -0.45, 0.9, Math.PI * 0.18, Math.PI * 0.32), std(GFX, '#1a1a20', { roughness: 0.8 }));
+  door.scale.set(w * 0.465, rise * 1.105, d * 0.465);
+  const fly = new GFX.Mesh(new GFX.TorusGeometry(1, 0.02, 4, 24), std(GFX, '#e8e8ec', { roughness: 0.5 }));
+  fly.rotation.x = Math.PI / 2;
+  fly.scale.set(w * 0.47, d * 0.47, 1);
+  fly.position.y = 0.05;
+  group.add(shell, door, fly);
+  return { group };
+}
+
+/** A crowd barrier along the block: galvanised steel sections, a step plate on the crowd's side, a yellow top rail. */
+function barrier(GFX, { w = 1, d = 1, rise = 1.0 }) {
+  const group = new GFX.Group();
+  const steel = std(GFX, '#9aa0a8', { metalness: 0.8, roughness: 0.35 });
+  const rail = std(GFX, '#f0c020', { roughness: 0.5 });
+  const long = w >= d, L = long ? w : d;
+  const along = (m, a) => (long ? m.position.set(a, m.position.y, 0) : m.position.set(0, m.position.y, a));
+  for (let i = 0; i < L; i++) {
+    const a = i - L / 2 + 0.5;
+    const panel = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? 0.96 : 0.06, rise * 0.8, long ? 0.06 : 0.96), steel));
+    panel.position.y = rise * 0.5;
+    along(panel, a);
+    const foot = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? 0.96 : 0.7, 0.05, long ? 0.7 : 0.96), steel));
+    foot.position.y = 0.025;
+    along(foot, a);
+    group.add(panel, foot);
+    for (const e of [-0.46, 0.46]) {
+      const post = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.08, rise, 0.08), steel));
+      post.position.y = rise / 2;
+      along(post, a + e);
+      group.add(post);
+    }
+  }
+  const top = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? L : 0.1, 0.08, long ? 0.1 : L), rail));
+  top.position.y = rise;
+  group.add(top);
+  return { group };
+}
+
+export const FURNITURE = { console: desk, rack, seat, piano, bale, loo, tent, racking, dome, barrier };
