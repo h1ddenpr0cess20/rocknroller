@@ -14,6 +14,13 @@ import { createBand, THEMES } from './music.js';
 
 const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12);
 
+/**
+ * A number the game hands the audio, made safe for an AudioParam: Web Audio
+ * throws on anything not finite, and an exponential ramp can't reach zero.
+ */
+const finite = (v, fallback = 0) => (Number.isFinite(v) ? v : fallback);
+const audible = (v) => Math.max(0.0001, finite(v, 0.0001));
+
 export function createAudio() {
   let ctx = null, master = null, sfx = null, music = null;
   let rollSrc = null, revNode = null, crowd = null;
@@ -92,6 +99,8 @@ export function createAudio() {
 
   function burst({ at = 0, length = 0.1, type = 'lowpass', freq = 1000, q = 0.7, gain = 0.5, sweep = null }) {
     if (!ctx) return;
+    [at, length, freq, gain] = [Math.max(0, finite(at)), Math.max(0.01, finite(length, 0.1)), audible(freq), audible(gain)];
+    if (sweep !== null) sweep = audible(sweep);
     const t = now() + at;
     const s = ctx.createBufferSource();
     s.buffer = noise;
@@ -110,6 +119,8 @@ export function createAudio() {
 
   function tone({ at = 0, freq = 440, to = null, length = 0.15, type = 'sine', gain = 0.3, out = sfx, attack = 0.004 }) {
     if (!ctx) return;
+    [at, length, freq, gain] = [Math.max(0, finite(at)), Math.max(0.01, finite(length, 0.15)), audible(freq), audible(gain)];
+    if (to !== null) to = audible(to);
     const t = now() + at;
     const o = ctx.createOscillator();
     o.type = type;
@@ -158,6 +169,7 @@ export function createAudio() {
     /** The settings sliders: 'music' or 'sfx', 0 to 1. */
     setVolume(kind, v) {
       if (kind !== 'music' && kind !== 'sfx') return;
+      v = Math.max(0, Math.min(1, finite(v, volume[kind])));
       volume[kind] = v;
       const node = kind === 'music' ? music : sfx;
       if (node) node.gain.setTargetAtTime(v, now(), 0.05);
@@ -166,6 +178,7 @@ export function createAudio() {
     /** The grind of rolling, every frame: speed in tiles a second, and whether he is on anything. */
     rolling(speed, grounded) {
       if (!rollSrc) return;
+      speed = Math.max(0, finite(speed));
       const level = grounded ? Math.min(0.5, speed * 0.05) : 0;
       rollSrc.gain.gain.setTargetAtTime(level, now(), 0.05);
       rollSrc.band.frequency.setTargetAtTime(110 + speed * 45, now(), 0.08);
@@ -181,7 +194,7 @@ export function createAudio() {
 
     /** The stone knocking on the floor, as hard as `speed`. */
     land(speed) {
-      const k = Math.min(1, speed / 12);
+      const k = Math.min(1, finite(speed) / 12);
       if (k < 0.1) return;
       tone({ freq: 110, to: 44, length: 0.16, gain: 0.7 * k });
       tone({ freq: 640 + Math.random() * 120, to: 300, length: 0.06, type: 'triangle', gain: 0.3 * k });
@@ -190,7 +203,7 @@ export function createAudio() {
 
     /** Somebody smashed, or bounced off: `grade` from smash.js, `speed` how fast. */
     smash(grade, speed = 5) {
-      const k = Math.min(1.2, 0.5 + speed / 14);
+      const k = Math.min(1.2, 0.5 + finite(speed, 5) / 14);
       if (grade === 'crit') {
         tone({ freq: 130, to: 38, length: 0.5, gain: 0.95 });
         burst({ length: 1.1, type: 'highpass', freq: 4500, gain: 0.5 });

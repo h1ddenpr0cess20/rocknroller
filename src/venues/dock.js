@@ -99,7 +99,7 @@ export function dock() {
   g.foe('roadie', ...store.tile(4, -3), { range: 5 }).foe('roadie', ...store.tile(12, 1), { range: 5 }).foe('security', ...store.tile(15, 5), { range: 5 });
   g.foe('merch', ...store.tile(13, -7), { range: 5 });
   g.pass(...store.tile(15, -7));
-  g.pick(...store.tile(1, -7), 10).pick(...store.tile(1, 7), 10).pick(...store.tile(8, -3), 5).pick(...store.tile(8, 1), 5).pick(...store.tile(8, 5), 5);
+  g.pick(...store.tile(1, -7), 10).pick(...store.tile(1, 7), 10).pick(...store.tile(16, -3), 5).pick(...store.tile(16, 1), 5).pick(...store.tile(16, 5), 5);
   g.lighter(...store.tile(4, 7));
   g.tape(...store.tile(15, 7));
   beacon(store, 8, BEACON[1]);

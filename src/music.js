@@ -1,7 +1,8 @@
 /**
  * The band. Every venue has a band playing in it, made on the spot with Web
  * Audio, no samples: a drum kit (kick, snare, hats, toms, crash), a bass, two
- * guitars through a distortion and a cabinet, a lead, and synths for the
+ * guitars through a distortion and a cabinet (one rig a side, built for each
+ * song and shared by every strum in it), a lead, and synths for the
  * clubs, all in a small room of reverb. Each plays its part in a style the
  * venue picks — its tempo, its key, a chord progression, a drum pattern and a
  * way of strumming — over eight-bar phrases: the verse, then the chorus with
@@ -200,14 +201,16 @@ export function createBand(ctx, out, noise) {
   // ——— the kit.
   function kick(when, level = 1) {
     const g = voice();
-    const end = env(g, when, 0.95 * level, 0.002, 0.01, 0.2);
-    const o = osc('sine', 160, when, end, g);
-    o.frequency.exponentialRampToValueAtTime(46, when + 0.1);
-    noiseHit(when, { freq: 3200, type: 'highpass', level: 0.18 * level, length: 0.012 });
+    const end = env(g, when, 1.0 * level, 0.002, 0.03, 0.28);
+    const o = osc('sine', 150, when, end, g);
+    o.frequency.exponentialRampToValueAtTime(48, when + 0.09);
+    // The beater's click on top.
+    noiseHit(when, { freq: 3500, type: 'highpass', level: 0.3 * level, length: 0.014 });
   }
   function snare(when, level = 1) {
-    noiseHit(when, { freq: 2200, type: 'bandpass', q: 0.8, level: 0.5 * level, length: 0.17 });
-    noiseHit(when, { freq: 6500, type: 'highpass', level: 0.14 * level, length: 0.09 });
+    noiseHit(when, { freq: 2000, type: 'bandpass', q: 0.7, level: 0.55 * level, length: 0.18 });
+    // The wires: bright, and as long as the crack.
+    noiseHit(when, { freq: 5500, type: 'highpass', level: 0.36 * level, length: 0.15 });
     const g = voice();
     const end = env(g, when, 0.42 * level, 0.001, 0.01, 0.11);
     const o = osc('triangle', 230, when, end, g);
@@ -217,7 +220,7 @@ export function createBand(ctx, out, noise) {
     for (let i = 0; i < 3; i++) noiseHit(when + i * 0.011, { freq: 1500, type: 'bandpass', q: 1.2, level: 0.28 * level, length: 0.07 });
   }
   function hat(when, level = 1, open = false) {
-    noiseHit(when, { freq: 7800, type: 'highpass', q: 0.7, level: 0.25 * level, length: open ? 0.28 : 0.045 });
+    noiseHit(when, { freq: 7000, type: 'highpass', q: 0.7, level: 0.55 * level, length: open ? 0.32 : 0.05 });
   }
   function tom(when, pitch = 120, level = 1) {
     const g = voice();
@@ -227,34 +230,47 @@ export function createBand(ctx, out, noise) {
     noiseHit(when, { freq: 900, type: 'bandpass', level: 0.1 * level, length: 0.05 });
   }
   function crash(when, level = 1) {
-    noiseHit(when, { freq: 4800, type: 'highpass', q: 0.5, level: 0.3 * level, length: 1.5 });
-    noiseHit(when, { freq: 9000, type: 'bandpass', q: 0.8, level: 0.14 * level, length: 0.9 });
+    noiseHit(when, { freq: 4200, type: 'highpass', q: 0.5, level: 0.5 * level, length: 1.8 });
+    noiseHit(when, { freq: 8500, type: 'bandpass', q: 0.8, level: 0.3 * level, length: 1.1 });
   }
 
   // ——— the strings.
-  /** A guitar: a chord of saws (root, fifth, octave) through the distortion and a cabinet, panned. */
-  function guitar(when, root, length, { open = false, pan = 0, level = 1, third = null } = {}) {
+  /**
+   * The guitar rigs, built once: each a distortion into a cabinet (a high
+   * pass, a mid push, a low pass) and panned to its side. A strum only adds
+   * its oscillators and their envelope; the rig is shared, so a busy bar
+   * costs a few oscillators, not a few dozen filters.
+   */
+  const rig = (pan) => {
+    const input = ctx.createGain();
     const shape = ctx.createWaveShaper();
     shape.curve = curve;
     shape.oversample = '2x';
     const hp = ctx.createBiquadFilter();
-    hp.type = 'highpass'; hp.frequency.value = 110;
+    hp.type = 'highpass'; hp.frequency.value = 90;
     const mid = ctx.createBiquadFilter();
-    mid.type = 'peaking'; mid.frequency.value = 1400; mid.gain.value = 5; mid.Q.value = 0.9;
+    mid.type = 'peaking'; mid.frequency.value = 900; mid.gain.value = 4; mid.Q.value = 0.8;
     const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass'; lp.frequency.value = 3300; lp.Q.value = 0.6;
+    lp.type = 'lowpass'; lp.frequency.value = 3800; lp.Q.value = 0.5;
     const p = ctx.createStereoPanner();
     p.pan.value = pan;
-    const g = voice(0.16 * level);
-    shape.connect(hp).connect(mid).connect(lp).connect(p).connect(g);
-    const hold = open ? Math.max(0.1, length - 0.05) : 0.04;
+    const out = ctx.createGain();
+    out.gain.value = 0.17;
+    input.connect(shape).connect(hp).connect(mid).connect(lp).connect(p).connect(out).connect(target);
+    return { input, out };
+  };
+  /** The rigs of the song now playing (see `fresh`). */
+  let rigs = null;
+
+  /** A guitar: a power chord (root, fifth, octave) of detuned saws, into one of the rigs. */
+  function guitar(when, root, length, { open = false, side = 0, level = 1 } = {}) {
     const gain = ctx.createGain();
-    gain.connect(shape);
-    const end = env(gain, when, 1, 0.004, hold, open ? 0.3 : 0.06);
-    const notes = [root, root + 7, root + 12, third ?? root + 19];
-    notes.forEach((n, i) => {
-      osc('sawtooth', NOTE(n), when, end, gain, i % 2 ? 6 : -6);
-      if (i < 2) osc('sawtooth', NOTE(n), when, end, gain, i % 2 ? -9 : 9);
+    gain.connect(rigs[side].input);
+    const hold = open ? Math.max(0.1, length - 0.05) : 0.03;
+    const end = env(gain, when, level, 0.003, hold, open ? 0.35 : 0.05);
+    [root, root + 7, root + 12].forEach((n, i) => {
+      osc('sawtooth', NOTE(n), when, end, gain, i % 2 ? 5 : -5);
+      if (i === 0) osc('sawtooth', NOTE(n), when, end, gain, side ? 9 : -9);
     });
   }
 
@@ -270,14 +286,17 @@ export function createBand(ctx, out, noise) {
     osc('sine', NOTE(note - 12), when, end, g);
   }
 
-  /** The lead: a single line, with a vibrato it takes a moment to start, through a milder distortion and an echo. */
-  function lead(when, note, length, kind = 'saw', level = 1) {
+  /** The lead's rig: a milder distortion, a filter, and an echo with feedback. */
+  let leadRig = null;
+  const makeLeadRig = () => {
+    const input = ctx.createGain();
     const shape = ctx.createWaveShaper();
     shape.curve = curveLead;
     const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass'; lp.frequency.value = kind === 'tube' ? 2400 : 3600;
-    const g = voice(0.2 * level);
-    shape.connect(lp).connect(g);
+    lp.type = 'lowpass'; lp.frequency.value = 3200;
+    const out = ctx.createGain();
+    out.gain.value = 0.2;
+    input.connect(shape).connect(lp).connect(out);
     const echo = ctx.createDelay(1);
     echo.delayTime.value = 0.3;
     const fb = ctx.createGain();
@@ -286,11 +305,30 @@ export function createBand(ctx, out, noise) {
     send.gain.value = 0.35;
     lp.connect(send).connect(echo);
     echo.connect(fb).connect(echo);
-    echo.connect(g);
+    echo.connect(out);
+    out.connect(target);
+    return { input, out, lp };
+  };
+
+  /**
+   * A song's own output and rigs: what it plays goes through these, so when
+   * it stops and fades, all of it fades, and the next song starts clean.
+   */
+  const fresh = () => {
+    target = ctx.createGain();
+    target.connect(bus);
+    rigs = [rig(-0.6), rig(0.6)];
+    leadRig = makeLeadRig();
+    return target;
+  };
+
+  /** The lead: a single line, with a vibrato it takes a moment to start. */
+  function lead(when, note, length, kind = 'saw', level = 1) {
     const gain = ctx.createGain();
-    gain.connect(shape);
-    const end = env(gain, when, 1, 0.012, Math.max(0.05, length * 0.8), 0.14);
+    gain.connect(leadRig.input);
+    const end = env(gain, when, level, 0.012, Math.max(0.05, length * 0.8), 0.14);
     const type = kind === 'square' ? 'square' : 'sawtooth';
+    leadRig.lp.frequency.setValueAtTime(kind === 'tube' ? 2400 : 3600, when);
     const a = osc(type, NOTE(note), when, end, gain, -7);
     const b = osc(type, NOTE(note), when, end, gain, 7);
     const vib = ctx.createOscillator();
@@ -374,8 +412,8 @@ export function createBand(ctx, out, noise) {
       if (!hit) continue;
       const len = hit === 2 ? step * (theme.strum === 'anthem' ? 5 : 3.2) : step * 0.9;
       const t = when + step * i;
-      guitar(t, root + 24, len, { open: hit === 2, pan: -0.55, level: level * (chorus ? 1.05 : 0.95) });
-      guitar(t + 0.006, root + 24, len, { open: hit === 2, pan: 0.55, level: level * (chorus ? 1.05 : 0.95) });
+      guitar(t, root + 12, len, { open: hit === 2, side: 0, level: level * (chorus ? 1.05 : 0.95) });
+      guitar(t + 0.007, root + 12, len, { open: hit === 2, side: 1, level: level * (chorus ? 1.05 : 0.95) });
     }
 
     // The lead takes the choruses, and plays the riff over two bars.
@@ -403,8 +441,7 @@ export function createBand(ctx, out, noise) {
      */
     start(theme, tempo, beat0 = 0) {
       this.stop();
-      target = ctx.createGain();
-      target.connect(bus);
+      fresh();
       const beat = 60 / tempo;
       const t0 = ctx.currentTime - beat0 * beat;
       const firstBar = Math.max(0, Math.ceil((beat0 * beat + 0.12) / (beat * 4)));
@@ -437,8 +474,7 @@ export function createBand(ctx, out, noise) {
 
     /** `bars` bars of `theme` scheduled at once from now: for rendering offline (an OfflineAudioContext). */
     sketch(theme, tempo, bars) {
-      target = ctx.createGain();
-      target.connect(bus);
+      fresh();
       const bar = (60 / tempo) * 4;
       for (let i = 0; i < bars; i++) playBar(theme, tempo, i, ctx.currentTime + 0.05 + i * bar);
     },

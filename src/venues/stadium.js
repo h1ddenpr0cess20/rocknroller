@@ -128,7 +128,7 @@ export function stadium() {
   g.foe('headliner', ...stage.tile(11, 0), { range: 7 });
   g.foe('roadie', ...stage.tile(18, 6), { range: 4 });
   g.pick(...stage.tile(2, 0), 10).pick(...stage.tile(6, -6), 10).pick(...stage.tile(6, 6), 10).pick(...stage.tile(15, -6), 10).pick(...stage.tile(15, 6), 10);
-  g.tape(...stage.tile(3, -7)).tape(...stage.tile(3, 7));
+  g.tape(...stage.tile(4, -5)).tape(...stage.tile(4, 5));
   g.light('strobe', ...wallTile(stage, 10), { colors: ['#ffffff'], reach: 12, height: 2.2 });
   for (const [k, c] of [[4, SHOW[0]], [10, SHOW[1]], [16, SHOW[2]]]) g.light('spot', ...wallTile(stage, k), { colors: [c, SHOW[4]], radius: 6, height: 3.6, shift: k });
   g.light('laser', ...stage.tile(20, -8), { colors: [SHOW[3]], aim: [-12, 8], height: 3.4 });

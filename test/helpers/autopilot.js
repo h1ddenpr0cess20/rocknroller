@@ -36,7 +36,8 @@ export function graph(venue) {
   const key = (x, z) => z * venue.cols + x;
   // Round bumpers, not into them: the tile one stands on is no way through.
   const posts = new Set(venue.bumpers.map((b) => key(Math.floor(b.x), Math.floor(b.z))));
-  const walkable = (c, x, z) => c && c.kind !== 'wall' && c.kind !== 'zap' && !posts.has(key(x, z));
+  // Round props too: they can be smashed, but it takes a run at them.
+  const walkable = (c, x, z) => c && c.kind !== 'wall' && c.kind !== 'zap' && !c.breakable && !posts.has(key(x, z));
   const steps = new Map();
   const rides = new Map();
   for (let z = 0; z < venue.rows; z++) {
@@ -229,11 +230,11 @@ function waypoints(gig, moves, from) {
 }
 
 /**
- * Drive venue `index` to the stage door. Returns whether it got there, how
+ * Drive venue `index` to the stage door (picking up the passes and records on the way, or with `everything`, every last thing). Returns whether it got there, how
  * long it took, every way Rock was lost or hurt, the people he ran into, and
  * the gig as it came out.
  */
-export function drive(index, { limit = 1200, sample = null, records = true, duel = true, from = null } = {}) {
+export function drive(index, { limit = 1200, sample = null, records = true, duel = true, from = null, everything = false } = {}) {
   const gig = createGig(GFX, index);
   const venue = gig.venue;
   const net = graph(venue);
@@ -249,7 +250,7 @@ export function drive(index, { limit = 1200, sample = null, records = true, duel
 
   const exits = [];
   for (let z = 0; z < venue.rows; z++) for (let x = 0; x < venue.cols; x++) if (venue.cell(x, z)?.kind === 'exit') exits.push([x, z]);
-  const goals = gig.actors.pickups.filter((p) => p.kind === 'pass' || (records && p.kind === 'record'));
+  const goals = gig.actors.pickups.filter((p) => everything || p.kind === 'pass' || (records && p.kind === 'record'));
   const tileOf = (p) => [Math.floor(p.x), Math.floor(p.z)];
 
   const here = () => [Math.floor(b.x), Math.floor(b.z)];

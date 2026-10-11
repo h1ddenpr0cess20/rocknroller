@@ -191,7 +191,16 @@ export function createActors(GFX, venue, world, { killY }) {
     return { ...b, y: ground, look, hit: -10 };
   });
 
-  world.boxes = [...crushers.map((h) => h.box), ...lifts.map((l) => l.box), ...doors.map((g) => g.box)];
+  // Props that can be smashed: a box over each, solid until Rock comes at it hard enough.
+  const props = venue.props.filter((p) => p.breakAt).map((p) => ({
+    spec: p, breakAt: p.breakAt, broken: -1, centre: [p.x + p.w / 2, p.base, p.z + p.d / 2],
+    box: {
+      solid: true, kind: 'prop', vx: 0, vy: 0, vz: 0,
+      min: [p.x + 0.04, p.base, p.z + 0.04], max: [p.x + p.w - 0.04, p.base + Math.max(0.6, p.rise), p.z + p.d - 0.04],
+    },
+  }));
+
+  world.boxes = [...crushers.map((h) => h.box), ...lifts.map((l) => l.box), ...doors.map((g) => g.box), ...props.map((p) => p.box)];
 
   // What lies about: each set down as soon as its model is baked (or at once, as a stand-in).
   const pickups = venue.pickups.map((p, i) => {
@@ -318,7 +327,7 @@ export function createActors(GFX, venue, world, { killY }) {
   }
 
   return {
-    group, foes, crushers, spikes, lifts, doors, pickups, bumpers,
+    group, foes, crushers, spikes, lifts, doors, pickups, bumpers, props,
     place,
     /** Takes the events since last asked. */
     drain() { return events.splice(0); },
@@ -465,6 +474,14 @@ export function createActors(GFX, venue, world, { killY }) {
     /** Lift a gate, from `time`. */
     open(door, time) {
       if (door.opening < 0) door.opening = time;
+    },
+
+    /** A prop is smashed, from `time`: nothing to hit there any more. */
+    smashProp(p, time) {
+      if (p.broken >= 0) return;
+      p.broken = time;
+      p.spec.broken = time;
+      p.box.solid = false;
     },
 
     /** A panel gives way, from `time`. */

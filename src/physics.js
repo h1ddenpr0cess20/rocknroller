@@ -257,7 +257,7 @@ export function stepBall(ball, world, ax, az, dt, { push = PUSH, airPush = AIR_P
       gnx += nx; gny += ny; gnz += nz;
       if (box) ball.on = box;
     }
-    // Pushed down onto something by a box coming down: squashed.
+    // Pushed down onto something by a box coming down: smashed.
     if (box && ny < -FLOOR && box.vy < -0.5) result.squeezedFrom = box;
   };
 

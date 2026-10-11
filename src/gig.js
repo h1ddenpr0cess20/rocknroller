@@ -8,6 +8,9 @@ import { buildVenue, DEPTH, HEADING } from './venue.js';
 import { loadVenue } from './venues/index.js';
 import { groundAxes } from './view.js';
 
+/** What smashing a prop is worth. */
+export const PROP_HYPE = 15;
+
 /**
  * One venue as it is played, without anything drawn or heard: the venue,
  * what moves and lies about in it, Rock, and the rules — what costs him
@@ -93,7 +96,7 @@ function harm(gig, amount) {
 /**
  * One step of everything. `push` is along the ground ([x, z]). While `live`,
  * the rules apply and the foes give chase; while `moving` is false, Rock
- * stays where he is (zapped, or squashed). `rev` is whether the rev button
+ * stays where he is (zapped, or smashed). `rev` is whether the rev button
  * is held.
  *
  * Returns what happened:
@@ -107,6 +110,7 @@ function harm(gig, amount) {
  *   `picked`   whatever he picked up.
  *   `door`     'opened', 'locked' or 'sturdy' (a panel too strong for the speed).
  *   `broke`    the panels he broke.
+ *   `smashed`  the props he smashed.
  *   `bumped`   the bumpers he bounced off.
  *   `encore`   true if a lighter brought him back.
  *   `events`   a speaker stack came down, or pyro fired: { type, x, y, z }.
@@ -117,7 +121,7 @@ export function stepGig(gig, push, dt = STEP, { live = true, moving = true, rev 
   gig.time += dt;
   gig.actors.place(gig.time, dt);
   const touched = gig.actors.step(dt, gig.time, live && moving ? ball : null);
-  const out = { impact: 0, outcome: null, hurt: null, hits: [], picked: [], door: null, broke: [], bumped: [], encore: false, events: gig.actors.drain() };
+  const out = { impact: 0, outcome: null, hurt: null, hits: [], picked: [], door: null, broke: [], smashed: [], bumped: [], encore: false, events: gig.actors.drain() };
   if (!moving) return out;
 
   const cx0 = Math.floor(ball.x), cz0 = Math.floor(ball.z);
@@ -145,6 +149,22 @@ export function stepGig(gig, push, dt = STEP, { live = true, moving = true, rev 
 
   // Panels: fast enough and they are gone before he reaches them; not fast enough and they hold.
   const speed0 = Math.hypot(ball.vx, ball.vz);
+  // Props, the same: an amp, a table, a row of seats, gone if he comes at it fast enough.
+  for (const p of gig.actors.props) {
+    if (p.broken >= 0) continue;
+    const reach = ball.r + 0.1 + speed0 * dt * 2;
+    const qx = Math.max(p.box.min[0], Math.min(ball.x, p.box.max[0]));
+    const qy = Math.max(p.box.min[1], Math.min(ball.y, p.box.max[1]));
+    const qz = Math.max(p.box.min[2], Math.min(ball.z, p.box.max[2]));
+    const ex = qx - ball.x, ez = qz - ball.z;
+    if (Math.hypot(ex, qy - ball.y, ez) > reach) continue;
+    const toward = speed0 > 0 ? (ball.vx * ex + ball.vz * ez) / (speed0 * (Math.hypot(ex, ez) || 1)) : 0;
+    if (toward < 0.3 || speed0 < p.breakAt) continue;
+    gig.actors.smashProp(p, gig.time);
+    out.smashed.push(p);
+    earn(gig.hype, PROP_HYPE);
+    ball.vx *= 0.9; ball.vz *= 0.9;
+  }
   for (const g of gig.actors.doors) {
     if (g.kind !== 'panel' || !g.box.solid || g.broken >= 0) continue;
     const reach = ball.r + 0.12 + speed0 * dt * 2;

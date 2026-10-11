@@ -11,7 +11,7 @@ export const QUIPS = Object.freeze({
   tap: ['That\'s just bumping into someone.', 'Speed, Rock. Speed.', 'Walking into people. Great plan.'],
   fell: ['Gravity still works.', 'Down. As is tradition.', 'I\'m a rock. This is what I do.', 'Falling. Again.'],
   zapped: ['I did not need that.', 'Mm. Tingly.', 'Rocks conduct. Who knew.'],
-  crushed: ['That was a speaker. I was in its way.', 'Squashed. By a speaker. Louder than I\'d like.'],
+  crushed: ['That was a speaker. I was in its way.', 'Smashed. By a speaker. Louder than I\'d like.'],
   burnt: ['Warm.', 'Medium rare.', 'That was pyro. They\'ve got a lot of it.'],
   thud: ['Hard landing.', 'Ouch. Ground.'],
   tape: ['Gaff tape fixes everything.', 'Patched.', 'Silver tape. Holds a rock together. Mostly.'],
