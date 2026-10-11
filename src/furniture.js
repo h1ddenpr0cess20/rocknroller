@@ -89,26 +89,37 @@ function rack(GFX, { rise = 1.1 }) {
   };
 }
 
-/** A velvet cinema-style seat: a plump red cushion and back on a dark frame, two arms. */
-function seat(GFX, { rise = 0.8 }) {
+/** Velvet theatre seats, a row of them over every tile of the block, all facing the same way (+z, before `rot`). */
+function seat(GFX, { rise = 0.8, w = 1, d = 1, rot = 0 }) {
   const group = new GFX.Group();
   const velvet = std(GFX, '#9a1428', { roughness: 0.9 });
   const frame = std(GFX, '#2a1a10', { roughness: 0.5 });
-  const cushion = shadowed(place(new GFX.Mesh(new GFX.BoxGeometry(0.62, 0.22, 0.58), velvet), 0, rise * 0.45, 0.04));
-  const back = shadowed(place(new GFX.Mesh(new GFX.BoxGeometry(0.62, rise * 0.62, 0.14), velvet), 0, rise * 0.7, -0.24));
-  const top = new GFX.Mesh(new GFX.CylinderGeometry(0.07, 0.07, 0.62, 10), velvet);
-  top.rotation.z = Math.PI / 2;
-  place(top, 0, rise * 0.7 + rise * 0.31, -0.24);
-  const base = shadowed(place(new GFX.Mesh(new GFX.BoxGeometry(0.66, rise * 0.34, 0.6), frame), 0, rise * 0.17, 0.02));
-  group.add(cushion, back, top, base);
-  for (const s of [-1, 1]) group.add(shadowed(place(new GFX.Mesh(new GFX.BoxGeometry(0.07, 0.22, 0.56), frame), s * 0.33, rise * 0.55, 0.02)));
-  const brass = new GFX.Mesh(new GFX.CylinderGeometry(0.035, 0.035, 0.012, 10), std(GFX, '#e0b44a', { metalness: 1, roughness: 0.3 }));
-  brass.rotation.x = Math.PI / 2;
-  group.add(place(brass, 0, rise * 0.7, -0.165));
+  const brassMat = std(GFX, '#e0b44a', { metalness: 1, roughness: 0.3 });
+  // Turned a quarter, the block's width runs along what is z here.
+  const quarter = Math.abs(Math.sin(rot)) > 0.5;
+  const [cols, rows] = quarter ? [d, w] : [w, d];
+  const cushionG = new GFX.BoxGeometry(0.62, 0.22, 0.58), backG = new GFX.BoxGeometry(0.62, rise * 0.62, 0.14);
+  const topG = new GFX.CylinderGeometry(0.07, 0.07, 0.62, 10), baseG = new GFX.BoxGeometry(0.66, rise * 0.34, 0.6);
+  const armG = new GFX.BoxGeometry(0.07, 0.22, 0.56), plateG = new GFX.CylinderGeometry(0.035, 0.035, 0.012, 10);
+  for (let j = 0; j < rows; j++) {
+    for (let i = 0; i < cols; i++) {
+      const x = i - (cols - 1) / 2, z = j - (rows - 1) / 2;
+      const one = new GFX.Group();
+      one.position.set(x, 0, z);
+      const top = new GFX.Mesh(topG, velvet);
+      top.rotation.z = Math.PI / 2;
+      place(top, 0, rise * 0.7 + rise * 0.31, -0.24);
+      one.add(shadowed(place(new GFX.Mesh(cushionG, velvet), 0, rise * 0.45, 0.04)), shadowed(place(new GFX.Mesh(backG, velvet), 0, rise * 0.7, -0.24)), top, shadowed(place(new GFX.Mesh(baseG, frame), 0, rise * 0.17, 0.02)));
+      for (const s of [-1, 1]) one.add(shadowed(place(new GFX.Mesh(armG, frame), s * 0.33, rise * 0.55, 0.02)));
+      const plate = new GFX.Mesh(plateG, brassMat);
+      plate.rotation.x = Math.PI / 2;
+      one.add(place(plate, 0, rise * 0.7, -0.165));
+      group.add(one);
+    }
+  }
   return { group };
 }
 
-/** A grand piano, 3 × 2: glossy black, the lid propped up, a keyboard of white keys, three legs. */
 function piano(GFX, { w = 3, d = 2, rise = 0.88 }) {
   const group = new GFX.Group();
   const gloss = new GFX.MeshPhysicalMaterial({ color: new GFX.Color('#0e0e12'), roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08 });

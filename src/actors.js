@@ -271,7 +271,7 @@ export function createActors(GFX, venue, world, { killY }) {
     if (how === 'tempo') {
       const beat = (time * venue.tempo) / 60;
       const u = beat - Math.floor(beat);
-      return { push: 3, top: 0.15 + 2.6 * Math.pow(1 - u, 3) };
+      return { push: 3, top: 0.1 + 1.9 * Math.pow(1 - u, 4) };
     }
     if (how === 'stomp') {
       if (m.stompAt === undefined && toRock < STOMP.reach && time - (m.stompedAt ?? -99) > STOMP.every) m.stompAt = time;
