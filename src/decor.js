@@ -57,36 +57,53 @@ function amp(GFX, { venue }) {
   const tolex = tolexTexture(GFX);
   const grille = grilleTexture(GFX);
   const black = std(GFX, '#1a1a1d', { map: tolex.map, bumpMap: tolex.bump, bumpScale: 0.6, roughness: 0.85 });
-  const front = new GFX.MeshStandardMaterial({ color: new GFX.Color('#ffffff'), map: tiled(GFX, grille.map, 2, 1), bumpMap: tiled(GFX, grille.bump, 2, 1), bumpScale: 1.2, roughness: 0.6 });
-  const metal = std(GFX, '#b9bdc6', { metalness: 0.9, roughness: 0.3 });
-  const cab = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.94, 0.62, 0.84), [black, black, black, black, front, black]));
-  cab.position.y = 0.31;
-  const plate = plateTexture(GFX, venue?.look?.ampName ?? 'ROCK');
-  const faceMat = new GFX.MeshStandardMaterial({ color: new GFX.Color('#ffffff'), map: plate.map, roughness: 0.4, metalness: 0.5 });
-  const head = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.94, 0.32, 0.46), [black, black, black, black, faceMat, black]));
-  head.position.set(0, 0.62 + 0.16, 0);
-  group.add(cab, head);
-  // Corners, a handle, a red pilot light.
-  for (const sx of [-1, 1]) for (const y of [0.02, 0.6]) {
-    const c = new GFX.Mesh(new GFX.BoxGeometry(0.07, 0.07, 0.07), metal);
-    c.position.set(sx * 0.46, y, 0.41);
-    group.add(c);
+  const cloth = new GFX.MeshStandardMaterial({ color: new GFX.Color('#7a7872'), map: tiled(GFX, grille.map, 2, 2), bumpMap: tiled(GFX, grille.bump, 2, 2), bumpScale: 1.2, roughness: 0.75 });
+  const metal = std(GFX, '#c9ccd4', { metalness: 0.9, roughness: 0.3 });
+  const piping = std(GFX, '#e8e4d8', { roughness: 0.5 });
+  const gold = std(GFX, '#c8a050', { metalness: 0.85, roughness: 0.3 });
+  const add = (m, x, y, z) => { m.position.set(x, y, z); group.add(m); return m; };
+
+  // The cab: a four-by-twelve, the cloth set back in its frame, piping round the cloth, metal corners.
+  const W = 0.94, H = 0.6, D = 0.62, front = D / 2;
+  shadowed(add(new GFX.Mesh(new GFX.BoxGeometry(W, H, D), black), 0, H / 2, 0));
+  add(new GFX.Mesh(new GFX.BoxGeometry(W - 0.12, H - 0.12, 0.02), cloth), 0, H / 2, front - 0.005);
+  for (const [w, h, x, y] of [[W - 0.1, 0.018, 0, 0.055], [W - 0.1, 0.018, 0, H - 0.055], [0.018, H - 0.1, -(W / 2 - 0.05), H / 2], [0.018, H - 0.1, W / 2 - 0.05, H / 2]]) {
+    add(new GFX.Mesh(new GFX.BoxGeometry(w, h, 0.02), piping), x, y, front + 0.008);
   }
-  const handle = new GFX.Mesh(new GFX.TorusGeometry(0.1, 0.018, 6, 12, Math.PI), metal);
-  handle.position.set(0, 0.94, 0);
-  group.add(handle);
-  const pilot = new GFX.Mesh(new GFX.SphereGeometry(0.022, 8, 6), new GFX.MeshBasicMaterial({ color: new GFX.Color('#ff3a2a'), toneMapped: false }));
-  pilot.position.set(0.4, 0.76, 0.235);
-  group.add(pilot);
-  group.scale.y = 1;
+  for (const sx of [-1, 1]) {
+    for (const y of [0.03, H - 0.03]) for (const z of [front - 0.03, -front + 0.03]) add(new GFX.Mesh(new GFX.BoxGeometry(0.075, 0.075, 0.075), metal), sx * (W / 2 - 0.03), y, z);
+    // A handle let into each side.
+    const handle = add(new GFX.Mesh(new GFX.TorusGeometry(0.07, 0.014, 6, 12, Math.PI), metal), sx * (W / 2 + 0.005), H * 0.62, 0);
+    handle.rotation.y = Math.PI / 2;
+  }
+
+  // The head: black, a gold control panel across the front with a row of knobs, the name above it, a pilot light.
+  const HH = 0.3, HD = 0.42, hy = H + 0.01 + HH / 2;
+  shadowed(add(new GFX.Mesh(new GFX.BoxGeometry(W, HH, HD), black), 0, hy, -0.06));
+  const plate = plateTexture(GFX, venue?.look?.ampName ?? 'ROCK');
+  const badge = new GFX.MeshStandardMaterial({ color: new GFX.Color('#ffffff'), map: plate.map, roughness: 0.4, metalness: 0.3 });
+  add(new GFX.Mesh(new GFX.BoxGeometry(W - 0.12, 0.09, 0.012), badge), 0, hy + 0.07, -0.06 + HD / 2 + 0.006);
+  add(new GFX.Mesh(new GFX.BoxGeometry(W - 0.08, 0.1, 0.012), gold), 0, hy - 0.07, -0.06 + HD / 2 + 0.006);
+  const knobMat = std(GFX, '#16161a', { roughness: 0.35 });
+  for (let k = 0; k < 8; k++) {
+    const knob = add(new GFX.Mesh(new GFX.CylinderGeometry(0.022, 0.026, 0.035, 10), knobMat), -0.32 + k * 0.08, hy - 0.07, -0.06 + HD / 2 + 0.03);
+    knob.rotation.x = Math.PI / 2;
+  }
+  const pilot = add(new GFX.Mesh(new GFX.SphereGeometry(0.02, 8, 6), new GFX.MeshBasicMaterial({ color: new GFX.Color('#ff3a2a'), toneMapped: false })), 0.41, hy - 0.07, -0.06 + HD / 2 + 0.02);
+  const handle = add(new GFX.Mesh(new GFX.TorusGeometry(0.1, 0.018, 6, 12, Math.PI), metal), 0, hy + HH / 2, -0.06);
+  void handle;
+  for (const sx of [-1, 1]) for (const z of [-0.06 + HD / 2 - 0.025, -0.06 - HD / 2 + 0.025]) add(new GFX.Mesh(new GFX.BoxGeometry(0.06, 0.06, 0.06), metal), sx * (W / 2 - 0.025), hy + HH / 2 - 0.025, z);
+  // The lead from the head down the back.
+  const lead = add(new GFX.Mesh(new GFX.CylinderGeometry(0.012, 0.012, H, 6), knobMat), 0.3, H / 2 + 0.05, -front - 0.01);
+  void lead;
   return {
     group,
     update(time, beat) { pilot.material.color.setRGB(1, 0.2 + 0.1 * Math.sin(time * 3), 0.15); void beat; },
   };
 }
 
-/** A road case: black laminate in a silver frame, latches, a stencil; two of them stacked. */
-function roadCase(GFX, { rise }) {
+/** Road cases: black laminate in a silver frame, latches, a stencil; two stacked on every tile of the block. */
+function roadCase(GFX, { rise, w = 1, d = 1 }) {
   const group = new GFX.Group();
   const [c, ctx] = canvas(256, 128);
   ctx.fillStyle = '#26262b';
@@ -107,12 +124,24 @@ function roadCase(GFX, { rise }) {
   const top = std(GFX, '#202024', { roughness: 0.6 });
   const lower = Math.min(0.56, rise * 0.58);
   const upper = Math.max(0.3, rise - lower - 0.02);
-  const a = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.92, lower, 0.84), [face, face, top, top, face, face]));
-  a.position.y = lower / 2;
-  const b = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.82, upper, 0.7), [face, face, top, top, face, face]));
-  b.position.set(0.02, lower + upper / 2, 0.02);
-  b.rotation.y = 0.06;
-  group.add(a, b);
+  const lowerBox = new GFX.BoxGeometry(0.92, lower, 0.84), upperBox = new GFX.BoxGeometry(0.82, upper, 0.7);
+  for (let j = 0; j < d; j++) {
+    for (let i = 0; i < w; i++) {
+      const x = i - (w - 1) / 2, z = j - (d - 1) / 2;
+      // Not quite square to each other: they were stacked in a hurry.
+      const twist = Math.sin(i * 12.9 + j * 7.3) * 0.08;
+      const a = shadowed(new GFX.Mesh(lowerBox, [face, face, top, top, face, face]));
+      a.position.set(x, lower / 2, z);
+      a.rotation.y = twist * 0.4;
+      group.add(a);
+      // Now and then the top one is missing.
+      if ((i * 7 + j * 3) % 5 === 4) continue;
+      const b = shadowed(new GFX.Mesh(upperBox, [face, face, top, top, face, face]));
+      b.position.set(x + 0.02, lower + upper / 2, z + 0.02);
+      b.rotation.y = 0.06 + twist;
+      group.add(b);
+    }
+  }
   return { group };
 }
 
@@ -166,7 +195,11 @@ function drums(GFX, { w = 2, d = 2, rise }) {
   const leg = new GFX.Mesh(new GFX.CylinderGeometry(0.02, 0.02, 0.28, 6), chrome);
   leg.position.set(0, top + 0.16, 0.62);
   group.add(stool, leg);
-  return { group };
+  // Sculpted from the drummer's side; turned so the kick faces the room (+z), as every other prop faces.
+  const facing = new GFX.Group();
+  facing.rotation.y = Math.PI;
+  facing.add(group);
+  return { group: facing };
 }
 
 /** A PA speaker on a stand: a tall black cabinet, cone behind a grille, a horn above. */
@@ -215,6 +248,35 @@ function bar(GFX, { w = 3, d = 1, rise = 0.9, venue }) {
   const strip = new GFX.Mesh(new GFX.BoxGeometry(length * 0.9, 0.025, 0.012), new GFX.MeshBasicMaterial({ color: new GFX.Color(glowColour), toneMapped: false }));
   strip.position.set(0, rise * 0.55, 0.436);
   holder.add(body, top, rail, strip);
+  // The front in panels: raised frames a tile apart, and a kick plate along the floor.
+  // Both long sides alike, so it looks right whichever way it is turned.
+  const frame = wood(GFX, '#5a3820');
+  const brass = std(GFX, '#e0b44a', { metalness: 1, roughness: 0.25 });
+  for (const side of [1, -1]) {
+    for (let i = 0; i < Math.round(length); i++) {
+      const x = -length / 2 + i + 0.5;
+      const panel = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.78, rise * 0.42, 0.03), frame));
+      panel.position.set(x, rise * 0.32, side * 0.44);
+      holder.add(panel);
+    }
+    const kick = new GFX.Mesh(new GFX.BoxGeometry(length * 0.96, 0.08, 0.04), std(GFX, '#1a120c'));
+    kick.position.set(0, 0.04, side * 0.44);
+    holder.add(kick);
+    if (side < 0) {
+      const back = new GFX.Mesh(rail.geometry, brass);
+      back.rotation.z = Math.PI / 2;
+      back.position.set(0, 0.22, -0.46);
+      const backStrip = new GFX.Mesh(strip.geometry, strip.material);
+      backStrip.position.set(0, rise * 0.55, -0.436);
+      holder.add(back, backStrip);
+    }
+    // Rail posts, every couple of tiles.
+    for (let x = -length / 2 + 0.5; x < length / 2; x += 2) {
+      const post = new GFX.Mesh(new GFX.CylinderGeometry(0.015, 0.015, 0.22, 6), brass);
+      post.position.set(x, 0.11, side * 0.46);
+      holder.add(post);
+    }
+  }
   // Taps and bottles along the top.
   const metal = std(GFX, '#d6d9e0', { metalness: 1, roughness: 0.2 });
   for (let i = 0; i < Math.floor(length * 1.5); i++) {
@@ -230,7 +292,17 @@ function bar(GFX, { w = 3, d = 1, rise = 0.9, venue }) {
       const colour = ['#2a7a3a', '#8a4a1a', '#3a5aa8', '#a8802a'][i % 4];
       const bottle = shadowed(new GFX.Mesh(new GFX.CylinderGeometry(0.03, 0.035, 0.2, 10), new GFX.MeshPhysicalMaterial({ color: new GFX.Color(colour), roughness: 0.1, clearcoat: 1 })));
       bottle.position.set(x, rise + 0.1, -0.1 + (i % 2) * 0.1);
-      holder.add(bottle);
+      const neck = new GFX.Mesh(new GFX.CylinderGeometry(0.012, 0.022, 0.08, 8), bottle.material);
+      neck.position.set(x, rise + 0.24, -0.1 + (i % 2) * 0.1);
+      const label = new GFX.Mesh(new GFX.CylinderGeometry(0.0355, 0.0355, 0.07, 10, 1, true), std(GFX, ['#f2ead8', '#e8c860', '#f0f0f0'][i % 3]));
+      label.position.set(x, rise + 0.09, -0.1 + (i % 2) * 0.1);
+      holder.add(bottle, neck, label);
+      if (i % 4 === 1) {
+        // A pint, half gone.
+        const glass = new GFX.Mesh(new GFX.CylinderGeometry(0.035, 0.028, 0.13, 10), new GFX.MeshPhysicalMaterial({ color: new GFX.Color('#e0a030'), roughness: 0.05, transmission: 0.3, clearcoat: 1 }));
+        glass.position.set(x + 0.12, rise + 0.065, 0.28);
+        holder.add(glass);
+      }
     }
   }
   group.add(holder);
@@ -375,24 +447,75 @@ export const PROPS = { amp, case: roadCase, drums, speaker, bar, pool, jukebox, 
  * The props of a venue, each over its tiles: { group, update(time, beat) }.
  * A venue's `props` name them by kind; one with no look gets a plain box.
  */
+/**
+ * Props with a front: built facing +z, `w` across the front and `d` deep.
+ * Wherever they are put they are turned to face the most open floor
+ * beside them, and their footprint is handed over the right way round.
+ */
+const FACING = new Set(['amp', 'drums', 'speaker', 'console', 'rack', 'jukebox', 'pinball', 'loo']);
+
+/** The way out of a footprint with the most floor in front of it (two tiles deep): [dx, dz]. */
+export function openSide(venue, { x, z, w, d, base }) {
+  const floorAt = (i, j) => {
+    const c = venue.cell(i, j);
+    return c && c.kind !== 'wall' && Math.abs(Math.max(...c.h) - base) < 0.6 ? 1 : 0;
+  };
+  // Toward the camera first when it's a tie: +z, +x, then the back.
+  const sides = [[0, 1], [1, 0], [-1, 0], [0, -1]];
+  let best = sides[0], most = -1;
+  for (const [dx, dz] of sides) {
+    let n = 0;
+    for (let k = 1; k <= 2; k++) {
+      if (dx) for (let j = z; j < z + d; j++) n += floorAt(dx > 0 ? x + w - 1 + k : x - k, j);
+      else for (let i = x; i < x + w; i++) n += floorAt(i, dz > 0 ? z + d - 1 + k : z - k);
+    }
+    if (n > most) { most = n; best = [dx, dz]; }
+  }
+  return best;
+}
+
+/** How long a smashed prop takes to go. */
+const SMASH_TIME = 0.45;
+
 export function createProps(GFX, venue, extra = {}) {
   const group = new GFX.Group();
   group.name = 'props';
   const library = { ...PROPS, ...extra };
   const live = [];
+  const smashable = [];
   for (const spec of venue.props) {
     if (spec.free) continue;
     const make = library[spec.kind] ?? plain;
-    const made = make(GFX, { ...spec, venue });
+    let shape = spec, rot = spec.rot ?? 0;
+    if (FACING.has(spec.kind)) {
+      const [dx, dz] = openSide(venue, spec);
+      rot = Math.atan2(dx, dz);
+      // Facing along x, what is across its front runs along z.
+      if (dx) shape = { ...spec, w: spec.d, d: spec.w };
+    } else if (spec.kind === 'bar') rot = 0;
+    const made = make(GFX, { ...shape, rot, venue });
     const holder = new GFX.Group();
     holder.position.set(spec.x + spec.w / 2, spec.base, spec.z + spec.d / 2);
-    holder.rotation.y = spec.rot ?? 0;
+    holder.rotation.y = rot;
     holder.add(made.group);
     group.add(holder);
     if (made.update) live.push(made);
+    if (spec.breakAt) smashable.push({ spec, holder });
   }
   return {
     group,
-    update(time, beat) { for (const p of live) p.update(time, beat); },
+    update(time, beat) {
+      for (const p of live) p.update(time, beat);
+      // Smashed props tip over and sink away into the floor.
+      for (const s of smashable) {
+        if (s.spec.broken === undefined || !s.holder.visible) continue;
+        s.start ??= time;
+        const t = time - s.start;
+        const k = Math.min(1, t / SMASH_TIME);
+        s.holder.rotation.z = k * 1.2;
+        s.holder.scale.set(1 - k * 0.6, 1 - k * 0.9, 1 - k * 0.6);
+        if (k >= 1) s.holder.visible = false;
+      }
+    },
   };
 }

@@ -12,6 +12,7 @@ export default person({
   name: 'mosher',
   scale: 1.42,
   b: 1.15,
+  shape: { torso: 1.06, girth: 1.12, head: 0.96 },
   skin: '#d9987a',
   look: { torso: tank, sleeve: '#d9987a', cuff: '#d9987a', legs: cloth('#2a2a34'), boot: '#f4f4f4' },
   mats: { torso: 'cloth', sleeve: 'skin', cuff: 'skin', legs: 'denim', boot: 'rubber' },

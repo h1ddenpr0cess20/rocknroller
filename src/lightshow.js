@@ -12,6 +12,10 @@ import { canvas, cached, copyOf, glowTexture, random, texture } from './textures
  *   ball     a mirror ball: it turns, and throws a field of sparkles across
  *            the floor, in colours that chase.
  *   laser    a fan of thin beams, sweeping.
+ *   chandelier  crystal and candle-bulbs on brass arms, hung high: warm,
+ *            steady, glittering a little as it sways.
+ *   festoon  a string of bulbs slung between two points (`to`, an offset
+ *            in tiles), sagging, the bulbs taking turns in `colors`.
  *   neon     a neon sign: a word in tube, flickering.
  *
  * Each draws its own meshes (additive, so they glow), and gives lights: the
@@ -210,11 +214,145 @@ export function createLightshow(GFX, venue) {
 
   const add = (spec) => {
     const f = { ...defaults, ...spec };
-    const make = { bulb, par, spot, strobe, ball, laser, neon }[f.kind];
+    const make = { bulb, par, spot, strobe, ball, laser, neon, chandelier, festoon }[f.kind];
     if (!make) throw new Error(`${venue.name}: no such light as ${f.kind}`);
     const made = make(f);
     if (made) fixtures.push(made);
   };
+
+  // ——— a chandelier: a brass hoop in two tiers of arms, candle bulbs on them, crystal drops hanging below.
+  function chandelier(f) {
+    const y = heightOf(f.x, f.z);
+    const high = f.height ?? 3.2;
+    const centre = [f.x, y + high, f.z];
+    const colour = rgb(f.color ?? '#ffd59a');
+    const brass = new GFX.MeshStandardMaterial({ name: 'chandelier-brass', color: new GFX.Color('#c89a48'), roughness: 0.3, metalness: 0.95 });
+    const crystal = new GFX.MeshStandardMaterial({ name: 'chandelier-crystal', color: new GFX.Color('#f4f0ff'), roughness: 0.05, metalness: 0.4, emissive: new GFX.Color(...colour), emissiveIntensity: 0.6, flatShading: true });
+    const flame = new GFX.MeshBasicMaterial({ color: new GFX.Color(colour[0] * 1.3, colour[1] * 1.2, colour[2]), toneMapped: false });
+    const g = new GFX.Group();
+    g.position.set(...centre);
+    const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.015, 0.015, 6, 6), brass);
+    chain.position.y = 3.3;
+    const stem = new GFX.Mesh(new GFX.CylinderGeometry(0.05, 0.09, 0.6, 10), brass);
+    const bowl = new GFX.Mesh(new GFX.SphereGeometry(0.16, 14, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), brass);
+    bowl.position.y = -0.3;
+    g.add(chain, stem, bowl);
+    const drops = [];
+    const tier = (radius, at, n) => {
+      const ring = new GFX.Mesh(new GFX.TorusGeometry(radius, 0.022, 6, 32), brass);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = at;
+      g.add(ring);
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        const cx = Math.cos(a) * radius, cz = Math.sin(a) * radius;
+        const cup = new GFX.Mesh(new GFX.CylinderGeometry(0.05, 0.035, 0.05, 8), brass);
+        cup.position.set(cx, at + 0.04, cz);
+        const candle = new GFX.Mesh(new GFX.CylinderGeometry(0.022, 0.022, 0.14, 6), new GFX.MeshStandardMaterial({ color: '#f6f0e4', roughness: 0.6 }));
+        candle.position.set(cx, at + 0.13, cz);
+        const bulbMesh = new GFX.Mesh(new GFX.SphereGeometry(0.035, 8, 6), flame);
+        bulbMesh.scale.y = 1.5;
+        bulbMesh.position.set(cx, at + 0.24, cz);
+        const drop = new GFX.Mesh(new GFX.IcosahedronGeometry(0.045, 0), crystal);
+        drop.scale.y = 1.8;
+        drop.position.set(cx, at - 0.12, cz);
+        g.add(cup, candle, bulbMesh, drop);
+        drops.push(drop);
+      }
+      // Swags of crystal between the arms.
+      for (let i = 0; i < n * 2; i++) {
+        const a = ((i + 0.5) / (n * 2)) * Math.PI * 2;
+        const bead = new GFX.Mesh(new GFX.IcosahedronGeometry(0.025, 0), crystal);
+        bead.position.set(Math.cos(a) * radius * 0.92, at - 0.07, Math.sin(a) * radius * 0.92);
+        g.add(bead);
+        drops.push(bead);
+      }
+    };
+    tier(0.62, -0.2, 8);
+    tier(0.36, 0.12, 6);
+    const tip = new GFX.Mesh(new GFX.IcosahedronGeometry(0.09, 0), crystal);
+    tip.scale.y = 2;
+    tip.position.y = -0.55;
+    g.add(tip);
+    const h = halo(colour, 3.2);
+    h.position.y = -0.05;
+    g.add(h);
+    g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
+    group.add(g);
+    // A warm pool on the floor below.
+    const p = pool(colour);
+    p.mesh.position.set(f.x, y + 0.04, f.z);
+    p.mesh.scale.setScalar(f.radius ?? 3.2);
+    group.add(p.mesh);
+    sources.push({ pos: centre, colour, reach: f.reach ?? 8, strength: 1 });
+    const seed = f.x * 1.3 + f.z * 0.7;
+    return {
+      update(time, beat, ctx) {
+        g.rotation.y = Math.sin(time * 0.25 + seed) * 0.12;
+        g.rotation.z = Math.sin(time * 0.4 + seed) * 0.015;
+        crystal.emissiveIntensity = 0.45 + 0.2 * Math.sin(time * 3 + seed);
+        h.material.opacity = 0.5 + 0.06 * Math.sin(time * 7 + seed);
+        tint(p.material, colour, 0.35);
+        ctx.offer({ pos: [f.x, centre[1] - 0.4, f.z], color: colour, intensity: 10, reach: f.reach ?? 9 });
+      },
+    };
+  }
+
+  // ——— a festoon: bulbs on a sagging cable from (x, z) to (x, z) + `to`, at `height`.
+  function festoon(f) {
+    const [dx, dz] = f.to ?? [4, 0];
+    const high = f.height ?? 2.2;
+    const n = f.bulbs ?? Math.max(4, Math.round(Math.hypot(dx, dz) * 1.6));
+    const sag = f.sag ?? 0.35;
+    const colours = (f.colors ?? ['#ffd28a']).map(rgb);
+    const at = (t) => {
+      const x = f.x + dx * t, z = f.z + dz * t;
+      return [x, heightOf(f.x, f.z) * (1 - t) + heightOf(f.x + dx, f.z + dz) * t + high - sag * 4 * t * (1 - t), z];
+    };
+    // The cable, in short straight lengths.
+    const up = new GFX.Vector3(0, 1, 0), d = new GFX.Vector3();
+    for (let i = 0; i < 12; i++) {
+      const a = at(i / 12), b = at((i + 1) / 12);
+      d.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+      const length = d.length();
+      const piece = new GFX.Mesh(new GFX.CylinderGeometry(0.012, 0.012, length, 4), iron);
+      piece.position.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
+      piece.quaternion.setFromUnitVectors(up, d.divideScalar(length));
+      group.add(piece);
+    }
+    for (const end of [0, 1]) {
+      const [px, , pz] = at(end);
+      const post = new GFX.Mesh(new GFX.CylinderGeometry(0.03, 0.04, high, 6), iron);
+      post.position.set(px, heightOf(px, pz) + high / 2, pz);
+      group.add(post);
+    }
+    const lamps = [];
+    for (let i = 0; i < n; i++) {
+      const t = (i + 0.5) / n;
+      const c = colours[i % colours.length];
+      const p = at(t);
+      const mat = new GFX.MeshBasicMaterial({ color: new GFX.Color(...c), toneMapped: false });
+      const glass = new GFX.Mesh(new GFX.SphereGeometry(0.06, 8, 6), mat);
+      glass.position.set(p[0], p[1] - 0.08, p[2]);
+      const hh = halo(c, 0.7);
+      hh.position.copy(glass.position);
+      group.add(glass, hh);
+      lamps.push({ mat, hh, c, i });
+    }
+    const mid = at(0.5);
+    sources.push({ pos: mid, colour: colours[0], reach: f.reach ?? 6, strength: 0.6 });
+    return {
+      update(time, beat, ctx) {
+        // The bulbs take turns being brightest, round the string, on the beat.
+        for (const l of lamps) {
+          const k = 0.7 + 0.3 * Math.max(0, Math.cos(((beat / 2) - l.i / 3) * Math.PI));
+          tint(l.mat, l.c, k * 1.1);
+          l.hh.material.opacity = 0.45 * k;
+        }
+        ctx.offer({ pos: mid, color: colours[0], intensity: 5, reach: 7 });
+      },
+    };
+  }
 
   // ——— a caged bulb.
   function bulb(f) {
@@ -295,8 +433,9 @@ export function createLightshow(GFX, venue) {
         tint(lensMat, c, 1.2);
         h.material.color.setRGB(c[0], c[1], c[2]);
         h.material.opacity = 0.35 + 0.45 * l;
-        tint(b.material, c, 0.7 * l + 0.2);
-        tint(p.material, c, 0.55 * l + 0.2);
+        const k = f.faint ? 0.3 : 1;
+        tint(b.material, c, (0.7 * l + 0.2) * k);
+        tint(p.material, c, (0.55 * l + 0.2) * (f.faint ? 0.6 : 1));
         ctx.offer({ pos: lens, color: c, intensity: 9 * l, reach: 8 });
       },
     };
@@ -338,8 +477,8 @@ export function createLightshow(GFX, venue) {
         b.aim(lens, target);
         p.mesh.position.set(tx, ty + 0.03, tz);
         p.mesh.scale.setScalar(Math.hypot(lens[0] - tx, lens[1] - ty, lens[2] - tz) * angle * 1.15);
-        tint(b.material, c, 0.75 * l + 0.2);
-        tint(p.material, c, 0.7 * l + 0.2);
+        tint(b.material, c, (0.75 * l + 0.2) * (f.faint ? 0.35 : 1));
+        tint(p.material, c, (0.7 * l + 0.2) * (f.faint ? 0.7 : 1));
         h.material.color.setRGB(c[0], c[1], c[2]);
         ctx.offer({ pos: [tx, ty + 0.9, tz], color: c, intensity: 8 * l, reach: 6 });
       },
@@ -490,23 +629,76 @@ export function createLightshow(GFX, venue) {
     };
   }
 
-  // ——— a neon sign: a word, in tube.
+  /**
+   * Where a sign hangs. On a wall with floor in front of it on the camera's
+   * side (+x or +z), it is fixed flat to that face, its middle `height` up
+   * from the floor but never above the wall's top. Over floor with a wall
+   * behind it, the same, on that wall. Otherwise it stands on whatever is
+   * under it — a wall top, the floor — facing the camera's corner.
+   */
+  function mount(f, height, size) {
+    const i = Math.floor(f.x), j = Math.floor(f.z);
+    const c = venue.cell(i, j);
+    const floorAt = (x, z) => {
+      const n = venue.cell(x, z);
+      return n && n.kind !== 'wall' ? Math.max(...n.h) : null;
+    };
+    const face = (wallX, wallZ, dx, dz, floor) => {
+      const top = Math.max(...venue.cell(wallX, wallZ).h);
+      const y = Math.min(floor + height, top - size / 2 - 0.08);
+      return { at: [wallX + 0.5 + dx * 0.53, Math.max(floor + size / 2 + 0.1, y), wallZ + 0.5 + dz * 0.53], turn: Math.atan2(dx, dz) };
+    };
+    if (c?.kind === 'wall') {
+      for (const [dx, dz] of [[0, 1], [1, 0]]) {
+        const floor = floorAt(i + dx, j + dz);
+        if (floor !== null && Math.max(...c.h) - floor > 1) return face(i, j, dx, dz, floor);
+      }
+      // A low wall, or one with the room behind it: the sign stands on top of it.
+      return { at: [f.x, Math.max(...c.h) + size / 2 + 0.05, f.z], turn: Math.PI / 4 };
+    }
+    if (c) {
+      const floor = Math.max(...c.h);
+      for (const [dx, dz] of [[0, -1], [-1, 0]]) {
+        const w = venue.cell(i + dx, j + dz);
+        if (w?.kind === 'wall' && Math.max(...w.h) - floor > 1) return face(i + dx, j + dz, -dx, -dz, floor);
+      }
+      return { at: [f.x, floor + height, f.z], turn: Math.PI / 4, standing: true };
+    }
+    return { at: [f.x, heightOf(f.x, f.z) + height, f.z], turn: Math.PI / 4 };
+  }
+
+  // ——— a neon sign: a word, in tube, on a wall.
   function neon(f) {
-    const y = heightOf(f.x, f.z);
     const colour = f.color ?? f.colors?.[0] ?? '#ff3a8a';
     const tex = neonTexture(GFX, f.text ?? 'LIVE', colour);
     const c = rgb(colour);
     const height = f.size ?? 0.55;
-    const material = new GFX.SpriteMaterial({ map: tex.map, color: new GFX.Color(1, 1, 1), ...additive });
-    const sign = new GFX.Sprite(material);
     const width = height * (tex.aspect ?? 3);
-    sign.scale.set(width, height, 1);
-    const at = [f.x, y + (f.height ?? 1.2), f.z];
+    const { at, turn, standing } = mount(f, f.height ?? 1.2, height);
+    const material = new GFX.MeshBasicMaterial({ map: tex.map, color: new GFX.Color(1, 1, 1), side: GFX.DoubleSide, ...additive });
+    const sign = new GFX.Mesh(new GFX.PlaneGeometry(width, height), material);
     sign.position.set(...at);
+    sign.rotation.y = turn;
+    group.add(sign);
+    // The backing board it is screwed to, and a halo on the wall round it.
+    const board = new GFX.Mesh(new GFX.BoxGeometry(width * 1.04, height * 1.1, 0.04), iron);
+    // Its forward (out of the wall) and its right, along the face.
+    const fwd = [Math.sin(turn), Math.cos(turn)], right = [Math.cos(turn), -Math.sin(turn)];
+    board.position.set(at[0] - fwd[0] * 0.03, at[1], at[2] - fwd[1] * 0.03);
+    board.rotation.y = turn;
+    group.add(board);
+    if (standing) {
+      // Free-standing: on two legs.
+      for (const m of [-1, 1]) {
+        const leg = new GFX.Mesh(new GFX.CylinderGeometry(0.025, 0.03, at[1] - heightOf(f.x, f.z), 6), iron);
+        leg.position.set(at[0] + right[0] * m * width * 0.4, (at[1] + heightOf(f.x, f.z)) / 2 - height / 4, at[2] + right[1] * m * width * 0.4);
+        group.add(leg);
+      }
+    }
     const h = halo(c, Math.max(width, 1.6) * 1.1);
     h.position.set(...at);
-    h.material.opacity = 0.35;
-    group.add(sign, h);
+    h.material.opacity = 0.3;
+    group.add(h);
     const seed = f.x * 7.7 + f.z * 3.1;
     sources.push({ pos: at, colour: c, reach: f.reach ?? 5, strength: 0.5 });
     return {
@@ -515,7 +707,7 @@ export function createLightshow(GFX, venue) {
         const out = Math.sin(time * 1.9 + seed) > 0.992 || Math.sin(time * 4.7 + seed * 2) > 0.998;
         const k = out ? 0.25 : 1 + 0.03 * Math.sin(time * 40 + seed);
         material.opacity = k;
-        h.material.opacity = 0.35 * k;
+        h.material.opacity = 0.3 * k;
         ctx.offer({ pos: at, color: c, intensity: 4.5 * k, reach: 6 });
       },
     };
@@ -524,7 +716,8 @@ export function createLightshow(GFX, venue) {
   // ——— build the rig.
   const style = venue.look.lamp ?? 'bulb';
   for (const { x, z } of venue.lamps) {
-    if (style === 'par' || style === 'spot') add({ kind: style, x: x + 0.5, z: z + 0.5, shift: (x + z) * 0.37, aim: [1.5, 1.5] });
+    // House lights on the walls: soft, so the venue's own rig is what catches the eye.
+    if (style === 'par' || style === 'spot') add({ kind: style, x: x + 0.5, z: z + 0.5, shift: (x + z) * 0.37, aim: [1.5, 1.5], faint: true });
     else add({ kind: 'bulb', x: x + 0.5, z: z + 0.5, buzz: venue.look.buzz });
   }
   for (const f of venue.fixtures) add(f);

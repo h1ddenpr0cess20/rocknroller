@@ -12,6 +12,7 @@ export default person({
   name: 'critic',
   scale: 1.45,
   b: 1.05,
+  shape: { legs: 1.1, girth: 0.82, head: 1.1, torso: 1.08 },
   skin: '#e0b090',
   look: { torso: tweed, sleeve: tweed, cuff: tweed, legs: cloth('#2a2a30'), boot: '#2a1c12' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'cloth', legs: 'cloth', boot: 'leather' },

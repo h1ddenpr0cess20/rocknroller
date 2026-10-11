@@ -12,6 +12,7 @@ export default person({
   name: 'scalper',
   scale: 1.42,
   b: 1.05,
+  shape: { legs: 1.06, girth: 0.86, head: 0.96, torso: 1.06 },
   skin: '#d4a07c',
   look: { torso: coat, sleeve: coat, cuff: coat, legs: coat, boot: '#2a1c12' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'cloth', legs: 'cloth', boot: 'leather' },

@@ -15,6 +15,10 @@ import { createModel } from './models/model.js';
  *   `power`      how much it hurts to bounce off it.
  *   `hype`       what smashing it is worth.
  *   `hp`         (a boss) how much it takes in all.
+ *   `tactic`     (a boss) what it does besides come at Rock: `lunge` (every
+ *                so often a sudden rush), `tempo` (it moves on the beat:
+ *                still, then a surge) or `stomp` (it stops, stamps, and the
+ *                floor throws Rock back).
  *
  * How each one looks is its model (models/cast/): sculpted in code, baked in
  * the background as the page loads.
@@ -43,13 +47,13 @@ export const FOES = Object.freeze({
   mascot: { name: 'Mascot', blurb: 'Soft, huge, and absolutely will not stop hugging.', move: 'walk', toughness: 9, power: 3, hype: 150, radius: 0.61, speed: 2.4 },
   diver: { name: 'Stage Diver', blurb: 'Trusts the crowd. The crowd does not trust him.', move: 'fly', toughness: 4, power: 4, hype: 70, radius: 0.37, speed: 2.6 },
   // Not people, but they are at every gig.
-  ball: { name: 'Mirror Ball', blurb: 'Seven hundred tiny mirrors, all of them judging.', move: 'fly', toughness: 5, power: 5, hype: 80, radius: 0.39, speed: 2.0 },
+  drone: { name: 'Camera Drone', blurb: 'Getting the crowd shot. You are now the crowd shot.', move: 'fly', toughness: 5, power: 5, hype: 80, radius: 0.39, speed: 2.4 },
   drum: { name: 'Runaway Drum', blurb: 'Nobody is playing it. It is playing itself.', move: 'crawl', toughness: 5, power: 6, hype: 70, radius: 0.49, speed: 1.6 },
   poolball: { name: '8-Ball', blurb: 'Rolled off the table. Has a grudge.', move: 'walk', toughness: 7, power: 7, hype: 90, radius: 0.49, speed: 2.6 },
   // The ones who run the night.
-  promoter: { name: 'The Promoter', blurb: 'Takes sixty percent. Smiles on the other forty.', move: 'walk', toughness: 9, power: 9, hype: 600, radius: 0.85, speed: 1.6, boss: true, hp: 50 },
-  maestro: { name: 'The Maestro', blurb: 'Conducts. Everything. Including you.', move: 'walk', toughness: 9, power: 10, hype: 800, radius: 0.85, speed: 1.8, boss: true, hp: 56 },
-  headliner: { name: 'The Headliner', blurb: 'Has a flying V, a smoke machine and no idea who you are.', move: 'walk', toughness: 10, power: 12, hype: 1500, radius: 1.04, speed: 1.6, boss: true, hp: 70 },
+  promoter: { name: 'The Promoter', blurb: 'Takes sixty percent. Lunges for the other forty.', move: 'walk', toughness: 9, power: 9, hype: 600, radius: 0.85, speed: 1.6, boss: true, hp: 50, tactic: 'lunge' },
+  maestro: { name: 'The Maestro', blurb: 'Conducts everything, including you. Moves only on the beat.', move: 'walk', toughness: 9, power: 10, hype: 800, radius: 0.85, speed: 1.8, boss: true, hp: 56, tactic: 'tempo' },
+  headliner: { name: 'The Headliner', blurb: 'Has a flying V, platform boots and no idea who you are. Stamps.', move: 'walk', toughness: 10, power: 12, hype: 1500, radius: 1.04, speed: 1.6, boss: true, hp: 70, tactic: 'stomp' },
 });
 
 /** How high a flyer goes over the floor where its loop starts: over the crowd's heads. */

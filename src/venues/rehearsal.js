@@ -1,14 +1,16 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, flat, pick, wash } from './helpers.js';
+import { across, branch } from './helpers.js';
 
 /**
- * Act 2: The Rehearsal Rooms. A converted warehouse with a corridor of
- * soundproofed practice rooms off it, a band in every one of them, all
- * playing at once through foam that doesn't help. Charcoal foam walls, a
- * different coloured light on every room, speaker stacks coming down in the
- * tight corridors, a gate and its pass, and a room with strobes in it where
- * everyone is headbanging, so it looks like a flip-book.
+ * Act 2: The Rehearsal Rooms. A converted warehouse cut up into practice
+ * rooms, nine of them in a block, a band in every one, all playing at once
+ * through foam that doesn't help. The rooms open into each other — some of
+ * them, through doorways where somebody has stacked the PA and keeps
+ * dropping it — so the block is a maze: a record in each of two rooms at
+ * the far end, the pass in the room where the A&R man is scouting, and the
+ * fire door out at the bottom corner, locked. Then down the fire escape to
+ * the loading bay.
  */
 
 export const REHEARSAL = {
@@ -19,8 +21,8 @@ export const REHEARSAL = {
 
 export function rehearsal() {
   const g = new Venue({
-    name: 'The Rehearsal Rooms', act: 2, cols: 124, rows: 140, palette: REHEARSAL, tempo: 118,
-    intro: 'Six practice rooms. Six bands. All of them at once.',
+    name: 'The Rehearsal Rooms', act: 2, cols: 90, rows: 100, palette: REHEARSAL, tempo: 118,
+    intro: 'Nine practice rooms. Nine bands. All of them at once.',
     look: {
       theme: 'rehearsal', floor: 'concrete', wall: 'foam', lamp: 'bulb', buzz: true, exitSign: 'GIG', ampName: 'REHEARSE',
       hemi: ['#b8c4ee', '#2a2840', 1.0], key: '#e4ecff', keyK: 1.1, lantern: '#f0f4ff',
@@ -29,100 +31,101 @@ export function rehearsal() {
       rig: { colors: ['#ff3a4a', '#2a8aff'], program: 'pulse', every: 2 },
     },
   });
-  const hall = (d, n, o = {}) => d.hall(n, { wall: 'foam', ...o });
-  const room = (d, l, w, o = {}) => d.room(l, w, { wall: 'foam', ...o });
+  const FOAM = { wall: 'foam' };
 
-  // The lobby.
-  g.room(2, 4, 5, 5, 50, { lamps: 3, wall: 'foam' });
+  // The lobby, and the stairs down to the block.
+  g.room(2, 4, 5, 5, 60, { lamps: 3, ...FOAM });
   g.start = { x: 4, z: 6 };
-  const d = digger(g, { x: 7, z: 6, h: 50, heading: '+x' });
-  const corridor = hall(d, 14);
-  g.speaker(...across(corridor, 5, { beats: 4 }));
-  g.speaker(...across(corridor, 9, { beats: 4, offset: 0.5 }));
-  g.pick(...corridor.tile(3, 0), 5).pick(...corridor.tile(7, 1), 5).pick(...corridor.tile(7, -1), 5).pick(...corridor.tile(12, 0), 10);
-  d.turn('+z', { wall: 'foam' });
-  const down = hall(d, 3);
-  g.tape(...down.tile(1, 0));
-  d.stairs(3, 1.5, { wall: 'foam' });
+  const d = digger(g, { x: 7, z: 6, h: 60, heading: '+x' });
+  const lobby = d.hall(8, FOAM);
+  g.pick(...lobby.tile(2, 0), 5).pick(...lobby.tile(4, 0), 5).pick(...lobby.tile(6, 0), 5);
+  g.light('neon', ...lobby.tile(4, -2), { text: 'REHEARSAL', color: '#2a8aff', height: 1.6, size: 0.55 });
+  d.turn('+z', FOAM);
+  d.hall(2, FOAM);
+  d.stairs(4, 2, FOAM);
 
-  // Room 1: the red room. Two metalheads and a mosher, a kit on a riser, and a sheet of foam across a bay.
-  const red = room(d, 15, 11);
-  for (const k of [1, 3, 5, 7, 9, 11]) g.pillar(...backTile(red, k), 1.0, { prop: 'amp', rot: Math.PI / 2 });
-  g.block(...red.rect(12, 2, red.back * 5 - (red.back > 0 ? 1 : 0), 2), 0.35, { prop: 'drums', rot: Math.PI / 2 });
-  g.foe('metalhead', ...red.tile(5, -2), { range: 6 }).foe('metalhead', ...red.tile(9, 2), { range: 6 }).foe('mosher', ...red.tile(11, -3), { range: 6 });
-  g.pick(...red.tile(3, 3), 10).pick(...red.tile(8, 0), 10).pick(...red.tile(13, -4), 10);
-  wash(g, red, ['#ff3a4a', '#ff8a2a'], { cans: 3, program: 'pulse', every: 1 });
-  const bay1 = d.fork().jump(pick(red.tile(8, -red.back * 6), red.back > 0 ? '+x' : '-x'));
-  const bayHall = bay1.hall(9, { wall: 'foam' });
-  flat(g, bayHall, 8, { look: 'foam', breakAt: 6.5 });
-  const closet = bay1.room(5, 5, { wall: 'foam' });
-  g.record(...closet.tile(3, 0));
-  g.pick(...closet.tile(1, -1), 10).pick(...closet.tile(1, 1), 10);
-  hall(d, 4);
-  d.turn('+x', { wall: 'foam' });
+  // The block: three by three rooms, seven tiles square, a foam wall between each.
+  const H = d.h, S = 7, x0 = d.at.x - 3, z0 = d.at.z;
+  const at = (i, j) => [x0 + i * (S + 1), z0 + j * (S + 1)];
+  /** Tile (a, b) of room (i, j), from its top-left corner. */
+  const tile = (i, j, a, b) => [at(i, j)[0] + a, at(i, j)[1] + b];
+  const floors = ['concrete', 'carpet', 'planks', 'carpet', 'concrete', 'planks', 'carpet', 'planks', 'concrete'];
+  for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) g.room(...at(i, j), S, S, H, { ...FOAM, floor: floors[j * 3 + i], lamps: 0 });
+  /** A doorway through the wall between two rooms side by side (`across` 'x') or one above the other ('z'), three wide. */
+  const door = (i, j, way, { stack = false, offset = 0 } = {}) => {
+    const [x, z] = at(i, j);
+    const [dx, dz, w, dd] = way === 'x' ? [x + S, z + 2, 1, 3] : [x + 2, z + S, 3, 1];
+    g.flat(dx, dz, w, dd, H, { tex: 'concrete' });
+    if (stack) g.speaker(dx, dz, { w, d: dd, beats: 4, offset });
+  };
+  door(0, 0, 'x');
+  door(1, 0, 'x', { stack: true });
+  door(0, 0, 'z');
+  door(0, 1, 'x', { stack: true, offset: 0.5 });
+  door(1, 1, 'z');
+  door(1, 1, 'x', { stack: true, offset: 0.25 });
+  door(0, 2, 'x');
+  door(1, 2, 'x');
 
-  // A corridor a tile wide, with speakers coming down in it. Wait for them.
-  const tight = hall(d, 12, { width: 1 });
-  g.speaker(...across(tight, 3, { beats: 4 }));
-  g.speaker(...across(tight, 7, { beats: 4, offset: 0.5 }));
-  g.speaker(...across(tight, 10, { beats: 4 }));
-  hall(d, 3);
+  /** A room's band, out of the way of the doors: amps in the top corners, a kit in the bottom left, a coloured light on it. */
+  const band = (i, j, colour, { kit = true } = {}) => {
+    for (const a of [0, 6]) g.pillar(...tile(i, j, a, 0), 1.0, { prop: 'amp', rot: 0 });
+    if (kit) g.block(...tile(i, j, 0, 5), 2, 2, 0.35, { prop: 'drums' });
+    g.light('par', ...tile(i, j, 6, 6), { colors: [colour], program: 'pulse', every: 1, aim: [-3, -3], height: 1.7, glow: 0.7, reach: 7 });
+  };
+  // Room 1, the punks; room 2, the metal band, under a strobe; room 3, the drummer, and a record under his stool.
+  band(0, 0, '#ff3a4a');
+  g.foe('mosher', ...tile(0, 0, 3, 4), { range: 4 });
+  g.pick(...tile(0, 0, 3, 5), 10).pick(...tile(0, 0, 5, 3), 5);
+  band(1, 0, '#e8e8ff', { kit: false });
+  g.light('strobe', ...tile(1, 0, 3, 1), { colors: ['#ffffff'], reach: 7, height: 1.4 });
+  g.foe('metalhead', ...tile(1, 0, 2, 4), { range: 4 }).foe('metalhead', ...tile(1, 0, 5, 4), { range: 4 });
+  g.pick(...tile(1, 0, 3, 3), 10);
+  band(2, 0, '#ffb02a');
+  g.foe('drum', ...tile(2, 0, 3, 4), { path: [tile(2, 0, 2, 2), tile(2, 0, 5, 2), tile(2, 0, 5, 4), tile(2, 0, 2, 4)] });
+  g.record(...tile(2, 0, 5, 5));
+  // Room 4, a singer-songwriter and his friend; room 5, the big room, the covers band and its crowd; room 6, a record.
+  band(0, 1, '#3aff7a', { kit: false });
+  g.foe('freebird', ...tile(0, 1, 3, 3), { range: 4 });
+  g.tape(...tile(0, 1, 1, 5));
+  band(1, 1, '#2a8aff');
+  g.foe('mosher', ...tile(1, 1, 2, 4), { range: 4 }).foe('roadie', ...tile(1, 1, 5, 3), { range: 4 });
+  g.pick(...tile(1, 1, 1, 3), 10).pick(...tile(1, 1, 3, 5), 10);
+  g.lighter(...tile(1, 1, 6, 6));
+  band(2, 1, '#ff3a8a');
+  g.foe('metalhead', ...tile(2, 1, 3, 4), { range: 4 });
+  g.record(...tile(2, 1, 5, 4));
+  g.road(...tile(2, 1, 3, 5), 50);
+  // Room 7, where the A&R man is, and the pass; room 8, the bassist alone; room 9, the fire door.
+  band(0, 2, '#c83aff', { kit: false });
+  g.foe('suit', ...tile(0, 2, 3, 3), { range: 4 });
+  g.pass(...tile(0, 2, 2, 5));
+  band(1, 2, '#3ad8ff', { kit: false });
+  g.foe('roadie', ...tile(1, 2, 3, 4), { range: 4 });
+  g.pick(...tile(1, 2, 2, 5), 10).pick(...tile(1, 2, 5, 5), 10);
+  band(2, 2, '#ff6a2a');
+  g.foe('mosher', ...tile(2, 2, 3, 3), { range: 4 });
+  g.light('neon', ...tile(2, 2, 6, 0), { text: 'FIRE EXIT', color: '#3aff7a', height: 1.5, size: 0.4 });
 
-  // Room 2: the blue room. Freebird guys and a roadie; the pass is in a cupboard off it.
-  const blue = room(d, 13, 11);
-  g.foe('freebird', ...blue.tile(4, -2), { range: 6 }).foe('freebird', ...blue.tile(8, 3), { range: 6 }).foe('roadie', ...blue.tile(10, -1), { range: 6 });
-  for (const k of [2, 6, 10]) g.pillar(...backTile(blue, k), 1.0, { prop: 'amp', rot: Math.PI / 2 });
-  g.pick(...blue.tile(2, 4), 10).pick(...blue.tile(7, 0), 10).pick(...blue.tile(11, -4), 10);
-  g.road(...blue.tile(11, 4), 60);
-  wash(g, blue, ['#2a8aff', '#2de2ff'], { cans: 3, program: 'chase', every: 2 });
-  const cupboard = d.fork().jump(pick(blue.tile(6, -6 * -1 * -1), '+x'));
-  const cupHall = cupboard.hall(3, { wall: 'foam' });
-  void cupHall;
-  const cup = cupboard.room(6, 7, { wall: 'foam' });
-  g.pass(...cup.tile(3, 0));
-  g.foe('roadie', ...cup.tile(2, 2), { range: 4 });
-  g.pick(...cup.tile(4, -2), 10);
-  // And over a gap on a plank, the second record.
-  const gapSide = d.fork().jump(pick(blue.tile(9, blue.back * 6), blue.back > 0 ? '-x' : '+x'));
-  gapSide.hall(2, { wall: 'foam' });
-  const plank = gapSide.bridge(7);
-  g.foe('mosher', ...plank.tile(4, 0), { path: [plank.tile(1, 0), plank.tile(6, 0)] });
-  const alcove = gapSide.room(5, 5, { wall: 'foam' });
-  g.record(...alcove.tile(2, 0));
-  hall(d, 4);
-  d.turn('+z', { wall: 'foam' });
-  const gate = hall(d, 6);
-  barred(g, gate, 3);
-  d.stairs(4, 2, { wall: 'foam' });
-
-  // Room 3: the strobe room. Everyone headbangs, and it looks like stills.
-  const strobe = room(d, 15, 13);
-  wash(g, strobe, ['#ff2d95', '#8a4be8'], { cans: 3, strobe: true, program: 'chase', every: 1 });
-  g.light('strobe', ...strobe.tile(14, strobe.back * 7), { colors: ['#ffffff'], reach: 9, shift: 2, height: 1.3 });
-  for (const [a, b] of [[3, 3], [3, -3], [8, 4], [8, -4]]) g.pillar(...strobe.tile(a, b), 0.9, { prop: 'speaker' });
-  g.foe('metalhead', ...strobe.tile(4, 0), { range: 7 }).foe('metalhead', ...strobe.tile(7, 3), { range: 7 }).foe('mosher', ...strobe.tile(9, -3), { range: 7 }).foe('metalhead', ...strobe.tile(12, 1), { range: 7 }).foe('mosher', ...strobe.tile(13, -4), { range: 7 });
-  g.pick(...strobe.tile(2, 0), 10).pick(...strobe.tile(6, -4), 10).pick(...strobe.tile(11, 4), 10);
-  g.tape(...strobe.tile(13, 5)).lighter(...strobe.tile(1, -5));
-  // Off the back of the room, another sheet of foam, a long run at it, and the last record.
-  const backBay = d.fork().jump(pick(strobe.tile(5, strobe.back * 7), strobe.back > 0 ? '-x' : '+x'));
-  const bbHall = backBay.hall(10, { wall: 'foam' });
-  flat(g, bbHall, 9, { look: 'foam', breakAt: 6.5 });
-  const stash = backBay.room(5, 5, { wall: 'foam' });
-  g.record(...stash.tile(3, 0));
-  g.road(...stash.tile(1, 1), 70);
-  hall(d, 4);
-  d.turn('+x', { wall: 'foam' });
-
-  // The green room: a last few, and the stage door.
-  const long = hall(d, 8);
-  g.foe('roadie', ...long.tile(5, 0), { range: 5 });
-  g.speaker(...across(long, 7, { beats: 4 }));
-  const green = room(d, 9, 9);
-  g.foe('roadie', ...green.tile(3, -2), { range: 5 }).foe('suit', ...green.tile(4, 2), { range: 5 }).foe('freebird', ...green.tile(6, 0), { range: 5 });
-  g.pick(...green.tile(7, 3), 10).tape(...green.tile(1, -3));
-  hall(d, 3);
-  d.stairs(3, 1.5, { wall: 'foam' });
-  hall(d, 2);
-  d.exit(3);
+  // The fire door, at the bottom of room 9, and the fire escape: down the banked stairs, outside, to the loading bay.
+  const [fx, fz] = tile(2, 2, 3, S);
+  const out = digger(g, { x: fx, z: fz, h: H, heading: '+z' });
+  const fire = out.hall(3, FOAM);
+  g.gate(...fire.span(1), { axis: 'z' });
+  const escape = out.chute(9, 3);
+  g.pick(...escape.tile(2, 0), 5).pick(...escape.tile(4, 0), 5).pick(...escape.tile(6, 0), 5);
+  out.turn('+x', { wall: 'block' });
+  const bay = out.hall(10, { wall: 'block', width: 5 });
+  g.speaker(...across(bay, 4, { beats: 4 }));
+  g.foe('roadie', ...bay.tile(7, 0), { range: 3 });
+  g.pick(...bay.tile(2, 0), 5).pick(...bay.tile(6, 1), 5).pick(...bay.tile(8, -1), 10);
+  // Along a plank from the bay, the band's van: the last record.
+  const van = branch(out, bay, 5, 'front', 3);
+  const plank = van.bridge(6);
+  g.foe('brother', ...plank.tile(3, 0), { path: [plank.tile(1, 0), plank.tile(5, 0)] });
+  const back = van.room(4, 4, { wall: 'block', floor: 'planks' });
+  g.record(...back.tile(2, 0));
+  out.hall(2, { wall: 'block' });
+  out.exit(3);
   return g;
 }

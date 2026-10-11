@@ -10,6 +10,8 @@ export default person({
   name: 'security',
   scale: 1.6,
   b: 1.4,
+  shape: { legs: 0.94, girth: 1.22, hips: 1.1 },
+  belly: 1.0,
   skin: '#b8805e',
   look: { torso: cloth('#e8f23a', '#a8b020'), sleeve: '#16161a', cuff: '#16161a', legs: cloth('#16161a'), boot: '#0a0a0c' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'cloth', legs: 'cloth', boot: 'leather' },

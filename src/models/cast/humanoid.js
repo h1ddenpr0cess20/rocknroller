@@ -13,8 +13,42 @@ import { coat, mix } from '../skins.js';
 
 export const side = (m) => (m > 0 ? 'L' : 'R');
 
-/** The skeleton. `b` widens the shoulders and hips (1 as drawn; the Warrior is broader). */
-export function bones(b = 1) {
+/** Where the legs end and the head begins, as sculpted. */
+const HIP = 0.32, NECK = 0.585;
+
+const step = (a, b, x) => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+/**
+ * A build: how one person's body differs from the sculpt everyone shares,
+ * as a warp of it (see `Sculpt.setWarp`). `legs` and `torso` stretch those
+ * up and down; `head` grows the head about the top of the neck; `girth`
+ * widens and deepens the trunk (and the shoulders, and so the arms) and
+ * `hips` the legs' spread. 1 is as sculpted; null if it is all 1.
+ */
+export function build({ legs = 1, torso = 1, head = 1, girth = 1, hips = Math.sqrt(girth) } = {}) {
+  if (legs === 1 && torso === 1 && head === 1 && girth === 1 && hips === 1) return null;
+  const neckAt = HIP * legs + (NECK - HIP) * torso;
+  const up = (y) => (y <= HIP ? y * legs : y <= NECK ? HIP * legs + (y - HIP) * torso : neckAt + (y - NECK) * head);
+  const down = (y) => (y <= HIP * legs ? y / legs : y <= neckAt ? HIP + (y - HIP * legs) / torso : NECK + (y - neckAt) / head);
+  // Across: the legs' spread, then the trunk's, then (up the neck) the head's, each easing into the next.
+  const wide = (y) => {
+    const trunk = hips + (girth - hips) * step(0.25, 0.36, y);
+    return trunk + (head - trunk) * step(0.52, 0.575, y);
+  };
+  const tall = (y) => (y <= HIP ? legs : y <= NECK ? torso : head);
+  return {
+    scale: ([, y]) => Math.min(wide(y), tall(y)),
+    to: ([x, y, z]) => { const w = wide(y); return [x * w, up(y), z * w]; },
+    from: ([x, y, z]) => { const r = down(y), w = wide(r); return [x / w, r, z / w]; },
+  };
+}
+
+/** The skeleton. `b` widens the shoulders and hips (1 as drawn; the Warrior is broader); `warp` is a build's. */
+export function bones(b = 1, warp = null) {
+  if (warp) return bones(b).map(([name, parent, at]) => [name, parent, warp.to(at)]);
   const list = [
     ['root', null, [0, 0, 0]],
     ['hips', 'root', [0, 0.32, 0]],
@@ -63,35 +97,54 @@ export function skinTone(hex = '#e9b48f') {
 /**
  * The body, painted in its clothes: `look` gives the colours (functions or
  * hex) of `skin`, `torso`, `sleeve` (upper arm), `cuff` (forearm), `hand`,
- * `legs`, `boot`; and `mats` the materials of the same (default 'cloth',
- * 'skin' for skin). `b` is the breadth.
+ * `legs`, `boot`, and if they have them a `belt` (and its `buckle`) and a
+ * `sole` under the shoes; and `mats` the materials of the same (default
+ * 'cloth', 'skin' for skin). `b` is the breadth; `belly` (0 to 2 or so)
+ * how far a belly sticks out.
  */
-export function body(s, { look, mats = {}, b = 1, k = 0.03 }) {
+export function body(s, { look, mats = {}, b = 1, k = 0.03, belly = 0 }) {
   const J = joints(b);
   const m = (part) => mats[part] ?? (part === 'skin' || part === 'hand' ? 'skin' : 'cloth');
   const c = (part) => look[part] ?? look.torso;
-  // Pelvis, belly, chest, shoulders.
+  const T = { color: c('torso'), mat: m('torso') };
+  // Pelvis, a waist narrower than the chest, the chest, and the slope of the shoulders up to the neck.
   s.ellipsoid([0, 0.318, 0], [0.083 * b, 0.056, 0.06], { color: c('legs'), mat: m('legs'), bone: 'hips', k });
-  s.limb([0, 0.33, 0.002], [0, 0.42, 0.004], 0.068 * b, 0.078 * b, { color: c('torso'), mat: m('torso'), bone: 'spine', k: 0.04 });
-  s.ellipsoid([0, 0.455, 0.006], [0.1 * b, 0.074, 0.068], { color: c('torso'), mat: m('torso'), bone: 'chest', k: 0.04 });
+  s.limb([0, 0.33, 0.002], [0, 0.42, 0.004], 0.066 * b, 0.074 * b, { ...T, bone: 'spine', k: 0.04 });
+  s.ellipsoid([0, 0.458, 0.008], [0.098 * b, 0.07, 0.066], { ...T, bone: 'chest', k: 0.04 });
+  s.ellipsoid([0, 0.47, 0.03], [0.074 * b, 0.05, 0.05], { ...T, bone: 'chest', k: 0.03 });
+  for (const mm of [1, -1]) s.limb([mm * 0.03, 0.515, -0.004], [mm * 0.092 * b, 0.494, 0], 0.03, 0.034, { ...T, bone: 'chest', k: 0.025 });
+  // A belly, for those who have one: out in front and a little down.
+  if (belly > 0) {
+    s.ellipsoid([0, 0.372 - belly * 0.008, 0.02 + belly * 0.03], [(0.07 + belly * 0.022) * b, 0.068 + belly * 0.018, 0.06 + belly * 0.034], { ...T, bone: 'spine', k: 0.04 });
+  }
+  // A belt, if they wear one: a band round the top of the trousers, a buckle.
+  if (look.belt) {
+    s.torus([0, 0.338, 0.004 + belly * 0.012], 0.074 * b + belly * 0.012, 0.009, { color: look.belt, mat: 'leather', bone: 'hips', k: 0.004 });
+    if (look.buckle) s.box([0, 0.338, 0.08 * b + belly * 0.05], [0.014, 0.011, 0.005], 0.002, { color: look.buckle, mat: 'metal', bone: 'hips', k: 0.002 });
+  }
   for (const mm of [1, -1]) {
     const S = side(mm);
-    s.sphere([mm * 0.098 * b, 0.494, 0], 0.04, { color: c('sleeve'), mat: m('sleeve'), bone: `arm${S}`, k: 0.035 });
-    // Arms.
-    s.limb(J[`shoulder${S}`], J[`elbow${S}`], 0.034, 0.028, { color: c('sleeve'), mat: m('sleeve'), bone: `arm${S}`, k: 0.012 });
-    s.limb(J[`elbow${S}`], J[`wrist${S}`], 0.027, 0.022, { color: c('cuff'), mat: m('cuff'), bone: `fore${S}`, k: 0.012 });
-    // A hand, a mitten of a fist with a thumb.
+    s.sphere([mm * 0.098 * b, 0.494, 0], 0.039, { color: c('sleeve'), mat: m('sleeve'), bone: `arm${S}`, k: 0.035 });
+    // Arms: the upper arm a little thicker at the shoulder, the forearm at the elbow.
+    s.limb(J[`shoulder${S}`], J[`elbow${S}`], 0.034, 0.027, { color: c('sleeve'), mat: m('sleeve'), bone: `arm${S}`, k: 0.012 });
+    s.limb(J[`elbow${S}`], J[`wrist${S}`], 0.028, 0.02, { color: c('cuff'), mat: m('cuff'), bone: `fore${S}`, k: 0.012 });
+    // A hand: a fist, knuckles forward, with a thumb over it.
     const h = J[`hand${S}`];
-    s.ellipsoid(h, [0.022, 0.03, 0.026], { color: c('hand'), mat: m('hand'), bone: `hand${S}`, k: 0.012 });
+    s.ellipsoid(h, [0.021, 0.028, 0.026], { color: c('hand'), mat: m('hand'), bone: `hand${S}`, k: 0.012 });
+    s.ellipsoid([h[0] - mm * 0.002, h[1] - 0.012, h[2] + 0.01], [0.019, 0.016, 0.022], { color: c('hand'), mat: m('hand'), bone: `hand${S}`, k: 0.01 });
     s.limb([h[0] - mm * 0.012, h[1] + 0.008, h[2] + 0.016], [h[0] - mm * 0.016, h[1] - 0.006, h[2] + 0.026], 0.0085, 0.008, { color: c('hand'), mat: m('hand'), bone: `hand${S}`, k: 0.006 });
-    // Legs and boots.
-    s.limb(J[`hip${S}`], J[`knee${S}`], 0.047 * Math.sqrt(b), 0.035, { color: c('legs'), mat: m('legs'), bone: `thigh${S}`, k: 0.02 });
-    s.limb(J[`knee${S}`], J[`ankle${S}`], 0.034, 0.027, { color: c('boot'), mat: m('boot'), bone: `shin${S}`, k: 0.012 });
-    const a = J[`ankle${S}`];
-    s.ellipsoid([a[0], 0.03, a[2] + 0.028], [0.033, 0.031, 0.058], { color: c('boot'), mat: m('boot'), bone: `foot${S}`, k: 0.02 });
+    // Legs: a thigh, a knee, a calf that swells and narrows to the ankle.
+    s.limb(J[`hip${S}`], J[`knee${S}`], 0.047 * Math.sqrt(b), 0.034, { color: c('legs'), mat: m('legs'), bone: `thigh${S}`, k: 0.02 });
+    const kn = J[`knee${S}`], a = J[`ankle${S}`];
+    s.limb(kn, [a[0], a[1] + 0.06, a[2] - 0.004], 0.033, 0.031, { color: c('boot'), mat: m('boot'), bone: `shin${S}`, k: 0.014 });
+    s.limb([a[0], a[1] + 0.06, a[2] - 0.004], a, 0.031, 0.025, { color: c('boot'), mat: m('boot'), bone: `shin${S}`, k: 0.012 });
+    // A shoe: heel, the foot, a rounded toe, and a sole under it.
+    s.ellipsoid([a[0], 0.032, a[2] + 0.024], [0.032, 0.03, 0.05], { color: c('boot'), mat: m('boot'), bone: `foot${S}`, k: 0.02 });
+    s.ellipsoid([a[0], 0.024, a[2] + 0.062], [0.03, 0.022, 0.03], { color: c('boot'), mat: m('boot'), bone: `foot${S}`, k: 0.015 });
+    if (look.sole) s.box([a[0], 0.006, a[2] + 0.034], [0.031, 0.006, 0.064], 0.005, { color: look.sole, mat: 'rubber', bone: `foot${S}`, k: 0.006 });
   }
   // Neck.
-  s.limb([0, 0.51, 0], [0, 0.585, 0.008], 0.03, 0.029, { color: c('skin'), mat: m('skin'), bone: 'neck', k: 0.02 });
+  s.limb([0, 0.51, 0], [0, 0.585, 0.008], 0.03, 0.028, { color: c('skin'), mat: m('skin'), bone: 'neck', k: 0.02 });
   return J;
 }
 

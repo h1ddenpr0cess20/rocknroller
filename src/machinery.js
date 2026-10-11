@@ -24,30 +24,51 @@ export function createSpeakerMesh(GFX, { w, d, height, venue }) {
   if (style === 'crate') return createCrate(GFX, { w, d, height });
   const group = new GFX.Group();
   const grille = grilleTexture(GFX);
-  const tolex = dark(GFX, '#17171a', { roughness: 0.7 });
-  const side = (across) => {
-    const n = Math.max(1, Math.round(across));
-    return new GFX.MeshStandardMaterial({ color: new GFX.Color('#ffffff'), map: tiled(GFX, grille.map, n, 1), bumpMap: tiled(GFX, grille.bump, n, 1), bumpScale: 1.4, roughness: 0.92, metalness: 0 });
-  };
+  const tolex = dark(GFX, '#17171a', { roughness: 0.75 });
+  const cloth = new GFX.MeshStandardMaterial({ color: new GFX.Color('#5a5a5e'), map: grille.map, bumpMap: grille.bump, bumpScale: 1.4, roughness: 0.9 });
   const metal = dark(GFX, '#b8bcc4', { metalness: 0.9, roughness: 0.3 });
-  // BoxGeometry's material order: +x, -x, +y, -y, +z, -z.
-  const mats = [side(d), side(d), tolex, tolex, side(w), side(w)];
-  const body = new GFX.Mesh(new GFX.BoxGeometry(w, height, d), mats);
-  body.castShadow = body.receiveShadow = true;
+  const truss = dark(GFX, '#2a2a30', { metalness: 0.7, roughness: 0.4 });
+  const body = new GFX.Group();
   group.add(body);
-  for (const sx of [-1, 1]) {
-    for (const sz of [-1, 1]) {
-      const c = new GFX.Mesh(new GFX.BoxGeometry(0.1, 0.1, 0.1), metal);
-      c.position.set(sx * (w / 2 - 0.02), height / 2 - 0.02, sz * (d / 2 - 0.02));
-      group.add(c);
+  // A row of cabinets along the long side, two high: each a tolex box, the cloth front and back set into it, corners, a handle.
+  const long = w >= d, L = long ? w : d, S = long ? d : w;
+  const n = Math.max(1, Math.round(L));
+  const cw = L / n, ch = height / 2;
+  const box = new GFX.BoxGeometry(long ? cw - 0.03 : S, ch - 0.03, long ? S : cw - 0.03);
+  const front = new GFX.BoxGeometry(long ? cw - 0.16 : 0.02, ch - 0.16, long ? 0.02 : cw - 0.16);
+  const corner = new GFX.BoxGeometry(0.07, 0.07, 0.07);
+  for (let i = 0; i < n; i++) {
+    for (let k = 0; k < 2; k++) {
+      const a = -L / 2 + cw * (i + 0.5), y = -height / 2 + ch * (k + 0.5);
+      const at = (u, v, h) => (long ? [u, h, v] : [v, h, u]);
+      const cab = new GFX.Mesh(box, tolex);
+      cab.position.set(...at(a, 0, y));
+      cab.castShadow = cab.receiveShadow = true;
+      body.add(cab);
+      for (const side of [-1, 1]) {
+        const f = new GFX.Mesh(front, cloth);
+        f.position.set(...at(a, side * (S / 2 + 0.005), y));
+        body.add(f);
+      }
+      for (const su of [-1, 1]) for (const sv of [-1, 1]) for (const sh of [-1, 1]) {
+        const c = new GFX.Mesh(corner, metal);
+        c.position.set(...at(a + su * (cw / 2 - 0.05), sv * (S / 2 - 0.03), y + sh * (ch / 2 - 0.05)));
+        body.add(c);
+      }
     }
   }
-  const handle = new GFX.Mesh(new GFX.TorusGeometry(0.14, 0.025, 6, 14, Math.PI), metal);
-  handle.position.set(0, height / 2 + 0.01, 0);
-  group.add(handle);
-  const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.04, 0.04, 8, 8), metal);
-  chain.position.y = height / 2 + 4;
-  group.add(chain);
+  // The truss it is flown from, and two chains up into the dark.
+  const bar = new GFX.Mesh(new GFX.BoxGeometry(long ? L + 0.2 : 0.16, 0.16, long ? 0.16 : L + 0.2), truss);
+  bar.position.y = height / 2 + 0.2;
+  group.add(bar);
+  for (const e of [-1, 1]) {
+    const off = e * (L / 2 - 0.15);
+    for (const [h, len] of [[height / 2 + 0.1, 0.22], [height / 2 + 4.3, 8]]) {
+      const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.025, 0.025, len, 6), metal);
+      chain.position.set(long ? off : 0, h, long ? 0 : off);
+      group.add(chain);
+    }
+  }
   return {
     group,
     update(up, time) {
@@ -188,38 +209,62 @@ export function createLiftMesh(GFX, { w, d, thickness, style }) {
   const side = dark(GFX, '#101012', { roughness: 0.8 });
   let live = null;
   if (style === 'crowd') {
-    // A raft of people, bobbing, arms up, shoulder to shoulder, under a dark slab.
-    const slab = new GFX.Mesh(new GFX.BoxGeometry(w, thickness, d), dark(GFX, '#17121e', { roughness: 0.95 }));
-    slab.castShadow = slab.receiveShadow = true;
-    group.add(slab);
-    const shirts = ['#ff2d95', '#2de2ff', '#ffd23a', '#8a4be8', '#3ae88a', '#f2f0ec', '#ff7a1a'].map((c) => dark(GFX, c, { roughness: 0.8 }));
-    const skin = [dark(GFX, '#d9a07c', { roughness: 0.6 }), dark(GFX, '#8a5a3a', { roughness: 0.6 }), dark(GFX, '#f0c8a8', { roughness: 0.6 })];
+    // Crowd-surfing: the people stand down in the pit, packed in, arms straight up, and Rock rides on their hands.
+    // There is nothing to see of the platform itself: the top of it is where their palms are.
+    const shirts = ['#ff2d95', '#2de2ff', '#ffd23a', '#8a4be8', '#3ae88a', '#f2f0ec', '#ff7a1a', '#16161c'].map((c) => dark(GFX, c, { roughness: 0.8 }));
+    const skins = ['#e8b48f', '#c08060', '#8a5a3a', '#f0c8a8', '#5a3a28'].map((c) => dark(GFX, c, { roughness: 0.6 }));
+    const hairs = ['#1a120c', '#5a3a1e', '#d8b060', '#2a2a2e', '#8a2a1a'].map((c) => dark(GFX, c, { roughness: 0.7 }));
+    const torso = new GFX.CylinderGeometry(0.15, 0.13, 0.5, 8);
+    const legs = new GFX.CylinderGeometry(0.12, 0.1, 0.5, 6);
+    const headG = new GFX.SphereGeometry(0.12, 10, 8);
+    const hairG = new GFX.SphereGeometry(0.125, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55);
+    const armG = new GFX.CylinderGeometry(0.04, 0.035, 0.5, 6);
+    const handG = new GFX.SphereGeometry(0.055, 6, 5);
+    const top = thickness / 2;
     const fans = [];
-    const cols = Math.max(2, Math.round(w * 2.4)), rows = Math.max(2, Math.round(d * 2.4));
+    const per = 2.6;
+    const cols = Math.max(2, Math.round(w * per)), rows = Math.max(2, Math.round(d * per));
     for (let j = 0; j < rows; j++) {
       for (let i = 0; i < cols; i++) {
-        const x = (-w / 2) + ((i + 0.5) / cols) * w, z = (-d / 2) + ((j + 0.5) / rows) * d;
+        const k = i * 7 + j * 13;
+        const jitter = [((k * 37) % 10) / 10 - 0.5, ((k * 53) % 10) / 10 - 0.5];
+        const x = -w / 2 + ((i + 0.5 + jitter[0] * 0.4) / cols) * w, z = -d / 2 + ((j + 0.5 + jitter[1] * 0.4) / rows) * d;
+        // Some taller than others: the hands don't all meet the platform at once.
+        const reach = 0.04 * ((k % 5) - 2);
         const person = new GFX.Group();
-        person.position.set(x, thickness / 2, z);
-        const body = new GFX.Mesh(new GFX.CylinderGeometry(0.13, 0.15, 0.3, 8), shirts[(i * 3 + j * 5) % shirts.length]);
-        body.position.y = 0.15;
-        const head = new GFX.Mesh(new GFX.SphereGeometry(0.1, 8, 6), skin[(i + j) % skin.length]);
-        head.position.y = 0.37;
-        person.add(body, head);
+        // Feet on the pit floor (the pits are dug 1.6 under the platform), palms at its top.
+        person.position.set(x, top - 1.6 + reach, z);
+        person.scale.setScalar(1.12);
+        const shirt = shirts[k % shirts.length], skin = skins[(k >> 1) % skins.length];
+        const lower = new GFX.Mesh(legs, shirts[7]);
+        lower.position.y = 0.25;
+        const body = new GFX.Mesh(torso, shirt);
+        body.position.y = 0.72;
+        const head = new GFX.Mesh(headG, skin);
+        head.position.y = 1.09;
+        const hair = new GFX.Mesh(hairG, hairs[k % hairs.length]);
+        hair.position.y = 1.1;
+        person.add(lower, body, head, hair);
         const arms = [-1, 1].map((m) => {
-          const a = new GFX.Mesh(new GFX.CylinderGeometry(0.035, 0.035, 0.34, 5), skin[(i + j) % skin.length]);
-          a.position.set(m * 0.14, 0.45, 0);
-          person.add(a);
-          return a;
+          const shoulder = new GFX.Group();
+          shoulder.position.set(m * 0.17, 0.92, 0);
+          const arm = new GFX.Mesh(armG, skin);
+          arm.position.y = 0.25;
+          const hand = new GFX.Mesh(handG, skin);
+          hand.position.y = 0.5;
+          shoulder.add(arm, hand);
+          person.add(shoulder);
+          return shoulder;
         });
+        person.rotation.y = (k % 8) * 0.8;
         group.add(person);
-        fans.push({ person, arms, seed: i * 1.3 + j * 2.1 });
+        fans.push({ person, arms, seed: k * 0.37, y: person.position.y });
       }
     }
     live = (time) => {
       for (const f of fans) {
-        f.person.position.y = thickness / 2 + Math.abs(Math.sin(time * 5 + f.seed)) * 0.05;
-        f.arms.forEach((a, k) => { a.rotation.z = (k ? -1 : 1) * (0.25 + 0.2 * Math.sin(time * 6 + f.seed)); });
+        f.person.position.y = f.y + Math.sin(time * 5 + f.seed) * 0.03;
+        f.arms.forEach((a, n) => { a.rotation.z = (n ? -1 : 1) * (0.08 + 0.08 * Math.sin(time * 6 + f.seed + n)); });
       }
     };
   } else if (style === 'forklift') {
@@ -282,24 +327,86 @@ export function createPanelMesh(GFX, { span, height, thickness, across, look }) 
 }
 
 /** A bumper: a squat chrome post with a glowing ring, which flashes when Rock bounces off it. */
-export function createBumperMesh(GFX, { radius }) {
+/**
+ * A bumper, by its `look`: 'post' (a pinball post, chrome with a lit ring),
+ * 'rope' (a brass stanchion of a velvet rope, the rope looped round it),
+ * 'podium' (a go-go dancer's lit cube) or 'drum' (a kick drum on its side,
+ * the head facing up). Each flashes and swells when it throws Rock.
+ */
+export function createBumperMesh(GFX, { radius, look = 'post' }) {
   const group = new GFX.Group();
-  const chrome = dark(GFX, '#eef0f6', { metalness: 0.55, roughness: 0.22, emissive: new GFX.Color('#4a3a58'), emissiveIntensity: 0.7 });
-  const ringMat = new GFX.MeshBasicMaterial({ color: new GFX.Color('#ff3a8a'), toneMapped: false });
-  const post = new GFX.Mesh(new GFX.CylinderGeometry(radius * 0.8, radius, 0.5, 20), chrome);
-  post.position.y = 0.25;
-  const cap = new GFX.Mesh(new GFX.SphereGeometry(radius * 0.8, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), chrome);
-  cap.position.y = 0.5;
-  const ring = new GFX.Mesh(new GFX.TorusGeometry(radius * 0.92, 0.04, 8, 28), ringMat);
-  ring.rotation.x = Math.PI / 2;
-  ring.position.y = 0.22;
-  for (const m of [post, cap]) m.castShadow = true;
-  group.add(post, cap, ring);
+  const parts = [];
+  let flashColour = [1, 0.23, 0.54], rest = [1, 0.23, 0.54];
+  const ringMat = new GFX.MeshBasicMaterial({ color: new GFX.Color(...rest), toneMapped: false });
+  if (look === 'rope') {
+    const brass = dark(GFX, '#d8a848', { metalness: 0.9, roughness: 0.25 });
+    const base = new GFX.Mesh(new GFX.CylinderGeometry(radius * 0.55, radius * 0.7, 0.08, 18), brass);
+    base.position.y = 0.04;
+    const post = new GFX.Mesh(new GFX.CylinderGeometry(0.05, 0.06, 0.8, 10), brass);
+    post.position.y = 0.42;
+    const knob = new GFX.Mesh(new GFX.SphereGeometry(0.1, 12, 8), brass);
+    knob.position.y = 0.86;
+    const velvet = new GFX.MeshStandardMaterial({ color: new GFX.Color('#b0102a'), roughness: 0.75 });
+    const rope = new GFX.Mesh(new GFX.TorusGeometry(radius * 0.72, 0.045, 8, 24), velvet);
+    rope.rotation.x = Math.PI / 2;
+    rope.position.y = 0.66;
+    const ring = new GFX.Mesh(new GFX.TorusGeometry(radius * 0.7, 0.025, 6, 24), ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.09;
+    parts.push(base, post, knob, rope);
+    group.add(...parts, ring);
+    rest = [1, 0.75, 0.3];
+    flashColour = [1, 1, 0.8];
+  } else if (look === 'podium') {
+    const shell = dark(GFX, '#1a1424', { metalness: 0.3, roughness: 0.35 });
+    const cube = new GFX.Mesh(new GFX.BoxGeometry(radius * 1.6, 0.5, radius * 1.6), shell);
+    cube.position.y = 0.25;
+    const top = new GFX.Mesh(new GFX.BoxGeometry(radius * 1.5, 0.04, radius * 1.5), ringMat);
+    top.position.y = 0.51;
+    const band = new GFX.Mesh(new GFX.BoxGeometry(radius * 1.64, 0.05, radius * 1.64), ringMat);
+    band.position.y = 0.06;
+    parts.push(cube);
+    group.add(cube, top, band);
+    rest = [0.2, 0.85, 1];
+    flashColour = [1, 0.3, 0.8];
+  } else if (look === 'drum') {
+    const shellMat = dark(GFX, '#b81c2a', { metalness: 0.2, roughness: 0.3 });
+    const chrome = dark(GFX, '#e8eaf0', { metalness: 0.9, roughness: 0.2 });
+    const head = new GFX.MeshStandardMaterial({ color: new GFX.Color('#f2ece0'), roughness: 0.7 });
+    const body = new GFX.Mesh(new GFX.CylinderGeometry(radius, radius, 0.42, 24), shellMat);
+    body.position.y = 0.21;
+    const skin = new GFX.Mesh(new GFX.CircleGeometry(radius * 0.96, 24), head);
+    skin.rotation.x = -Math.PI / 2;
+    skin.position.y = 0.425;
+    const ring = new GFX.Mesh(new GFX.TorusGeometry(radius * 0.98, 0.03, 6, 28), chrome);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.42;
+    const glow = new GFX.Mesh(new GFX.TorusGeometry(radius * 1.0, 0.025, 6, 28), ringMat);
+    glow.rotation.x = Math.PI / 2;
+    glow.position.y = 0.03;
+    parts.push(body);
+    group.add(body, skin, ring, glow);
+    rest = [1, 0.6, 0.2];
+    flashColour = [1, 1, 0.6];
+  } else {
+    const chrome = dark(GFX, '#eef0f6', { metalness: 0.55, roughness: 0.22, emissive: new GFX.Color('#4a3a58'), emissiveIntensity: 0.7 });
+    const post = new GFX.Mesh(new GFX.CylinderGeometry(radius * 0.8, radius, 0.5, 20), chrome);
+    post.position.y = 0.25;
+    const cap = new GFX.Mesh(new GFX.SphereGeometry(radius * 0.8, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), chrome);
+    cap.position.y = 0.5;
+    const ring = new GFX.Mesh(new GFX.TorusGeometry(radius * 0.92, 0.04, 8, 28), ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.22;
+    parts.push(post, cap);
+    group.add(post, cap, ring);
+    flashColour = [1, 0.93, 0.94];
+  }
+  for (const m of parts) m.castShadow = true;
   return {
     group,
     update(since) {
       const flash = since >= 0 && since < 0.25 ? 1 - since / 0.25 : 0;
-      ring.material.color.setRGB(1, 0.23 + 0.7 * flash, 0.54 + 0.4 * flash);
+      ringMat.color.setRGB(...rest.map((v, i) => v + (flashColour[i] - v) * flash));
       group.scale.setScalar(1 + flash * 0.12);
     },
   };

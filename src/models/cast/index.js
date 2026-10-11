@@ -1,8 +1,8 @@
-import ball from './ball.js';
 import bouncer from './bouncer.js';
 import brother from './brother.js';
 import critic from './critic.js';
 import diver from './diver.js';
+import drone from './drone.js';
 import drum from './drum.js';
 import drunk from './drunk.js';
 import freebird from './freebird.js';
@@ -28,5 +28,5 @@ import usher from './usher.js';
 /** Everyone sculpted, by name (see foes.js for who they are). */
 export const CAST = {
   brother, neighbour, phone, drunk, freebird, mosher, scalper, hipster, roadie, merch, influencer, metalhead,
-  usher, critic, suit, hippie, security, bouncer, mascot, diver, ball, drum, poolball, promoter, maestro, headliner,
+  usher, critic, suit, hippie, security, bouncer, mascot, diver, drone, drum, poolball, promoter, maestro, headliner,
 };

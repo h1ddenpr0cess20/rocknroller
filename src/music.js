@@ -1,11 +1,12 @@
 /**
  * The band. Every venue has a band playing in it, made on the spot with Web
  * Audio, no samples: a drum kit (kick, snare, hats, toms, crash), a bass, two
- * guitars through a distortion and a cabinet, a lead, and synths for the
+ * guitars through a distortion and a cabinet (one rig a side, built for each
+ * song and shared by every strum in it), a lead, and synths for the
  * clubs, all in a small room of reverb. Each plays its part in a style the
  * venue picks — its tempo, its key, a chord progression, a drum pattern and a
- * way of strumming — over eight-bar phrases: the verse, then the chorus with
- * the lead on top, with a fill into every change.
+ * way of strumming — as a song (`FORM`): an intro, verses, choruses with the
+ * lead on top, a breakdown and a solo, with a fill into every change.
  *
  * The band keeps time for everything else in the game. `beatAt(now)` is how
  * many beats from the downbeat the music is, and the light show and the
@@ -108,6 +109,23 @@ export const THEMES = {
   },
 };
 
+/** Each mode's notes, semitones above the key: for keeping a chord's third in the key. */
+const KEYS = {
+  minor: [0, 2, 3, 5, 7, 8, 10],
+  major: [0, 2, 4, 5, 7, 9, 11],
+  blues: [0, 2, 3, 5, 7, 8, 10],
+  dorian: [0, 2, 3, 5, 7, 9, 10],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+};
+
+/**
+ * A song, in bars: an intro that builds, a verse, the chorus, a second verse
+ * with the riff answered, the chorus again, a half-time breakdown, a solo, and
+ * the chorus once more, the riff up an octave. Then round again.
+ */
+const FORM = [['intro', 4], ['verse', 8], ['chorus', 8], ['verse', 8], ['chorus', 8], ['break', 4], ['solo', 4], ['chorus', 8]];
+const FORM_LENGTH = FORM.reduce((n, [, l]) => n + l, 0);
+
 /** A distortion: a soft clip that gets harder as `k` goes up. */
 function distortion(k = 40) {
   const n = 1024;
@@ -130,9 +148,18 @@ function room(ctx, seconds = 0.9, decay = 3) {
   return buffer;
 }
 
+/**
+ * How far ahead of the audio clock the band's bars are scheduled, in
+ * seconds. The scheduler runs on the page's main thread, which can be held up
+ * by a long frame or a background bake; this much in hand rides that out.
+ */
+export const LOOKAHEAD = 4;
+
 export function createBand(ctx, out, noise) {
   // The bus: everything through a compressor, a little of it through the room.
   const bus = ctx.createGain();
+  // A little headroom into the compressor, so the busiest choruses don't touch the ceiling.
+  bus.gain.value = 0.85;
   const glue = ctx.createDynamicsCompressor();
   glue.threshold.value = -16;
   glue.knee.value = 12;
@@ -150,7 +177,10 @@ export function createBand(ctx, out, noise) {
   limiter.ratio.value = 20;
   limiter.attack.value = 0.001;
   limiter.release.value = 0.08;
-  bus.connect(glue);
+  // A lift on the top end, for the cymbals and the bite of the guitars.
+  const air = ctx.createBiquadFilter();
+  air.type = 'highshelf'; air.frequency.value = 5000; air.gain.value = 6;
+  bus.connect(air).connect(glue);
   bus.connect(verb).connect(wet).connect(glue);
   glue.connect(limiter).connect(out);
 
@@ -200,14 +230,16 @@ export function createBand(ctx, out, noise) {
   // ——— the kit.
   function kick(when, level = 1) {
     const g = voice();
-    const end = env(g, when, 0.95 * level, 0.002, 0.01, 0.2);
-    const o = osc('sine', 160, when, end, g);
-    o.frequency.exponentialRampToValueAtTime(46, when + 0.1);
-    noiseHit(when, { freq: 3200, type: 'highpass', level: 0.18 * level, length: 0.012 });
+    const end = env(g, when, 1.0 * level, 0.002, 0.03, 0.28);
+    const o = osc('sine', 150, when, end, g);
+    o.frequency.exponentialRampToValueAtTime(48, when + 0.09);
+    // The beater's click on top.
+    noiseHit(when, { freq: 3500, type: 'highpass', level: 0.3 * level, length: 0.014 });
   }
   function snare(when, level = 1) {
-    noiseHit(when, { freq: 2200, type: 'bandpass', q: 0.8, level: 0.5 * level, length: 0.17 });
-    noiseHit(when, { freq: 6500, type: 'highpass', level: 0.14 * level, length: 0.09 });
+    noiseHit(when, { freq: 2000, type: 'bandpass', q: 0.7, level: 0.55 * level, length: 0.18 });
+    // The wires: bright, and as long as the crack.
+    noiseHit(when, { freq: 5500, type: 'highpass', level: 0.36 * level, length: 0.15 });
     const g = voice();
     const end = env(g, when, 0.42 * level, 0.001, 0.01, 0.11);
     const o = osc('triangle', 230, when, end, g);
@@ -217,7 +249,7 @@ export function createBand(ctx, out, noise) {
     for (let i = 0; i < 3; i++) noiseHit(when + i * 0.011, { freq: 1500, type: 'bandpass', q: 1.2, level: 0.28 * level, length: 0.07 });
   }
   function hat(when, level = 1, open = false) {
-    noiseHit(when, { freq: 7800, type: 'highpass', q: 0.7, level: 0.25 * level, length: open ? 0.28 : 0.045 });
+    noiseHit(when, { freq: 7000, type: 'highpass', q: 0.7, level: 0.55 * level, length: open ? 0.32 : 0.05 });
   }
   function tom(when, pitch = 120, level = 1) {
     const g = voice();
@@ -227,34 +259,47 @@ export function createBand(ctx, out, noise) {
     noiseHit(when, { freq: 900, type: 'bandpass', level: 0.1 * level, length: 0.05 });
   }
   function crash(when, level = 1) {
-    noiseHit(when, { freq: 4800, type: 'highpass', q: 0.5, level: 0.3 * level, length: 1.5 });
-    noiseHit(when, { freq: 9000, type: 'bandpass', q: 0.8, level: 0.14 * level, length: 0.9 });
+    noiseHit(when, { freq: 4200, type: 'highpass', q: 0.5, level: 0.5 * level, length: 1.8 });
+    noiseHit(when, { freq: 8500, type: 'bandpass', q: 0.8, level: 0.3 * level, length: 1.1 });
   }
 
   // ——— the strings.
-  /** A guitar: a chord of saws (root, fifth, octave) through the distortion and a cabinet, panned. */
-  function guitar(when, root, length, { open = false, pan = 0, level = 1, third = null } = {}) {
+  /**
+   * The guitar rigs, built once: each a distortion into a cabinet (a high
+   * pass, a mid push, a low pass) and panned to its side. A strum only adds
+   * its oscillators and their envelope; the rig is shared, so a busy bar
+   * costs a few oscillators, not a few dozen filters.
+   */
+  const rig = (pan) => {
+    const input = ctx.createGain();
     const shape = ctx.createWaveShaper();
     shape.curve = curve;
     shape.oversample = '2x';
     const hp = ctx.createBiquadFilter();
-    hp.type = 'highpass'; hp.frequency.value = 110;
+    hp.type = 'highpass'; hp.frequency.value = 90;
     const mid = ctx.createBiquadFilter();
-    mid.type = 'peaking'; mid.frequency.value = 1400; mid.gain.value = 5; mid.Q.value = 0.9;
+    mid.type = 'peaking'; mid.frequency.value = 900; mid.gain.value = 4; mid.Q.value = 0.8;
     const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass'; lp.frequency.value = 3300; lp.Q.value = 0.6;
+    lp.type = 'lowpass'; lp.frequency.value = 3800; lp.Q.value = 0.5;
     const p = ctx.createStereoPanner();
     p.pan.value = pan;
-    const g = voice(0.16 * level);
-    shape.connect(hp).connect(mid).connect(lp).connect(p).connect(g);
-    const hold = open ? Math.max(0.1, length - 0.05) : 0.04;
+    const out = ctx.createGain();
+    out.gain.value = 0.17;
+    input.connect(shape).connect(hp).connect(mid).connect(lp).connect(p).connect(out).connect(target);
+    return { input, out };
+  };
+  /** The rigs of the song now playing (see `fresh`). */
+  let rigs = null;
+
+  /** A guitar: a power chord (root, fifth, octave) of detuned saws, into one of the rigs. */
+  function guitar(when, root, length, { open = false, side = 0, level = 1 } = {}) {
     const gain = ctx.createGain();
-    gain.connect(shape);
-    const end = env(gain, when, 1, 0.004, hold, open ? 0.3 : 0.06);
-    const notes = [root, root + 7, root + 12, third ?? root + 19];
-    notes.forEach((n, i) => {
-      osc('sawtooth', NOTE(n), when, end, gain, i % 2 ? 6 : -6);
-      if (i < 2) osc('sawtooth', NOTE(n), when, end, gain, i % 2 ? -9 : 9);
+    gain.connect(rigs[side].input);
+    const hold = open ? Math.max(0.1, length - 0.05) : 0.03;
+    const end = env(gain, when, level, 0.003, hold, open ? 0.35 : 0.05);
+    [root, root + 7, root + 12].forEach((n, i) => {
+      osc('sawtooth', NOTE(n), when, end, gain, i % 2 ? 5 : -5);
+      if (i === 0) osc('sawtooth', NOTE(n), when, end, gain, side ? 9 : -9);
     });
   }
 
@@ -270,14 +315,17 @@ export function createBand(ctx, out, noise) {
     osc('sine', NOTE(note - 12), when, end, g);
   }
 
-  /** The lead: a single line, with a vibrato it takes a moment to start, through a milder distortion and an echo. */
-  function lead(when, note, length, kind = 'saw', level = 1) {
+  /** The lead's rig: a milder distortion, a filter, and an echo with feedback. */
+  let leadRig = null;
+  const makeLeadRig = () => {
+    const input = ctx.createGain();
     const shape = ctx.createWaveShaper();
     shape.curve = curveLead;
     const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass'; lp.frequency.value = kind === 'tube' ? 2400 : 3600;
-    const g = voice(0.2 * level);
-    shape.connect(lp).connect(g);
+    lp.type = 'lowpass'; lp.frequency.value = 3200;
+    const out = ctx.createGain();
+    out.gain.value = 0.2;
+    input.connect(shape).connect(lp).connect(out);
     const echo = ctx.createDelay(1);
     echo.delayTime.value = 0.3;
     const fb = ctx.createGain();
@@ -286,11 +334,30 @@ export function createBand(ctx, out, noise) {
     send.gain.value = 0.35;
     lp.connect(send).connect(echo);
     echo.connect(fb).connect(echo);
-    echo.connect(g);
+    echo.connect(out);
+    out.connect(target);
+    return { input, out, lp };
+  };
+
+  /**
+   * A song's own output and rigs: what it plays goes through these, so when
+   * it stops and fades, all of it fades, and the next song starts clean.
+   */
+  const fresh = () => {
+    target = ctx.createGain();
+    target.connect(bus);
+    rigs = [rig(-0.6), rig(0.6)];
+    leadRig = makeLeadRig();
+    return target;
+  };
+
+  /** The lead: a single line, with a vibrato it takes a moment to start. */
+  function lead(when, note, length, kind = 'saw', level = 1) {
     const gain = ctx.createGain();
-    gain.connect(shape);
-    const end = env(gain, when, 1, 0.012, Math.max(0.05, length * 0.8), 0.14);
+    gain.connect(leadRig.input);
+    const end = env(gain, when, level, 0.012, Math.max(0.05, length * 0.8), 0.14);
     const type = kind === 'square' ? 'square' : 'sawtooth';
+    leadRig.lp.frequency.setValueAtTime(kind === 'tube' ? 2400 : 3600, when);
     const a = osc(type, NOTE(note), when, end, gain, -7);
     const b = osc(type, NOTE(note), when, end, gain, 7);
     const vib = ctx.createOscillator();
@@ -329,70 +396,141 @@ export function createBand(ctx, out, noise) {
   let playing = null;
 
   /** Bar `bar` of `theme` from time `when`, at `tempo`. */
+  /** Where bar `bar` falls in the song: its section, how far into it, and which time round that section is. */
+  function placeOf(bar) {
+    let at = bar % FORM_LENGTH;
+    const seen = {};
+    for (const [name, length] of FORM) {
+      if (at < length) return { name, of: at, length, time: seen[name] ?? 0 };
+      seen[name] = (seen[name] ?? 0) + 1;
+      at -= length;
+    }
+    return { name: 'verse', of: 0, length: 8, time: 0 };
+  }
+
+  /** Bar `bar` of `theme` from time `when`, at `tempo`: what each of the band plays, by where it is in the song. */
   function playBar(theme, tempo, bar, when) {
     const beat = 60 / tempo;
     const step = beat / 4;
-    const phrase = bar % 8;
-    const chorus = phrase >= 4;
+    const { name, of, length, time } = placeOf(bar);
+    const phrase = of % 8;
+    const last = of === length - 1;
+    const loud = name === 'chorus' || name === 'solo';
     const drums = DRUMS[theme.drums] ?? DRUMS.rock;
-    const root = theme.key + (theme.prog[phrase] ?? 0);
+    const shift = theme.prog[phrase] ?? 0;
+    const root = theme.key + shift;
     const level = theme.gain ?? 1;
+    const key = KEYS[theme.scale] ?? KEYS.minor;
+    // The third of this bar's chord, major or minor, whichever is in the key.
+    const third = key.includes((shift + 4) % 12) ? 4 : 3;
 
-    // Drums: the pattern, a crash on the top of every phrase, a fill into every fourth bar.
-    const fill = phrase === 3 || phrase === 7;
-    for (let i = 0; i < 16; i++) {
-      const t = when + step * i;
-      if (fill && i >= 12) {
-        // A roll down the toms into the next bar.
-        if (i % 2 === 0) tom(t, [190, 150, 120, 95][(i - 12) / 2], 0.9);
-        if (i === 12) kick(t);
-        continue;
+    // ——— drums.
+    if (name === 'intro') {
+      // A build: kick and hats, the snare joining halfway, a snare roll into the verse.
+      for (let i = 0; i < 16; i++) {
+        const t = when + step * i;
+        if (last && i >= 8) { snare(t, 0.4 + ((i - 8) / 8) * 0.7); continue; }
+        if (i % 4 === 0) kick(t, 0.9);
+        if (i % 2 === 0) hat(t, i % 4 === 0 ? 0.8 : 0.55);
+        if (of >= length / 2 && (i === 4 || i === 12)) snare(t, 0.85);
       }
-      if (drums.kick.includes(i) || (chorus && drums.kicksLate.includes(i))) kick(t, i === 0 ? 1 : 0.85);
-      if (drums.snare.includes(i)) snare(t, 1);
-      if (drums.clap?.includes(i)) clap(t, 0.9);
-      if (drums.hat.includes(i)) hat(t, i % 4 === 0 ? 1 : 0.7, drums.open.includes(i) && chorus);
+    } else if (name === 'break') {
+      // Half time: the kick on one, the snare on three, the ride on the quarters.
+      for (let i = 0; i < 16; i++) {
+        const t = when + step * i;
+        if (last && i >= 12) { if (i % 2 === 0) tom(t, [170, 120][(i - 12) / 2]); continue; }
+        if (i === 0 || i === 10) kick(t, 1);
+        if (i === 8) snare(t, 1.05);
+        if (i % 4 === 0) hat(t, 0.75, i === 4);
+      }
+    } else {
+      for (let i = 0; i < 16; i++) {
+        const t = when + step * i;
+        if (last && i >= 12) {
+          // A roll down the toms into the next section.
+          if (i % 2 === 0) tom(t, [190, 150, 120, 95][(i - 12) / 2], 0.9);
+          if (i === 12) kick(t);
+          continue;
+        }
+        if (drums.kick.includes(i) || (loud && drums.kicksLate.includes(i))) kick(t, i === 0 ? 1 : 0.85);
+        if (drums.snare.includes(i)) snare(t, loud ? 1.05 : 0.95);
+        if (drums.clap?.includes(i)) clap(t, 0.9);
+        if (drums.hat.includes(i)) hat(t, i % 4 === 0 ? 1 : 0.7, drums.open.includes(i) && loud);
+      }
     }
-    if (phrase === 0) crash(when, 0.9);
-    if (phrase === 4) crash(when, 0.7);
+    if (of === 0 && name !== 'intro') crash(when, loud ? 1 : 0.8);
+    if (of === 4 && loud) crash(when, 0.7);
+    if (bar % FORM_LENGTH === 0) crash(when, 0.6);
 
-    // The bass.
+    // ——— bass.
     const bassNote = root + 12;
-    if (theme.bass === 'octave') {
+    if (name === 'intro' && of < length / 2) {
+      // Not yet.
+    } else if (name === 'break') {
+      bass(when, bassNote, beat * 3.5, 1);
+    } else if (theme.bass === 'octave') {
       for (let i = 0; i < 16; i += 2) bass(when + step * i, bassNote + (i % 4 === 2 ? 12 : 0), step * 2, 0.95);
     } else if (theme.bass === 'walk') {
-      const walk = [0, 0, 3, 5, 7, 5, 3, 0];
+      const walk = [0, 0, third, 5, 7, 5, third, 0];
       for (let i = 0; i < 8; i++) bass(when + step * 2 * i, bassNote + walk[i], step * 2, 1);
     } else {
       for (let i = 0; i < 16; i += 2) bass(when + step * i, bassNote, step * 1.6, i === 0 ? 1.05 : 0.9);
     }
 
-    // Two guitars, double-tracked, a hair apart and panned either side.
-    const strum = STRUMS[theme.strum] ?? STRUMS.chug;
-    for (let i = 0; i < 16; i++) {
-      const hit = strum[i];
-      if (!hit) continue;
-      const len = hit === 2 ? step * (theme.strum === 'anthem' ? 5 : 3.2) : step * 0.9;
-      const t = when + step * i;
-      guitar(t, root + 24, len, { open: hit === 2, pan: -0.55, level: level * (chorus ? 1.05 : 0.95) });
-      guitar(t + 0.006, root + 24, len, { open: hit === 2, pan: 0.55, level: level * (chorus ? 1.05 : 0.95) });
-    }
-
-    // The lead takes the choruses, and plays the riff over two bars.
-    if (chorus && bar % 2 === 0) {
-      const scale = SCALES[theme.scale] ?? SCALES.minor;
-      for (const [s, degree, len] of theme.riff) {
-        if (s >= 32) continue;
-        lead(when + step * s, theme.key + 36 + scale[degree % scale.length] + (theme.prog[phrase] ?? 0) * 0, step * len, theme.lead, level);
+    // ——— two guitars, double-tracked, a hair apart and panned either side.
+    const both = (t, len, open, g) => {
+      guitar(t, root + 12, len, { open, side: 0, level: level * g });
+      guitar(t + 0.007, root + 12, len, { open, side: 1, level: level * g });
+    };
+    if (name === 'intro') {
+      // One chord, left to ring, on the first bar of each half.
+      if (of % 2 === 0) both(when, beat * 7.5, true, 0.85);
+    } else if (name === 'break') {
+      both(when, beat * 3.8, true, 0.8);
+    } else {
+      const strum = STRUMS[theme.strum] ?? STRUMS.chug;
+      const g = loud ? 1.05 : 0.9;
+      for (let i = 0; i < 16; i++) {
+        const hit = strum[i];
+        if (!hit) continue;
+        const len = hit === 2 ? step * (theme.strum === 'anthem' ? 5 : 3.2) : step * 0.9;
+        both(when + step * i, len, hit === 2, g);
       }
     }
 
-    // Synths: an arpeggio round the chord, a pad under it.
-    if (theme.arp) {
-      const chord = [0, 3, 7, 12];
-      for (let i = 0; i < 16; i++) arp(when + step * i, root + 36 + chord[i % 4] + (i % 8 >= 4 ? 12 : 0), step * 0.9, level);
+    // ——— the lead.
+    const scale = SCALES[theme.scale] ?? SCALES.minor;
+    const riff = (up, g, from = 0) => {
+      for (const [s, degree, len] of theme.riff) {
+        if (s < from * 16 || s >= from * 16 + 16) continue;
+        lead(when + step * (s - from * 16), theme.key + 36 + up + scale[degree % scale.length], step * len, theme.lead, level * g);
+      }
+    };
+    if (name === 'chorus') {
+      // The riff, over two bars; the last time round, an octave up.
+      riff(time >= 2 ? 12 : 0, 1, of % 2);
+    } else if (name === 'verse' && time >= 1 && of >= 4) {
+      // The second verse: the riff answered, down an octave and quiet.
+      riff(-12, 0.55, of % 2);
+    } else if (name === 'solo') {
+      // A solo: a run up and down the scale, a different shape every bar, bending into the long notes.
+      let seed = (bar * 7919 + theme.key * 31) % 233280;
+      const rand = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+      let degree = 3 + Math.floor(rand() * 3);
+      for (let i = 0; i < 16;) {
+        const len = rand() < 0.3 ? 4 : rand() < 0.6 ? 2 : 1;
+        degree = Math.max(0, Math.min(scale.length - 1, degree + (rand() < 0.5 ? -1 : 1) * (rand() < 0.25 ? 2 : 1)));
+        lead(when + step * i, theme.key + 36 + scale[degree] + (rand() < 0.15 ? 12 : 0), step * len, theme.lead, level * 0.95);
+        i += len;
+      }
     }
-    if (theme.pad && phrase % 2 === 0) pad(when, [root + 36, root + 43, root + 48], beat * 8, level);
+
+    // ——— synths: an arpeggio round the chord, a pad under it.
+    if (theme.arp && name !== 'intro' && name !== 'break') {
+      const chord = [0, third, 7, 12];
+      for (let i = 0; i < 16; i++) arp(when + step * i, root + 36 + chord[i % 4] + (i % 8 >= 4 ? 12 : 0), step * 0.9, level * (loud ? 1 : 0.7));
+    }
+    if (theme.pad && (loud || name === 'break') && of % 2 === 0) pad(when, [root + 36, root + 36 + third, root + 43], beat * 8, level);
   }
 
   return {
@@ -403,18 +541,26 @@ export function createBand(ctx, out, noise) {
      */
     start(theme, tempo, beat0 = 0) {
       this.stop();
-      target = ctx.createGain();
-      target.connect(bus);
-      const beat = 60 / tempo;
-      const t0 = ctx.currentTime - beat0 * beat;
-      const firstBar = Math.max(0, Math.ceil((beat0 * beat + 0.12) / (beat * 4)));
+      fresh();
+      const beat = 60 / tempo, barLength = beat * 4;
+      // From the top, the count-in is short; picking up a clock that kept running, in step with it.
+      const t0 = beat0 > 0 ? ctx.currentTime - beat0 * beat : ctx.currentTime + 0.12;
+      const firstBar = beat0 > 0 ? Math.max(0, Math.ceil((beat0 * beat + 0.12) / barLength)) : 0;
       const state = { theme, tempo, t0, bar: firstBar, out: target };
-      state.timer = setInterval(() => {
-        while (t0 + state.bar * beat * 4 < ctx.currentTime + 0.7) {
-          playBar(theme, tempo, state.bar, t0 + state.bar * beat * 4);
+      // Bars are scheduled well ahead of the clock, so the page can stall (a model baking, shaders
+      // compiling, a slow frame) for seconds and the band plays on regardless. A bar whose start has
+      // already gone is skipped, not crammed in late: the band picks up again on the next downbeat.
+      const fill = () => {
+        const now = ctx.currentTime;
+        const behind = Math.floor((now - t0) / barLength) + 1;
+        if (state.bar < behind) state.bar = behind;
+        while (t0 + state.bar * barLength < now + LOOKAHEAD) {
+          playBar(theme, tempo, state.bar, t0 + state.bar * barLength);
           state.bar++;
         }
-      }, 90);
+      };
+      fill();
+      state.timer = setInterval(fill, 250);
       playing = state;
     },
 
@@ -437,8 +583,7 @@ export function createBand(ctx, out, noise) {
 
     /** `bars` bars of `theme` scheduled at once from now: for rendering offline (an OfflineAudioContext). */
     sketch(theme, tempo, bars) {
-      target = ctx.createGain();
-      target.connect(bus);
+      fresh();
       const bar = (60 / tempo) * 4;
       for (let i = 0; i < bars; i++) playBar(theme, tempo, i, ctx.currentTime + 0.05 + i * bar);
     },

@@ -1,5 +1,5 @@
 import { createEffects } from './effects.js';
-import { createGig, putBack, resultOf, STEP, stepGig, toGround } from './gig.js';
+import { createGig, PROP_HYPE, putBack, resultOf, STEP, stepGig, toGround } from './gig.js';
 import { comboAt, earn, windowLeft } from './hype.js';
 import { HARM } from './integrity.js';
 import { createLightshow } from './lightshow.js';
@@ -23,7 +23,7 @@ import { VENUES } from './venues/index.js';
  * shattered, unless there is a lighter to hold up for an encore.
  *
  * It keeps the screens and the state: `title`, `ready` (the venue's name
- * on screen), `play`, `lost` (off an edge or squashed: back in a moment),
+ * on screen), `play`, `lost` (off an edge or smashed: back in a moment),
  * `clear` (the review) and `over` (shattered). The rules are in gig.js.
  */
 
@@ -33,7 +33,7 @@ export const CLEAR_BONUS = 100;
 const BANNERS = {
   fell: 'INTO THE PIT!',
   zapped: 'ZAPPED!',
-  crushed: 'SQUASHED!',
+  crushed: 'SMASHED!',
   burnt: 'SINGED!',
   thud: 'THUD!',
 };
@@ -265,6 +265,15 @@ export function createGame({ stage, hud, input, audio, storage }) {
     }
     for (const p of out.picked) picked(p);
     for (const bm of out.bumped) { audio.bumper(); rock.react('smash', 0.3); stage.shake = Math.max(stage.shake, 0.05); void bm; }
+    for (const p of out.smashed) {
+      const at = [p.centre[0], p.centre[1] + 0.5, p.centre[2]];
+      effects.chips(...at, 10 + Math.min(20, p.spec.w * p.spec.d * 4));
+      effects.dust(...at);
+      audio.panel();
+      stage.shake = Math.max(stage.shake, 0.08);
+      const s = screenOf(...at);
+      hud.pop(s.x, s.y, `+${PROP_HYPE}`, '');
+    }
     for (const g of out.broke) {
       const at = [g.centre[0], g.base + 0.6, g.centre[2]];
       effects.dust(...at);
@@ -303,6 +312,12 @@ export function createGame({ stage, hud, input, audio, storage }) {
       audio.slam(near);
       effects.dust(e.x, e.y, e.z);
       stage.shake = Math.max(stage.shake, 0.05 * near);
+    } else if (e.type === 'stomp') {
+      audio.slam(near);
+      effects.dust(e.x, e.y, e.z);
+      effects.dust(e.x + 1, e.y, e.z);
+      effects.dust(e.x - 1, e.y, e.z);
+      stage.shake = Math.max(stage.shake, 0.25 * near);
     } else audio.burst(near);
   }
 

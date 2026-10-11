@@ -14,6 +14,8 @@ export default person({
   name: 'neighbour',
   scale: 1.4,
   b: 1.12,
+  shape: { legs: 0.9, girth: 1.12, head: 0.98 },
+  belly: 0.7,
   skin: '#f0a58a',
   look: { torso: robe, sleeve: robe, cuff: robe, legs: '#f0a58a', boot: '#f0a58a' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'cloth', legs: 'skin', boot: 'skin' },

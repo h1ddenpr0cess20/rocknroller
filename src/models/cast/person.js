@@ -1,6 +1,6 @@
 import { coat, mix } from '../skins.js';
 import { rgb } from '../sdf.js';
-import { body, bones, head, hair, joints, moveHumanoid, skinTone } from './humanoid.js';
+import { body, bones, build, head, hair, joints, moveHumanoid, skinTone } from './humanoid.js';
 
 /**
  * The people of the gig, as one body in different clothes: the humanoid rig
@@ -23,7 +23,8 @@ export const MATERIALS = {
   metal: { roughness: 0.28, metalness: 1 },
   plastic: { roughness: 0.34, clearcoat: 0.6, clearcoatRoughness: 0.2 },
   rubber: { roughness: 0.8 },
-  glow: { roughness: 0.4, emissive: '#ffffff', emissiveIntensity: 1.6 },
+  glow: { roughness: 0.4, emissive: '#ff9a4a', emissiveIntensity: 1.4 },
+  screen: { roughness: 0.4, emissive: '#ffffff', emissiveIntensity: 1.4 },
   glass: { roughness: 0.04, clearcoat: 1, metalness: 0.2 },
   paper: { roughness: 0.9 },
 };
@@ -43,24 +44,28 @@ export { mix, joints, skinTone };
  * `look` has `skin`, `torso`, `sleeve`, `cuff`, `hand`, `legs`, `boot` (each a
  * colour or a colour function); `mats` the material of each (default cloth,
  * skin for skin and hands); `face` is for `head()` (skin, brow, eyeColor,
- * ears, jaw, mood, blush) and `hair` for `hair()`; `b` the breadth.
+ * ears, jaw, mood, blush) and `hair` for `hair()`; `b` the breadth. `shape`
+ * is their build (humanoid.js `build`: legs, torso, head, girth, hips), so
+ * not everyone is the same height and shape, and `belly` a belly.
  */
 export function person({
   name, scale = 1.1, b = 1, skin = '#e9b48f', look, mats = {}, face = {}, hair: hairOpts = null,
-  extras = null, style = {}, cells = {}, budget = 12000, cell = 0.0085, k = 0.03,
+  extras = null, style = {}, cells = {}, budget = 12000, cell = 0.0085, k = 0.03, shape = {}, belly = 0,
 }) {
   const tone = typeof skin === 'string' ? skinTone(skin) : skin;
   const full = { skin: tone, hand: tone, ...look };
+  const warp = build(shape);
   return {
     name,
     scale,
     cell,
     cells: { eyes: 0.0026, irises: 0.0017, pupils: 0.0011, brows: 0.003, hair: 0.0045, kit: 0.0042, fine: 0.0028, ...cells },
     budget,
-    bones: bones(b),
+    bones: bones(b, warp),
     materials: MATERIALS,
     sculpt(s) {
-      const J = body(s, { b, look: full, mats, k });
+      s.setWarp(warp);
+      const J = body(s, { b, look: full, mats, k, belly });
       head(s, { skin: tone, ...face });
       if (hairOpts) hair(s, hairOpts);
       extras?.(s, J, { b, skin: tone });

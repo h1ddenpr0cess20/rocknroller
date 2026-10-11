@@ -11,6 +11,7 @@ export default person({
   name: 'diver',
   scale: 1.4,
   b: 1.1,
+  shape: { legs: 1.04, girth: 0.92 },
   skin: '#dca480',
   look: { torso: cloth('#ff2d4a', '#b81a30'), sleeve: '#dca480', cuff: '#dca480', legs: cloth('#1a1a20'), boot: '#f4f4f4' },
   mats: { torso: 'cloth', sleeve: 'skin', cuff: 'skin', legs: 'cloth', boot: 'rubber' },

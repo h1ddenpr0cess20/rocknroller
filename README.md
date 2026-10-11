@@ -5,14 +5,15 @@ and run into the annoying people you find at a gig, fast enough to smash them.
 Every venue has its own light show, and all of it keeps the beat of the band
 that is playing in it.
 
-Rock is [Rock](https://github.com/h1ddenpr0cess20/rock)'s boulder, used exactly
-as it is (`src/boulder.js` is a verbatim copy of its geometry). The renderer,
+Rock is [Rock](https://github.com/h1ddenpr0cess20/rock)'s boulder: the same
+shape, granite and colours (`src/boulder.js` is its geometry), sampled more
+finely so the faces are crisp and the grain shows up close. The renderer,
 physics, tiled venues and camera come from
 [dungeon-roller](https://github.com/h1ddenpr0cess20/dungeon-roller).
 
 ![The title screen](docs/screenshots/title.png)
 
-![The Garage: Rock has just run into a little brother](docs/screenshots/garage.jpg)
+![The Club](docs/screenshots/4-club.jpg)
 
 ## Run
 
@@ -56,6 +57,10 @@ takes to smash them in one go, and a **power**, how much it hurts to bounce off.
 | Over half their toughness | **Bonk** | You both bounce. It costs Rock some of their power, less the closer you were to a smash. |
 | Under that | **Tap** | It hurts, all of their power, and they don't move. |
 
+The furniture is fair game too: amps, kits, desks, bars, seats, cases and
+racking all go over if Rock comes at them fast enough (the bigger, the faster),
+for a little hype. Crowd barriers and the stands are the building, and stay.
+
 Someone who isn't smashed is still worn down: they have as much health as they
 have toughness, and a bonk takes off as much as the speed it came at. A bouncer
 you can't hit hard enough can be hit twice. The three bosses have a good deal
@@ -86,38 +91,36 @@ before. The game plays the same with storage blocked.
 
 - **Gates** across a way on: find the backstage pass in the same venue to lift them.
 - **Flimsy panels** (a sheet of ply, drywall, curtain): run at one fast enough and it breaks. Behind them are usually gold records.
-- **Speaker stacks, flight cases and chandeliers** come down on the beat. Wait for the moment they go up.
+- **Speaker stacks, flight cases and chandeliers** come down on the beat. Wait for the moment they go up. Get caught under one and Rock is smashed.
 - **Pyro** bursts out of the floor on the beat.
 - **Live cable** zaps whatever rolls onto it.
-- **Lifts, forklifts and the crowd** carry you across gaps, if you get on when they are waiting.
+- **Lifts, forklifts and the crowd** carry you across gaps, if you get on when they are waiting. Crowd-surfing, Rock rides on the hands of the people in the pit.
 - **Sticky floors** (spilled beer, mud) slow Rock; **belts** carry him; **bumpers** throw him back.
 
 ## The tour
 
-| | Venue | The band | In the way |
+Every venue is laid out its own way, not the same rooms in a different paint.
+
+| | Venue | The band | The way through |
 |---|---|---|---|
-| 1 | **The Garage** | 124 bpm | Little brothers and an angry neighbour. Teaches the lot: picks, a gate and its pass, a speaker stack, a sheet of ply with a record behind it. |
-| 2 | **The Rehearsal Rooms** | 118 bpm | Six practice rooms, a band in each, charcoal foam on the walls and a different colour in every room. A strobe room where everybody is headbanging. |
+| 1 | **The Garage** | 124 bpm | A band room under fairy lights, the side of the house, a basement. Little brothers and an angry neighbour. Teaches the lot: picks, a gate and its pass, a speaker stack, a sheet of ply with a record behind it. |
+| 2 | **The Rehearsal Rooms** | 118 bpm | A block of nine practice rooms opening into each other, a band in each, the PA dropping in some of the doorways. Records in the far rooms, the pass with the A&R man, a locked fire door and a slide down the fire escape. |
 | 3 | **Sticky's** | 96 bpm | A dive bar: sticky floor, neon beer signs, a pool table, a jukebox, pinball bumpers, drunks, a bouncer and an 8-ball with a grudge. |
-| 4 | **The Club** | 126 bpm | Dance floor, mirror ball, lasers and strobes. Stage divers, influencers, hipsters. The way over the mosh pit is on the crowd's hands. The Promoter is in the office. |
-| 5 | **The Loading Dock** | 132 bpm | Diamond plate and corrugated iron, amber beacons. Conveyor belts, flight cases coming down on the beat, a forklift across the bay. |
-| 6 | **The Studio** | 100 bpm | Acoustic foam, racks of gear, a mixing desk, a chicane of live cable across the floor. A lift up to the control room, and everybody has notes. |
-| 7 | **The Opera House** | 88 bpm | Velvet seats, damask walls, a chandelier over every aisle. Ushers and critics. The Maestro is at the piano. |
-| 8 | **The Festival** | 112 bpm | Mud, hay bales, portable loos, a mud slide, the PA coming down in the food lane. Hippies, phones, a mascot. |
-| 9 | **The Arena** | 120 bpm | Moving walkways, a tunnel of pyro and speakers, a big rig over the floor. Security, moshers, the team mascot. |
-| 10 | **The Stadium** | 128 bpm | All of it at once, under the stars. The Headliner has a flying V and no idea who Rock is. |
+| 4 | **The Club** | 126 bpm | A velvet-rope queue doubling back along the street, a podium dance floor under the tour's only mirror ball, a crowd-surf over the pit, a sticky bar, the VIP rope, and the Promoter, who lunges for his cut. |
+| 5 | **The Loading Dock** | 132 bpm | Down the trailer's tail-lift onto a ledge where the belts run toward the edge, a parcel chute, a conveyor sorting hall, the goods lift, warehouse aisles with crates coming off the crane, three forklifts across the bays. |
+| 6 | **The Studio** | 100 bpm | A corridor of isolation booths hiding the records and the pass, a live room with a chicane of live cable and kick drums to bounce off, the control room, a stairwell zig-zagging down. |
+| 7 | **The Opera House** | 88 bpm | A chandeliered foyer and grand staircase, a balcony over the dark with an opera box, a slalom down the stepped stalls under falling chandeliers, one plank over the pit, and the Maestro, who moves only on the beat. |
+| 8 | **The Festival** | 112 bpm | An island with no walls to speak of: a maze of tents under festoons, a mud slide, a boardwalk over the river with no rail, a main-stage field with a crowd barrier and its gate. |
+| 9 | **The Arena** | 120 bpm | Turnstiles, a concourse ring round the seating with two ways round and moving walkways, the security office, a gated tunnel down to the show floor, the players' tunnel with the pyro on a timer. |
+| 10 | **The Stadium** | 128 bpm | Down from the top of the stands on three long ramps, across the pitch to the sound-desk tower, out along the catwalk over the pit to the Headliner, who stamps and throws Rock back. |
 
-![The Rehearsal Rooms](docs/screenshots/rehearsal.jpg)
-
-![Sticky's](docs/screenshots/dive.jpg)
-
-![The Club](docs/screenshots/club.jpg)
-
-![The Loading Dock](docs/screenshots/dock.jpg)
-
-![The Festival](docs/screenshots/festival.jpg)
-
-![The Stadium: the Headliner](docs/screenshots/stadium.jpg)
+| | |
+|---|---|
+| ![The Garage](docs/screenshots/1-garage.jpg) | ![The Rehearsal Rooms](docs/screenshots/2-rehearsal.jpg) |
+| ![Sticky's](docs/screenshots/3-dive.jpg) | ![The Club](docs/screenshots/4-club.jpg) |
+| ![The Loading Dock](docs/screenshots/5-dock.jpg) | ![The Studio](docs/screenshots/6-studio.jpg) |
+| ![The Opera House](docs/screenshots/7-opera.jpg) | ![The Festival](docs/screenshots/8-festival.jpg) |
+| ![The Arena](docs/screenshots/9-arena.jpg) | ![The Stadium](docs/screenshots/10-stadium.jpg) |
 
 ![The tour map](docs/screenshots/tour.jpg)
 
@@ -131,9 +134,11 @@ Every venue is lit by a rig (`src/lightshow.js`) that keeps the beat of the band
 | **par** | A PAR can: a coloured wash and a shaft of haze, changing colour on the beat (chase, pulse or rainbow). |
 | **spot** | A moving head: a beam and a pool of light that wander the floor. |
 | **strobe** | Flashes white on the beat, in bursts. |
-| **ball** | A mirror ball: it turns and throws sparkles across the floor, in colours that chase. |
+| **ball** | A mirror ball: it turns and throws sparkles across the floor, in colours that chase. There is one, in the Club. |
 | **laser** | A fan of thin beams, sweeping. |
-| **neon** | A word in tube, flickering. |
+| **neon** | A word in tube, flickering, fixed to a wall. |
+| **chandelier** | Crystal and candle-bulbs on brass arms, warm and swaying: the Opera House. |
+| **festoon** | A string of bulbs slung between two posts, taking turns on the beat: the Garage and the Festival. |
 
 The few fixtures nearest Rock become real lights; the rest are baked into the
 floor and walls. Strobes never flash more than three times a second, at any
@@ -148,10 +153,21 @@ are made the same way. The beat clock drives the hazards and the lights.
 
 The people are sculpted in code (`src/models/cast/`) and baked in background
 workers while the page loads, so a venue starts with stand-ins and swaps the
-real people in as they finish. Little brothers, neighbours, Freebird guys,
-phone guys, hipsters, scalpers, merch guys, ushers, critics, A&R suits, security,
-bouncers, a mascot, stage divers, a runaway drum, a mirror ball, an 8-ball, and
-three bosses: the Promoter, the Maestro and the Headliner.
+real people in as they finish. They share one rig, but each has a build of its
+own (`build()` in `humanoid.js`: legs, torso, head, girth, a belly), so a crowd
+isn't one body in different clothes. Little brothers, neighbours, drunks,
+moshers, hipsters, roadies, merch guys, influencers, metalheads, ushers,
+critics, A&R suits, security, bouncers, a mascot, stage divers, camera drones, a
+runaway drum and an 8-ball:
+
+![The cast](docs/screenshots/cast.jpg)
+
+And three bosses, each built and fought differently: the Promoter, short and
+round, who lunges and then has to get his breath back; the Maestro, impossibly
+tall, who moves only on the beat; and the Headliner, a giant with a flying V,
+who stamps and throws Rock back.
+
+![The Promoter, the Maestro and the Headliner](docs/screenshots/bosses.jpg)
 
 ## Develop
 
@@ -167,7 +183,9 @@ show maths (including the strobe limit), the physics and camera, and each
 venue: every one has to be cleared start to finish, with all three gold
 records, by an autopilot (`test/helpers/autopilot.js`) that plans a route, waits
 for the speaker stacks and pyro, charges the panels, fetches the passes and
-duels the bosses.
+duels the bosses. Every pickup has to be somewhere Rock can reach, smashable
+props have to stand up to a nudge and go over at speed, and the mirror ball
+and each boss turn up once on the whole tour.
 
 Other things in the box:
 
@@ -191,7 +209,8 @@ console, `rocknroller.debug` has `venue(i)` to jump to a venue and
 | `src/lightshow.js` | The rig. |
 | `src/music.js`, `src/audio.js` | The band and the sound effects. |
 | `src/models/` | The people and props, sculpted and baked. |
-| `src/boulder.js`, `src/rock.js` | Rock: the boulder as given, and how it squashes and reacts. |
+| `src/boulder.js`, `src/rock.js` | Rock: the boulder, and how it squashes and reacts. |
+| `src/decor.js`, `src/furniture.js` | The props: amps, kits, bars, desks, seats, racking, stands, barriers, tents. |
 | `src/vendor/gfx/` | The renderer. |
 
 ## Credits

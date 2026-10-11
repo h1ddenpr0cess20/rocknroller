@@ -89,26 +89,37 @@ function rack(GFX, { rise = 1.1 }) {
   };
 }
 
-/** A velvet cinema-style seat: a plump red cushion and back on a dark frame, two arms. */
-function seat(GFX, { rise = 0.8 }) {
+/** Velvet theatre seats, a row of them over every tile of the block, all facing the same way (+z, before `rot`). */
+function seat(GFX, { rise = 0.8, w = 1, d = 1, rot = 0 }) {
   const group = new GFX.Group();
   const velvet = std(GFX, '#9a1428', { roughness: 0.9 });
   const frame = std(GFX, '#2a1a10', { roughness: 0.5 });
-  const cushion = shadowed(place(new GFX.Mesh(new GFX.BoxGeometry(0.62, 0.22, 0.58), velvet), 0, rise * 0.45, 0.04));
-  const back = shadowed(place(new GFX.Mesh(new GFX.BoxGeometry(0.62, rise * 0.62, 0.14), velvet), 0, rise * 0.7, -0.24));
-  const top = new GFX.Mesh(new GFX.CylinderGeometry(0.07, 0.07, 0.62, 10), velvet);
-  top.rotation.z = Math.PI / 2;
-  place(top, 0, rise * 0.7 + rise * 0.31, -0.24);
-  const base = shadowed(place(new GFX.Mesh(new GFX.BoxGeometry(0.66, rise * 0.34, 0.6), frame), 0, rise * 0.17, 0.02));
-  group.add(cushion, back, top, base);
-  for (const s of [-1, 1]) group.add(shadowed(place(new GFX.Mesh(new GFX.BoxGeometry(0.07, 0.22, 0.56), frame), s * 0.33, rise * 0.55, 0.02)));
-  const brass = new GFX.Mesh(new GFX.CylinderGeometry(0.035, 0.035, 0.012, 10), std(GFX, '#e0b44a', { metalness: 1, roughness: 0.3 }));
-  brass.rotation.x = Math.PI / 2;
-  group.add(place(brass, 0, rise * 0.7, -0.165));
+  const brassMat = std(GFX, '#e0b44a', { metalness: 1, roughness: 0.3 });
+  // Turned a quarter, the block's width runs along what is z here.
+  const quarter = Math.abs(Math.sin(rot)) > 0.5;
+  const [cols, rows] = quarter ? [d, w] : [w, d];
+  const cushionG = new GFX.BoxGeometry(0.62, 0.22, 0.58), backG = new GFX.BoxGeometry(0.62, rise * 0.62, 0.14);
+  const topG = new GFX.CylinderGeometry(0.07, 0.07, 0.62, 10), baseG = new GFX.BoxGeometry(0.66, rise * 0.34, 0.6);
+  const armG = new GFX.BoxGeometry(0.07, 0.22, 0.56), plateG = new GFX.CylinderGeometry(0.035, 0.035, 0.012, 10);
+  for (let j = 0; j < rows; j++) {
+    for (let i = 0; i < cols; i++) {
+      const x = i - (cols - 1) / 2, z = j - (rows - 1) / 2;
+      const one = new GFX.Group();
+      one.position.set(x, 0, z);
+      const top = new GFX.Mesh(topG, velvet);
+      top.rotation.z = Math.PI / 2;
+      place(top, 0, rise * 0.7 + rise * 0.31, -0.24);
+      one.add(shadowed(place(new GFX.Mesh(cushionG, velvet), 0, rise * 0.45, 0.04)), shadowed(place(new GFX.Mesh(backG, velvet), 0, rise * 0.7, -0.24)), top, shadowed(place(new GFX.Mesh(baseG, frame), 0, rise * 0.17, 0.02)));
+      for (const s of [-1, 1]) one.add(shadowed(place(new GFX.Mesh(armG, frame), s * 0.33, rise * 0.55, 0.02)));
+      const plate = new GFX.Mesh(plateG, brassMat);
+      plate.rotation.x = Math.PI / 2;
+      one.add(place(plate, 0, rise * 0.7, -0.165));
+      group.add(one);
+    }
+  }
   return { group };
 }
 
-/** A grand piano, 3 × 2: glossy black, the lid propped up, a keyboard of white keys, three legs. */
 function piano(GFX, { w = 3, d = 2, rise = 0.88 }) {
   const group = new GFX.Group();
   const gloss = new GFX.MeshPhysicalMaterial({ color: new GFX.Color('#0e0e12'), roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08 });
@@ -196,4 +207,152 @@ function tent(GFX, { w = 2, d = 2, rise = 1.4 }) {
   return { group };
 }
 
-export const FURNITURE = { console: desk, rack, seat, piano, bale, loo, tent };
+/**
+ * Pallet racking over the block: orange uprights, blue beams, three levels
+ * of pallets stacked with boxes, shrink-wrap and the odd flight case.
+ */
+function racking(GFX, { w = 1, d = 1, rise = 1.3 }) {
+  const group = new GFX.Group();
+  const upright = std(GFX, '#e0702a', { roughness: 0.5, metalness: 0.4 });
+  const beam = std(GFX, '#2a5ab0', { roughness: 0.45, metalness: 0.5 });
+  const pallet = std(GFX, '#b08a58', { roughness: 0.85 });
+  const boxes = ['#c8a070', '#b89060', '#d4b080', '#2a2a30', '#e8e4dc'].map((c) => std(GFX, c, { roughness: c === '#e8e4dc' ? 0.25 : 0.8, transparent: c === '#e8e4dc', opacity: c === '#e8e4dc' ? 0.85 : 1 }));
+  const long = w >= d, L = long ? w : d, S = long ? d : w;
+  const height = rise + 0.9;
+  const levels = [0.05, height * 0.42, height * 0.8];
+  // Uprights at every tile end along it, both sides.
+  const post = new GFX.BoxGeometry(0.07, height, 0.07);
+  for (let i = 0; i <= L; i++) {
+    for (const side of [-1, 1]) {
+      const m = shadowed(new GFX.Mesh(post, upright));
+      const a = i - L / 2, b = side * (S / 2 - 0.06);
+      m.position.set(long ? a : b, height / 2, long ? b : a);
+      group.add(m);
+    }
+  }
+  for (const y of levels.slice(1)) {
+    for (const side of [-1, 1]) {
+      const m = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? L : 0.06, 0.08, long ? 0.06 : L), beam));
+      const b = side * (S / 2 - 0.06);
+      m.position.set(long ? 0 : b, y, long ? b : 0);
+      group.add(m);
+    }
+  }
+  // Pallets and what is on them: a load on most bays of every level.
+  let n = 0;
+  for (const y of levels) {
+    for (let i = 0; i < L; i++) {
+      n++;
+      const a = i - L / 2 + 0.5;
+      const p = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? 0.86 : S * 0.84, 0.06, long ? S * 0.84 : 0.86), pallet));
+      p.position.set(long ? a : 0, y + 0.07, long ? 0 : a);
+      group.add(p);
+      if ((n * 5) % 7 === 3) continue;
+      const tall = 0.25 + ((n * 37) % 10) / 40;
+      const mat = boxes[(n * 3) % boxes.length];
+      const box = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? 0.78 : S * 0.74, tall, long ? S * 0.74 : 0.78), mat));
+      box.position.set(long ? a : 0, y + 0.1 + tall / 2, long ? 0 : a);
+      box.rotation.y = Math.sin(n * 4.1) * 0.05;
+      group.add(box);
+    }
+  }
+  return { group };
+}
+
+/** A camping tent: a dome of nylon in a colour of its own, a darker door, guy lines out to pegs. */
+function dome(GFX, { w = 2, d = 2, rise = 0.9, seed = 0 }) {
+  const group = new GFX.Group();
+  const colours = ['#e0384a', '#2a8ad8', '#f0b02a', '#3aa858', '#8a4ad0', '#f06a2a'];
+  const colour = colours[Math.abs(Math.round(seed * 7)) % colours.length];
+  const nylon = std(GFX, colour, { roughness: 0.55 });
+  const shell = shadowed(new GFX.Mesh(new GFX.SphereGeometry(1, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), nylon));
+  shell.scale.set(w * 0.46, rise * 1.1, d * 0.46);
+  const door = new GFX.Mesh(new GFX.SphereGeometry(1, 10, 6, -0.45, 0.9, Math.PI * 0.18, Math.PI * 0.32), std(GFX, '#1a1a20', { roughness: 0.8 }));
+  door.scale.set(w * 0.465, rise * 1.105, d * 0.465);
+  const fly = new GFX.Mesh(new GFX.TorusGeometry(1, 0.02, 4, 24), std(GFX, '#e8e8ec', { roughness: 0.5 }));
+  fly.rotation.x = Math.PI / 2;
+  fly.scale.set(w * 0.47, d * 0.47, 1);
+  fly.position.y = 0.05;
+  group.add(shell, door, fly);
+  return { group };
+}
+
+/** A crowd barrier along the block: galvanised steel sections, a step plate on the crowd's side, a yellow top rail. */
+function barrier(GFX, { w = 1, d = 1, rise = 1.0 }) {
+  const group = new GFX.Group();
+  const steel = std(GFX, '#9aa0a8', { metalness: 0.8, roughness: 0.35 });
+  const rail = std(GFX, '#f0c020', { roughness: 0.5 });
+  const long = w >= d, L = long ? w : d;
+  const along = (m, a) => (long ? m.position.set(a, m.position.y, 0) : m.position.set(0, m.position.y, a));
+  for (let i = 0; i < L; i++) {
+    const a = i - L / 2 + 0.5;
+    const panel = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? 0.96 : 0.06, rise * 0.8, long ? 0.06 : 0.96), steel));
+    panel.position.y = rise * 0.5;
+    along(panel, a);
+    const foot = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? 0.96 : 0.7, 0.05, long ? 0.7 : 0.96), steel));
+    foot.position.y = 0.025;
+    along(foot, a);
+    group.add(panel, foot);
+    for (const e of [-0.46, 0.46]) {
+      const post = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.08, rise, 0.08), steel));
+      post.position.y = rise / 2;
+      along(post, a + e);
+      group.add(post);
+    }
+  }
+  const top = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? L : 0.1, 0.08, long ? 0.1 : L), rail));
+  top.position.y = rise;
+  group.add(top);
+  return { group };
+}
+
+/** Many boxes as one geometry: each [x, y, z, w, h, d]. */
+function boxes(GFX, list) {
+  const pos = [], nor = [], idx = [];
+  for (const [x, y, z, w, h, d] of list) {
+    const g = new GFX.BoxGeometry(w, h, d);
+    const p = g.attributes.position.array, n = g.attributes.normal.array, base = pos.length / 3;
+    for (let i = 0; i < p.length; i += 3) pos.push(p[i] + x, p[i + 1] + y, p[i + 2] + z);
+    nor.push(...n);
+    for (const i of g.index.array) idx.push(i + base);
+  }
+  const out = new GFX.BufferGeometry();
+  out.setAttribute('position', new GFX.BufferAttribute(new Float32Array(pos), 3));
+  out.setAttribute('normal', new GFX.BufferAttribute(new Float32Array(nor), 3));
+  out.setIndex(new GFX.BufferAttribute(pos.length / 3 > 65535 ? new Uint32Array(idx) : new Uint16Array(idx), 1));
+  out.computeBoundingSphere();
+  return out;
+}
+
+/**
+ * The stands: the seating bowl seen from behind and above, concrete tiers
+ * stepping up from every side toward a rim, and on each step a row of seats
+ * all the way round, in the home team's blue with the odd orange block.
+ */
+function stands(GFX, { w = 8, d = 6, rise = 2.4 }) {
+  const group = new GFX.Group();
+  const concrete = std(GFX, '#8a8e98', { roughness: 0.85 });
+  const tiers = 4, step = 0.9;
+  const blue = [], orange = [];
+  for (let t = 0; t < tiers; t++) {
+    const inset = t * step, top = rise * ((t + 1) / tiers);
+    const tw = w - inset * 2, td = d - inset * 2;
+    if (tw <= 1 || td <= 1) break;
+    const tier = shadowed(new GFX.Mesh(new GFX.BoxGeometry(tw, top, td), concrete));
+    tier.position.y = top / 2;
+    group.add(tier);
+    if (t === tiers - 1) break;
+    // A row of seats round the edge of this step, facing out, just in from the next tier up.
+    const r = 0.22, y = top + 0.16;
+    const ring = (n, at) => { for (let i = 0; i < n; i++) at(i, n); };
+    const put = (x, z, i) => (Math.floor(i / 4) % 5 === 2 ? orange : blue).push([x, y, z, 0.32, 0.3, 0.32]);
+    const ew = tw / 2 - r, ed = td / 2 - r;
+    ring(Math.floor(tw / 0.5), (i, n) => { const x = -ew + (2 * ew * i) / (n - 1); put(x, -ed, i); put(x, ed, i + 2); });
+    ring(Math.floor(td / 0.5), (i, n) => { const z = -ed + (2 * ed * i) / (n - 1); put(-ew, z, i + 1); put(ew, z, i + 3); });
+  }
+  group.add(shadowed(new GFX.Mesh(boxes(GFX, blue), std(GFX, '#2d6ae0', { roughness: 0.5 }))));
+  group.add(shadowed(new GFX.Mesh(boxes(GFX, orange), std(GFX, '#ff8a1a', { roughness: 0.5 }))));
+  return { group };
+}
+
+export const FURNITURE = { console: desk, rack, seat, piano, bale, loo, tent, racking, dome, barrier, stands };

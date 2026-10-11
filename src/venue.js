@@ -31,6 +31,9 @@ export const CAP = -1;
 /** Corner order: (x, z), (x + 1, z), (x, z + 1), (x + 1, z + 1). */
 const H00 = 0, H10 = 1, H01 = 2, H11 = 3;
 
+/** Props that are part of the building, not furniture: they don't break. */
+const STURDY = new Set(['barrier', 'stands']);
+
 /** Where in a crusher's or a pyro's cycle the slam, or the burst, lands. */
 const SLAM_AT = 0.8;
 const BURST_AT = 0.6;
@@ -234,21 +237,19 @@ export class Venue {
   }
 
   /** A pillar: wall standing `rise` above the floor under it. With `prop`, it is drawn as that (an amp, a stack of cases...). */
-  pillar(x, z, rise = 1.1, { prop = null, rot = 0, wall = null, ...more } = {}) {
-    const c = this.cell(x, z);
-    const h = c ? Math.max(...c.h) : 0;
-    this.cells[z * this.cols + x] = null;
-    this.wall(x, z, 1, 1, h + rise, { tex: wall });
-    const cell = this.cell(x, z);
-    if (prop && cell) {
-      cell.prop = prop;
-      this.props.push({ kind: prop, x, z, w: 1, d: 1, rot, base: h, rise, ...more });
-    }
-    return this;
+  pillar(x, z, rise = 1.1, opts = {}) {
+    return this.block(x, z, 1, 1, rise, opts);
   }
 
-  /** Like `pillar`, but `w` × `d` tiles of it, drawn as one `prop` (a drum kit, a bar, a stack of cases). */
-  block(x, z, w, d, rise = 1.0, { prop = null, rot = 0, wall = null, ...more } = {}) {
+  /**
+   * Like `pillar`, but `w` × `d` tiles of it, drawn as one `prop` (a drum
+   * kit, a bar, a stack of cases). A prop can be smashed: its tiles stay
+   * floor, and the prop is a box over them that Rock can roll into, or
+   * through, if he comes at it fast enough (see `breakAt`). One that is
+   * `sturdy` — a crowd barrier, the stands — is wall, as a block with no
+   * prop is.
+   */
+  block(x, z, w, d, rise = 1.0, { prop = null, rot = 0, wall = null, sturdy = STURDY.has(prop), ...more } = {}) {
     let h = 0;
     for (let j = z; j < z + d; j++) {
       for (let i = x; i < x + w; i++) {
@@ -256,15 +257,24 @@ export class Venue {
         h = Math.max(h, c ? Math.max(...c.h) : 0);
       }
     }
+    const breakable = Boolean(prop) && !sturdy && [...Array(w * d).keys()].every((k) => this.cell(x + (k % w), z + Math.floor(k / w))?.kind === 'floor');
     for (let j = z; j < z + d; j++) {
       for (let i = x; i < x + w; i++) {
+        if (breakable) {
+          Object.assign(this.cell(i, j), { prop, base: h, breakable: true });
+          continue;
+        }
         this.cells[j * this.cols + i] = null;
         this.wall(i, j, 1, 1, h + rise, { tex: wall });
         const cell = this.cell(i, j);
-        if (prop && cell) cell.prop = prop;
+        if (prop && cell) Object.assign(cell, { prop, base: h });
       }
     }
-    if (prop) this.props.push({ kind: prop, x, z, w, d, rot, base: h, rise, ...more });
+    if (prop) {
+      // The bigger it is, the harder it has to be hit.
+      const breakAt = breakable ? (w * d <= 1 ? 4.5 : w * d <= 4 ? 5.5 : 6.5) : null;
+      this.props.push({ kind: prop, x, z, w, d, rot, base: h, rise, breakAt, ...more });
+    }
     return this;
   }
 
@@ -332,7 +342,7 @@ export class Venue {
 
   /**
    * One of the light rig (lightshow.js), set over tile (x, z): `kind` is
-   * 'par', 'spot', 'strobe', 'ball', 'laser', 'neon' or 'bulb'. `colors` are
+   * 'par', 'spot', 'strobe', 'ball', 'laser', 'neon', 'bulb', 'chandelier' or 'festoon'. `colors` are
    * what it cycles through; `reach` how far it is baked into the stone.
    */
   light(kind, x, z, opts = {}) {
@@ -451,13 +461,13 @@ export class Venue {
    */
   isSafe(x, z) {
     const c = this.cell(x, z);
-    if (!c || c.kind !== 'floor' || !isFlat(c) || c.trap || c.crush || c.door || c.fx === 'belt') return false;
+    if (!c || c.kind !== 'floor' || !isFlat(c) || c.trap || c.crush || c.door || c.prop || c.fx === 'belt') return false;
     for (let j = -1; j <= 1; j++) {
       for (let i = -1; i <= 1; i++) {
         const n = this.cell(x + i, z + j);
         if (!n) return false;
         if (n.kind === 'wall' && Math.min(...n.h) >= c.h[0] + 0.3) continue;
-        if (n.kind === 'zap' || !isFlat(n) || Math.abs(n.h[0] - c.h[0]) > 1e-6) return false;
+        if (n.kind === 'zap' || n.prop || !isFlat(n) || Math.abs(n.h[0] - c.h[0]) > 1e-6) return false;
       }
     }
     return true;
@@ -679,9 +689,16 @@ export function buildVenue(venue) {
           return [across, along];
         };
       }
-      if (!c.prop) {
+      if (!c.prop || c.breakable) {
         face(out, A, C, B, normalOf(A, C, B), [shadeOf(A), shadeOf(C), shadeOf(B)], [uv([0, 1]), uv([0, 0]), uv([1, 1])]);
         face(out, B, C, D, normalOf(B, C, D), [shadeOf(B), shadeOf(C), shadeOf(D)], [uv([1, 1]), uv([0, 0]), uv([1, 0])]);
+      } else if (c.base !== undefined && c.kind === 'wall') {
+        // Under a prop, the floor it stands on, for wherever the prop doesn't cover its tile.
+        const y = c.base + 0.002, floorCol = colourAt(0).map((v) => v * tint);
+        const a = [x, y, z], b = [x + 1, y, z], cc = [x, y, z + 1], dd = [x + 1, y, z + 1];
+        const under = layer(floors, 'floor'), up = [0, 1, 0];
+        face(under, a, cc, b, up, [lit(floorCol, a), lit(floorCol, cc), lit(floorCol, b)], [uv([0, 1]), uv([0, 0]), uv([1, 1])]);
+        face(under, b, cc, dd, up, [lit(floorCol, b), lit(floorCol, cc), lit(floorCol, dd)], [uv([1, 1]), uv([0, 0]), uv([1, 0])]);
       }
       world.addTriangle(...A, ...C, ...B);
       world.addTriangle(...B, ...C, ...D);
@@ -707,13 +724,13 @@ export function buildVenue(venue) {
         const d0 = a0 - b0, d1 = a1 - b1;
         if (d0 <= 1e-6 && d1 <= 1e-6) continue;
         if (d0 >= -1e-6 && d1 >= -1e-6) {
-          wall(p0, p1, [[0, b0], [1, b1], [1, a1], [0, a0]], outward, shade, Boolean(c.prop));
+          wall(p0, p1, [[0, b0], [1, b1], [1, a1], [0, a0]], outward, shade, Boolean(c.prop && !c.breakable));
         } else {
           // The two edges cross: this tile is higher on one side of the crossing only.
           const t = d0 / (d0 - d1);
           const ym = a0 + (a1 - a0) * t;
-          if (d0 > 0) wall(p0, p1, [[0, b0], [t, ym], [0, a0]], outward, shade, Boolean(c.prop));
-          else wall(p0, p1, [[1, b1], [1, a1], [t, ym]], outward, shade, Boolean(c.prop));
+          if (d0 > 0) wall(p0, p1, [[0, b0], [t, ym], [0, a0]], outward, shade, Boolean(c.prop && !c.breakable));
+          else wall(p0, p1, [[1, b1], [1, a1], [t, ym]], outward, shade, Boolean(c.prop && !c.breakable));
         }
       }
     }
