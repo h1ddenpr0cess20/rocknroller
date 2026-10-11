@@ -85,8 +85,8 @@ function amp(GFX, { venue }) {
   };
 }
 
-/** A road case: black laminate in a silver frame, latches, a stencil; two of them stacked. */
-function roadCase(GFX, { rise }) {
+/** Road cases: black laminate in a silver frame, latches, a stencil; two stacked on every tile of the block. */
+function roadCase(GFX, { rise, w = 1, d = 1 }) {
   const group = new GFX.Group();
   const [c, ctx] = canvas(256, 128);
   ctx.fillStyle = '#26262b';
@@ -107,12 +107,24 @@ function roadCase(GFX, { rise }) {
   const top = std(GFX, '#202024', { roughness: 0.6 });
   const lower = Math.min(0.56, rise * 0.58);
   const upper = Math.max(0.3, rise - lower - 0.02);
-  const a = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.92, lower, 0.84), [face, face, top, top, face, face]));
-  a.position.y = lower / 2;
-  const b = shadowed(new GFX.Mesh(new GFX.BoxGeometry(0.82, upper, 0.7), [face, face, top, top, face, face]));
-  b.position.set(0.02, lower + upper / 2, 0.02);
-  b.rotation.y = 0.06;
-  group.add(a, b);
+  const lowerBox = new GFX.BoxGeometry(0.92, lower, 0.84), upperBox = new GFX.BoxGeometry(0.82, upper, 0.7);
+  for (let j = 0; j < d; j++) {
+    for (let i = 0; i < w; i++) {
+      const x = i - (w - 1) / 2, z = j - (d - 1) / 2;
+      // Not quite square to each other: they were stacked in a hurry.
+      const twist = Math.sin(i * 12.9 + j * 7.3) * 0.08;
+      const a = shadowed(new GFX.Mesh(lowerBox, [face, face, top, top, face, face]));
+      a.position.set(x, lower / 2, z);
+      a.rotation.y = twist * 0.4;
+      group.add(a);
+      // Now and then the top one is missing.
+      if ((i * 7 + j * 3) % 5 === 4) continue;
+      const b = shadowed(new GFX.Mesh(upperBox, [face, face, top, top, face, face]));
+      b.position.set(x + 0.02, lower + upper / 2, z + 0.02);
+      b.rotation.y = 0.06 + twist;
+      group.add(b);
+    }
+  }
   return { group };
 }
 

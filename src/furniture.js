@@ -196,4 +196,56 @@ function tent(GFX, { w = 2, d = 2, rise = 1.4 }) {
   return { group };
 }
 
-export const FURNITURE = { console: desk, rack, seat, piano, bale, loo, tent };
+/**
+ * Pallet racking over the block: orange uprights, blue beams, three levels
+ * of pallets stacked with boxes, shrink-wrap and the odd flight case.
+ */
+function racking(GFX, { w = 1, d = 1, rise = 1.3 }) {
+  const group = new GFX.Group();
+  const upright = std(GFX, '#e0702a', { roughness: 0.5, metalness: 0.4 });
+  const beam = std(GFX, '#2a5ab0', { roughness: 0.45, metalness: 0.5 });
+  const pallet = std(GFX, '#b08a58', { roughness: 0.85 });
+  const boxes = ['#c8a070', '#b89060', '#d4b080', '#2a2a30', '#e8e4dc'].map((c) => std(GFX, c, { roughness: c === '#e8e4dc' ? 0.25 : 0.8, transparent: c === '#e8e4dc', opacity: c === '#e8e4dc' ? 0.85 : 1 }));
+  const long = w >= d, L = long ? w : d, S = long ? d : w;
+  const height = rise + 0.9;
+  const levels = [0.05, height * 0.42, height * 0.8];
+  // Uprights at every tile end along it, both sides.
+  const post = new GFX.BoxGeometry(0.07, height, 0.07);
+  for (let i = 0; i <= L; i++) {
+    for (const side of [-1, 1]) {
+      const m = shadowed(new GFX.Mesh(post, upright));
+      const a = i - L / 2, b = side * (S / 2 - 0.06);
+      m.position.set(long ? a : b, height / 2, long ? b : a);
+      group.add(m);
+    }
+  }
+  for (const y of levels.slice(1)) {
+    for (const side of [-1, 1]) {
+      const m = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? L : 0.06, 0.08, long ? 0.06 : L), beam));
+      const b = side * (S / 2 - 0.06);
+      m.position.set(long ? 0 : b, y, long ? b : 0);
+      group.add(m);
+    }
+  }
+  // Pallets and what is on them: a load on most bays of every level.
+  let n = 0;
+  for (const y of levels) {
+    for (let i = 0; i < L; i++) {
+      n++;
+      const a = i - L / 2 + 0.5;
+      const p = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? 0.86 : S * 0.84, 0.06, long ? S * 0.84 : 0.86), pallet));
+      p.position.set(long ? a : 0, y + 0.07, long ? 0 : a);
+      group.add(p);
+      if ((n * 5) % 7 === 3) continue;
+      const tall = 0.25 + ((n * 37) % 10) / 40;
+      const mat = boxes[(n * 3) % boxes.length];
+      const box = shadowed(new GFX.Mesh(new GFX.BoxGeometry(long ? 0.78 : S * 0.74, tall, long ? S * 0.74 : 0.78), mat));
+      box.position.set(long ? a : 0, y + 0.1 + tall / 2, long ? 0 : a);
+      box.rotation.y = Math.sin(n * 4.1) * 0.05;
+      group.add(box);
+    }
+  }
+  return { group };
+}
+
+export const FURNITURE = { console: desk, rack, seat, piano, bale, loo, tent, racking };
