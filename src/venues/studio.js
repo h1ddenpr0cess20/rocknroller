@@ -89,10 +89,11 @@ export function studio() {
   d.turn('+x');
 
   // The live room: kit and amps along the back, a chicane of live cable, kick drums on their sides to bounce off.
+  // The gear stands between the runs of cable (at 5, 10 and 15), not on them.
   const live = d.room(21, 15, { floor: 'planks' });
   const deck = live.back * 6 - (live.back > 0 ? 1 : 0);
-  g.block(...live.rect(15, 4, deck, 2), 0.35, { prop: 'drums' });
-  for (const k of [2, 4, 7, 10]) g.pillar(...backTile(live, k), 1.0, { prop: 'amp' });
+  g.block(...live.rect(17, 4, deck, 2), 0.35, { prop: 'drums' });
+  for (const k of [2, 4, 7, 9]) g.pillar(...backTile(live, k), 1.0, { prop: 'amp' });
   for (const k of [12, 13]) g.pillar(...backTile(live, k), 1.1, { prop: 'rack' });
   // Cable: whole-width runs with a gap to get through, each on the other side from the last.
   const run = (along, gapAcross) => {

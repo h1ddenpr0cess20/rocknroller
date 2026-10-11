@@ -87,6 +87,18 @@ test('nothing is stood or left lying where a speaker stack comes down, pyro goes
   }
 });
 
+test('nothing is laid over a prop once it is put down: no live cable, no floor, under any of it', () => {
+  for (let i = 0; i < VENUES.length; i++) {
+    const v = loadVenue(i);
+    for (const p of v.props.filter((q) => !q.free)) {
+      for (const [x, z] of tilesOf(p)) {
+        const c = v.cell(x, z);
+        assert.equal(c?.prop, p.kind, `${v.name}: the ${p.kind} at ${p.x},${p.z} has ${c ? c.kind : 'nothing'} laid over it at ${x},${z}`);
+      }
+    }
+  }
+});
+
 test('gates and panels close off the whole way: no getting round the ends', () => {
   for (let i = 0; i < VENUES.length; i++) {
     const v = loadVenue(i);
