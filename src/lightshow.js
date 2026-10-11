@@ -629,23 +629,76 @@ export function createLightshow(GFX, venue) {
     };
   }
 
-  // ——— a neon sign: a word, in tube.
+  /**
+   * Where a sign hangs. On a wall with floor in front of it on the camera's
+   * side (+x or +z), it is fixed flat to that face, its middle `height` up
+   * from the floor but never above the wall's top. Over floor with a wall
+   * behind it, the same, on that wall. Otherwise it stands on whatever is
+   * under it — a wall top, the floor — facing the camera's corner.
+   */
+  function mount(f, height, size) {
+    const i = Math.floor(f.x), j = Math.floor(f.z);
+    const c = venue.cell(i, j);
+    const floorAt = (x, z) => {
+      const n = venue.cell(x, z);
+      return n && n.kind !== 'wall' ? Math.max(...n.h) : null;
+    };
+    const face = (wallX, wallZ, dx, dz, floor) => {
+      const top = Math.max(...venue.cell(wallX, wallZ).h);
+      const y = Math.min(floor + height, top - size / 2 - 0.08);
+      return { at: [wallX + 0.5 + dx * 0.53, Math.max(floor + size / 2 + 0.1, y), wallZ + 0.5 + dz * 0.53], turn: Math.atan2(dx, dz) };
+    };
+    if (c?.kind === 'wall') {
+      for (const [dx, dz] of [[0, 1], [1, 0]]) {
+        const floor = floorAt(i + dx, j + dz);
+        if (floor !== null && Math.max(...c.h) - floor > 1) return face(i, j, dx, dz, floor);
+      }
+      // A low wall, or one with the room behind it: the sign stands on top of it.
+      return { at: [f.x, Math.max(...c.h) + size / 2 + 0.05, f.z], turn: Math.PI / 4 };
+    }
+    if (c) {
+      const floor = Math.max(...c.h);
+      for (const [dx, dz] of [[0, -1], [-1, 0]]) {
+        const w = venue.cell(i + dx, j + dz);
+        if (w?.kind === 'wall' && Math.max(...w.h) - floor > 1) return face(i + dx, j + dz, -dx, -dz, floor);
+      }
+      return { at: [f.x, floor + height, f.z], turn: Math.PI / 4, standing: true };
+    }
+    return { at: [f.x, heightOf(f.x, f.z) + height, f.z], turn: Math.PI / 4 };
+  }
+
+  // ——— a neon sign: a word, in tube, on a wall.
   function neon(f) {
-    const y = heightOf(f.x, f.z);
     const colour = f.color ?? f.colors?.[0] ?? '#ff3a8a';
     const tex = neonTexture(GFX, f.text ?? 'LIVE', colour);
     const c = rgb(colour);
     const height = f.size ?? 0.55;
-    const material = new GFX.SpriteMaterial({ map: tex.map, color: new GFX.Color(1, 1, 1), ...additive });
-    const sign = new GFX.Sprite(material);
     const width = height * (tex.aspect ?? 3);
-    sign.scale.set(width, height, 1);
-    const at = [f.x, y + (f.height ?? 1.2), f.z];
+    const { at, turn, standing } = mount(f, f.height ?? 1.2, height);
+    const material = new GFX.MeshBasicMaterial({ map: tex.map, color: new GFX.Color(1, 1, 1), side: GFX.DoubleSide, ...additive });
+    const sign = new GFX.Mesh(new GFX.PlaneGeometry(width, height), material);
     sign.position.set(...at);
+    sign.rotation.y = turn;
+    group.add(sign);
+    // The backing board it is screwed to, and a halo on the wall round it.
+    const board = new GFX.Mesh(new GFX.BoxGeometry(width * 1.04, height * 1.1, 0.04), iron);
+    // Its forward (out of the wall) and its right, along the face.
+    const fwd = [Math.sin(turn), Math.cos(turn)], right = [Math.cos(turn), -Math.sin(turn)];
+    board.position.set(at[0] - fwd[0] * 0.03, at[1], at[2] - fwd[1] * 0.03);
+    board.rotation.y = turn;
+    group.add(board);
+    if (standing) {
+      // Free-standing: on two legs.
+      for (const m of [-1, 1]) {
+        const leg = new GFX.Mesh(new GFX.CylinderGeometry(0.025, 0.03, at[1] - heightOf(f.x, f.z), 6), iron);
+        leg.position.set(at[0] + right[0] * m * width * 0.4, (at[1] + heightOf(f.x, f.z)) / 2 - height / 4, at[2] + right[1] * m * width * 0.4);
+        group.add(leg);
+      }
+    }
     const h = halo(c, Math.max(width, 1.6) * 1.1);
     h.position.set(...at);
-    h.material.opacity = 0.35;
-    group.add(sign, h);
+    h.material.opacity = 0.3;
+    group.add(h);
     const seed = f.x * 7.7 + f.z * 3.1;
     sources.push({ pos: at, colour: c, reach: f.reach ?? 5, strength: 0.5 });
     return {
@@ -654,7 +707,7 @@ export function createLightshow(GFX, venue) {
         const out = Math.sin(time * 1.9 + seed) > 0.992 || Math.sin(time * 4.7 + seed * 2) > 0.998;
         const k = out ? 0.25 : 1 + 0.03 * Math.sin(time * 40 + seed);
         material.opacity = k;
-        h.material.opacity = 0.35 * k;
+        h.material.opacity = 0.3 * k;
         ctx.offer({ pos: at, color: c, intensity: 4.5 * k, reach: 6 });
       },
     };

@@ -79,8 +79,9 @@ export function opera() {
   d.hall(5, MARBLE);
   d.turn('+x', MARBLE);
 
-  // The stalls: raked down toward the stage, the rows across it with an aisle in each that is never where the last one was.
-  const stalls = d.ramp(20, 3.5, { width: 13, floor: 'carpet', wall: 'damask' });
+  // The stalls: raked down toward the stage in shallow steps, the rows across it with an aisle in each that is never where the last one was.
+  // Stepped, a shallow tread a tile deep, so every row of seats stands level.
+  const stalls = d.stairs(20, 3.5, { width: 13, floor: 'carpet', wall: 'damask', color: 0 });
   // Wall the top of the rake where the landing doesn't meet it.
   g.enclose(stalls.x, stalls.z, stalls.w, stalls.d, { sides: 'x0', wall: 'damask' });
   const rows = [[3, -4], [6, 3], [9, -1], [12, 4], [15, -4], [18, 1]];
