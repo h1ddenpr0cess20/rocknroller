@@ -31,6 +31,12 @@ export const heading = (h) => HEADING[h];
 /** The wall tile just beyond piece `p`'s back wall, `along` it: where a light goes to sit on the wall top. */
 export const wallTile = (p, along) => p.tile(along, p.back * (Math.floor((p.width - 1) / 2) + 1));
 
+/** The way toward piece `p`'s back wall, as [dx, dz]: for a prop's `face`. */
+export const toBack = (p) => [p.back * p.across[0], p.back * p.across[1]];
+
+/** The `rot` that turns a prop built facing +z to face [dx, dz]. */
+export const facingRot = ([dx, dz]) => Math.atan2(dx, dz);
+
 /** The tile in the middle of piece `p`. */
 export const centre = (p) => p.tile(Math.floor(p.length / 2), 0);
 

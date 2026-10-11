@@ -123,8 +123,8 @@ export function stadium() {
   // The stage: the size of a block, speaker towers either side, and the Headliner.
   const stage = d.room(21, 19, { floor: 'planks' });
   for (const k of [2, 18]) g.block(...stage.rect(k, 2, stage.back * 8 - (stage.back > 0 ? 1 : 0), 2), 2.0, { prop: 'speaker' });
-  g.block(...stage.rect(8, 6, stage.back * 7 - (stage.back > 0 ? 1 : 0), 3), 0.4, { prop: 'drums', rot: stage.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
-  for (const k of [5, 15]) g.pillar(...backTile(stage, k), 1.2, { prop: 'amp', rot: stage.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  g.block(...stage.rect(8, 6, stage.back * 7 - (stage.back > 0 ? 1 : 0), 3), 0.4, { prop: 'drums' });
+  for (const k of [5, 15]) g.pillar(...backTile(stage, k), 1.2, { prop: 'amp' });
   g.foe('headliner', ...stage.tile(11, 0), { range: 7 });
   g.foe('roadie', ...stage.tile(18, 6), { range: 4 });
   g.pick(...stage.tile(2, 0), 10).pick(...stage.tile(6, -6), 10).pick(...stage.tile(6, 6), 10).pick(...stage.tile(15, -6), 10).pick(...stage.tile(15, 6), 10);

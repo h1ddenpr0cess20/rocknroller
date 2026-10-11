@@ -259,7 +259,7 @@ function racking(GFX, { w = 1, d = 1, rise = 1.3 }) {
   return { group };
 }
 
-/** A camping tent: a dome of nylon in a colour of its own, a darker door, guy lines out to pegs. */
+/** A camping tent: a dome of nylon in a colour of its own, a darker door at the front (+z), guy lines out to pegs. */
 function dome(GFX, { w = 2, d = 2, rise = 0.9, seed = 0 }) {
   const group = new GFX.Group();
   const colours = ['#e0384a', '#2a8ad8', '#f0b02a', '#3aa858', '#8a4ad0', '#f06a2a'];
@@ -267,7 +267,7 @@ function dome(GFX, { w = 2, d = 2, rise = 0.9, seed = 0 }) {
   const nylon = std(GFX, colour, { roughness: 0.55 });
   const shell = shadowed(new GFX.Mesh(new GFX.SphereGeometry(1, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), nylon));
   shell.scale.set(w * 0.46, rise * 1.1, d * 0.46);
-  const door = new GFX.Mesh(new GFX.SphereGeometry(1, 10, 6, -0.45, 0.9, Math.PI * 0.18, Math.PI * 0.32), std(GFX, '#1a1a20', { roughness: 0.8 }));
+  const door = new GFX.Mesh(new GFX.SphereGeometry(1, 10, 6, Math.PI / 2 - 0.45, 0.9, Math.PI * 0.18, Math.PI * 0.32), std(GFX, '#1a1a20', { roughness: 0.8 }));
   door.scale.set(w * 0.465, rise * 1.105, d * 0.465);
   const fly = new GFX.Mesh(new GFX.TorusGeometry(1, 0.02, 4, 24), std(GFX, '#e8e8ec', { roughness: 0.5 }));
   fly.rotation.x = Math.PI / 2;

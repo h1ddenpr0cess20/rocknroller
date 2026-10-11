@@ -1,6 +1,6 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, branch, centre, flat, wallTile, wash } from './helpers.js';
+import { backTile, barred, branch, centre, flat, toBack, wallTile, wash } from './helpers.js';
 
 /**
  * Act 4: The Club. A basement dance club at two in the morning. It starts
@@ -72,7 +72,7 @@ export function club() {
 
   // The cloakroom: racks of coats along the back, and a tip jar's worth of picks.
   const cloak = d.room(7, 9, { floor: 'carpet' });
-  for (const k of [1, 3, 5]) g.pillar(...backTile(cloak, k), 1.1, { prop: 'rack', rot: cloak.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  for (const k of [1, 3, 5]) g.pillar(...backTile(cloak, k), 1.1, { prop: 'rack' });
   g.pick(...cloak.tile(2, 2), 10).pick(...cloak.tile(4, -2), 10);
   g.foe('hipster', ...cloak.tile(4, 1), { range: 4 });
   d.turn('+x');
@@ -80,8 +80,8 @@ export function club() {
   // The dance floor: lit panels, go-go podiums to bounce off, the DJ on a riser against the back wall, the ball over it all.
   const floor = d.room(21, 17, { floor: 'panels' });
   const deck = floor.back * 7 - (floor.back > 0 ? 1 : 0);
-  g.block(...floor.rect(8, 6, deck, 2), 0.6, { prop: 'console', rot: floor.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
-  for (const k of [5, 15]) g.pillar(...backTile(floor, k), 1.2, { prop: 'speaker', rot: floor.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  g.block(...floor.rect(8, 6, deck, 2), 0.6, { prop: 'console', face: toBack(floor) });
+  for (const k of [5, 15]) g.pillar(...backTile(floor, k), 1.2, { prop: 'speaker' });
   for (const [a, b] of [[5, -3], [10, 2], [15, -3], [7, 4], [13, 5]]) g.bumper(...floor.tile(a, b), { radius: 0.5, look: 'podium' });
   for (const [a, b] of [[2, -6], [19, -6], [2, 6], [19, 6]]) g.pillar(...floor.tile(a, b), 0.62, { prop: 'table' });
   g.foe('influencer', ...floor.tile(4, 0), { range: 6 }).foe('influencer', ...floor.tile(12, -5), { range: 6 });
@@ -114,10 +114,13 @@ export function club() {
 
   // The bar: the counter down the back, the floor in front of it sticky with what was spilt, the bass bins slamming.
   const bar = d.hall(16, { width: 5, floor: 'checker', wall: 'posters' });
-  g.block(...bar.rect(2, 12, bar.back * 2, 1), 0.9, { prop: 'bar', rot: bar.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  g.block(...bar.rect(2, 12, bar.back * 2, 1), 0.9, { prop: 'bar' });
   g.sticky(...bar.rect(2, 12, bar.back * 1, 1));
-  g.speaker(...across(bar, 6, { beats: 4 }));
-  g.speaker(...across(bar, 12, { beats: 4, offset: 0.5 }));
+  // The bins come down across the floor in front of the counter, not on it.
+  for (const [along, offset] of [[6, 0], [12, 0.5]]) {
+    const [x, z, w, dd] = bar.rect(along, 1, bar.back > 0 ? bar.lo : bar.lo + 1, bar.width - 1);
+    g.speaker(x, z, { w, d: dd, beats: 4, offset });
+  }
   g.foe('drunk', ...bar.tile(3, 0), { range: 4 }).foe('influencer', ...bar.tile(9, -1), { range: 4 });
   g.pick(...bar.tile(7, -1), 5).pick(...bar.tile(7, 0), 5).pick(...bar.tile(7, 1), 5).pick(...bar.tile(14, -1), 10);
   g.lighter(...bar.tile(15, -2));
@@ -139,7 +142,7 @@ export function club() {
 
   // The office: the promoter, his desk and his safe; tables to put between him and you.
   const office = d.room(17, 15, { floor: 'carpet', wall: 'damask' });
-  g.block(...office.rect(11, 4, office.back * 6, 1), 0.82, { prop: 'console', rot: office.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  g.block(...office.rect(11, 4, office.back * 6, 1), 0.82, { prop: 'console' });
   for (const [a, b] of [[4, -3], [4, 3], [9, 0], [13, -4], [13, 4]]) g.pillar(...office.tile(a, b), 0.62, { prop: 'table' });
   g.foe('promoter', ...office.tile(11, 0), { range: 5 });
   g.pick(...office.tile(2, 0), 10).pick(...office.tile(7, -5), 10).pick(...office.tile(7, 5), 10);

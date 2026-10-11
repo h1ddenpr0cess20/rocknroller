@@ -104,9 +104,11 @@ export function dock() {
   g.tape(...store.tile(15, 7));
   beacon(store, 8, BEACON[1]);
   sign(store, 3, 'AISLE 9', BEACON[2]);
+  // Out of the warehouse by a corridor of its own, gated, so the way on can't be got at from along the racking.
+  const door = d.hall(3);
+  barred(g, door, 1);
   d.turn('+x');
-  const door = d.hall(6);
-  barred(g, door, 2);
+  d.hall(6);
 
   // The loading bays: three gaps, three forklifts, live cable in the pits.
   for (let i = 0; i < 3; i++) {

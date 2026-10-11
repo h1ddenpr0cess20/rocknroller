@@ -92,7 +92,7 @@ export function festival() {
   g.floorOf(...field.rect(8, 8, -3, 7), 'mud');
   g.sticky(...field.rect(8, 8, -3, 7));
   for (const [a, b] of [[3, -7], [3, 6], [6, 0], [16, -8], [16, 8], [12, -6], [12, 7]]) g.block(...field.rect(a, 2, b, 1), 0.7, { prop: 'bale' });
-  for (const k of [2, 4, 6]) g.pillar(...backTile(field, k), 1.3, { prop: 'loo', rot: field.back > 0 ? -Math.PI / 2 : Math.PI / 2 });
+  for (const k of [2, 4, 6]) g.pillar(...backTile(field, k), 1.3, { prop: 'loo' });
   g.foe('mosher', ...field.tile(10, -1), { range: 6 }).foe('mosher', ...field.tile(13, 2), { range: 6 }).foe('phone', ...field.tile(5, 4), { range: 6 });
   g.foe('drunk', ...field.tile(17, -4), { range: 6 }).foe('freebird', ...field.tile(18, 5), { range: 6 }).foe('mascot', ...field.tile(20, 0), { range: 6 });
   g.foe('diver', ...field.tile(14, 0), { path: [field.tile(9, -5), field.tile(19, -5), field.tile(19, 5), field.tile(9, 5)] });

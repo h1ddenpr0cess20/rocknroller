@@ -49,10 +49,11 @@ export function dive() {
 
   // The bar: a long counter down the back, tables, a jukebox, and drunks. Spilled beer in front of the counter.
   const bar = d.room(17, 13, { wall: 'posters' });
-  g.block(...bar.rect(2, 12, bar.back * 6 - (bar.back > 0 ? 0 : 0), 1), 0.9, { prop: 'bar', rot: bar.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
-  g.sticky(...bar.rect(2, 12, bar.back * 5 - (bar.back > 0 ? 0 : 0), 2));
+  g.block(...bar.rect(2, 12, bar.back * 6, 1), 0.9, { prop: 'bar' });
+  // The two rows in front of the counter, not under it.
+  g.sticky(...bar.rect(2, 12, bar.back > 0 ? 4 : -5, 2));
   for (const [a, b] of [[4, 0], [7, 3], [10, -1], [13, 2], [14, -3]]) g.pillar(...bar.tile(a, b), 0.6, { prop: 'table' });
-  g.pillar(...bar.tile(15, bar.back * 5), 1.0, { prop: 'jukebox', rot: bar.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  g.pillar(...bar.tile(15, bar.back * 5), 1.0, { prop: 'jukebox' });
   g.foe('drunk', ...bar.tile(5, 2), { range: 6 }).foe('drunk', ...bar.tile(9, -3), { range: 6 }).foe('freebird', ...bar.tile(13, bar.back * 3), { range: 5 }).foe('hipster', ...bar.tile(11, 3), { range: 6 });
   g.pick(...bar.tile(3, -2), 10).pick(...bar.tile(8, 0), 10).pick(...bar.tile(14, -5), 10);
   g.tape(...bar.tile(15, 0));
@@ -96,7 +97,7 @@ export function dive() {
 
   // The pinball room: machines along the wall, and bumpers in the middle of the floor.
   const arcade = d.room(15, 13);
-  for (const k of [1, 3, 5, 7, 9]) g.pillar(...backTile(arcade, k), 0.9, { prop: 'pinball', rot: arcade.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
+  for (const k of [1, 3, 5, 7, 9]) g.pillar(...backTile(arcade, k), 0.9, { prop: 'pinball' });
   for (const [a, b] of [[4, 0], [6, 2], [6, -2], [9, 0], [11, 3], [11, -3]]) g.bumper(...arcade.tile(a, b), { radius: 0.55 });
   g.foe('mosher', ...arcade.tile(3, -3), { range: 6 }).foe('influencer', ...arcade.tile(8, 4), { range: 6 }).foe('drunk', ...arcade.tile(12, 0), { range: 6 });
   g.pick(...arcade.tile(2, 0), 10).pick(...arcade.tile(5, 4), 10).pick(...arcade.tile(13, -4), 10);
