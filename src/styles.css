@@ -174,6 +174,20 @@ kbd {
 .screen { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 20px; }
 .scrim { background: radial-gradient(ellipse at center, rgba(8,6,14,0.35), rgba(8,6,14,0.82)); }
 
+/* The title: down the left on a wide screen, so Rock is in the middle of the picture, not behind the logo; stacked top and bottom, with Rock between, on a tall one. */
+.screen.title { place-items: center start; text-align: left; padding-left: clamp(24px, 6vw, 110px); }
+.screen.title .logo, .screen.title .menu, .screen.title .help { justify-items: start; }
+.screen.title .logo .top, .screen.title .logo .bottom { font-size: clamp(48px, 8.5vw, 130px); }
+.screen.title .logo .tag { letter-spacing: 0.34em; }
+.screen.title .help { max-width: 44ch; color: #e6def4; text-shadow: 0 1px 3px #000, 0 0 10px rgba(0,0,0,0.8); }
+@media (max-aspect-ratio: 1/1) {
+  .screen.title { place-items: stretch; text-align: center; padding: 5vh 16px; }
+  .screen.title > div { display: grid; grid-template-rows: auto 1fr auto auto; height: 100%; justify-items: center; }
+  .screen.title .logo, .screen.title .menu, .screen.title .help { justify-items: center; }
+  .screen.title .logo .top, .screen.title .logo .bottom { font-size: clamp(48px, 17vw, 120px); }
+  .screen.title .menu { align-self: end; }
+}
+
 .logo { display: grid; gap: 0; justify-items: center; margin-bottom: 20px; }
 .logo .top, .logo .bottom {
   font-family: var(--display); line-height: 0.92; text-transform: uppercase; letter-spacing: 0.04em; margin: 0;

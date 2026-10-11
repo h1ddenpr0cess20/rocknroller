@@ -121,7 +121,7 @@ export function createHud(root, { onStart, onResume, onRestart, onQuit, onNext, 
     return s;
   };
 
-  const title = screen('title', '', `
+  const title = screen('title', 'title', `
     <div>
       <header class="logo">
         <h1 class="top flicker">Rock <span class="amp">'n'</span></h1>
