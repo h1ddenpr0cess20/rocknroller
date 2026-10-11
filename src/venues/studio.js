@@ -1,14 +1,16 @@
 import { digger } from '../dig.js';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, branch, centre, flat, wallTile, wash } from './helpers.js';
+import { across, backTile, barred, branch, wallTile, wash } from './helpers.js';
 
 /**
  * Act 6: The Studio. A recording studio at the hour when everyone has
  * stopped being polite: acoustic foam on the walls, a red light that says
- * ON AIR, racks of gear blinking, and cables across the floor of the live
- * room that are, in the engineer's words, "probably fine". They are not
- * fine: the chicane of live cable is the way across. Everyone here is
- * either in A&R or has notes. A lift takes you up to the control room.
+ * ON AIR, racks of gear blinking. Past reception is the long corridor of
+ * isolation booths, doors on either side, monitor wedges slamming down on
+ * the beat — and what you need is in the booths: two gold records and the
+ * pass for the live room. The live room's floor is a chicane of live cable
+ * with kick drums to bounce off; the control room is down a floor; and the
+ * way out is round and round and down the echo chamber.
  */
 
 export const STUDIO = {
@@ -21,7 +23,7 @@ const LIGHTS = ['#ff3a4a', '#ffb02a', '#2de2ff'];
 
 export function studio() {
   const g = new Venue({
-    name: 'The Studio', act: 6, cols: 150, rows: 150, palette: STUDIO, tempo: 100,
+    name: 'The Studio', act: 6, cols: 120, rows: 120, palette: STUDIO, tempo: 100,
     intro: 'Take one. Take two. Take forty-one. Rock is a perfectionist.',
     look: {
       theme: 'studio', floor: 'carpet', wall: 'foam', lamp: 'bulb', exitSign: 'GIG', ampName: 'STUDIO',
@@ -32,115 +34,120 @@ export function studio() {
     },
   });
   const sign = (p, along, text, color, height = 1.5, size = 0.7) => g.light('neon', ...wallTile(p, along), { text, color, height, size });
+  const side = (p) => (p.back > 0 ? Math.PI / 2 : -Math.PI / 2);
 
   // Reception: gold records on the wall, and a receptionist who is in no way impressed.
-  g.room(2, 4, 5, 5, 50, { lamps: 3, wall: 'posters', floor: 'carpet' });
+  g.room(2, 4, 5, 5, 60, { lamps: 3, wall: 'posters', floor: 'carpet' });
   g.start = { x: 4, z: 6 };
-  const d = digger(g, { x: 7, z: 6, h: 50, heading: '+x' });
-  const lobby = d.hall(12, { wall: 'posters', floor: 'carpet' });
-  g.foe('hipster', ...lobby.tile(7, 0), { range: 5 });
-  g.pick(...lobby.tile(3, 0), 5).pick(...lobby.tile(4, 1), 5).pick(...lobby.tile(5, -1), 5).pick(...lobby.tile(10, 0), 10);
-  sign(lobby, 4, 'STUDIO A', LIGHTS[1], 1.6, 0.8);
-  sign(lobby, 9, 'ON AIR', LIGHTS[0], 1.5, 0.7);
+  const d = digger(g, { x: 7, z: 6, h: 60, heading: '+x' });
+  const lobby = d.hall(6, { wall: 'posters', floor: 'carpet' });
+  g.pick(...lobby.tile(2, 0), 5).pick(...lobby.tile(4, 0), 5);
+  sign(lobby, 3, 'STUDIO A', LIGHTS[1], 1.6, 0.8);
   d.turn('+z', { wall: 'posters', floor: 'carpet' });
-  g.tape(...d.hall(3, { wall: 'posters', floor: 'carpet' }).tile(1, 0));
-  d.stairs(4, 2);
+  d.stairs(3, 1.5);
 
-  // The live room: kit and amps along the back, racks of gear, and a chicane of live cable across the floor.
-  const live = d.room(21, 15);
-  const side = live.back > 0 ? Math.PI / 2 : -Math.PI / 2;
+  // The booth corridor: long, foam all the way, wedges slamming down, and a booth off it every few steps.
+  const hall = d.hall(30, { floor: 'carpet' });
+  g.speaker(...across(hall, 9, { beats: 4 }));
+  g.speaker(...across(hall, 20, { beats: 4, offset: 0.5 }));
+  g.foe('critic', ...hall.tile(4, 0), { range: 4 }).foe('suit', ...hall.tile(15, 0), { range: 4 }).foe('hipster', ...hall.tile(26, 0), { range: 4 });
+  g.pick(...hall.tile(2, 0), 5).pick(...hall.tile(11, 0), 5).pick(...hall.tile(13, 0), 5).pick(...hall.tile(22, 0), 5).pick(...hall.tile(24, 0), 5);
+  g.light('par', ...wallTile(hall, 9), { colors: [LIGHTS[0]], program: 'pulse', aim: [0, 0], glow: 0.8, reach: 7, height: 1.4 });
+  g.light('par', ...wallTile(hall, 20), { colors: [LIGHTS[0]], program: 'pulse', aim: [0, 0], glow: 0.8, reach: 7, height: 1.4, shift: 2 });
+  /** A booth off the corridor, `along` it, on `which` side: a short way in and a small foam room. */
+  const booth = (along, which, label, color) => {
+    const b = branch(d, hall, along, which, 2);
+    b.hall(2, { floor: 'carpet' });
+    const room = b.room(5, 5, { floor: 'carpet' });
+    sign(hall, along, label, color, 1.4, 0.45);
+    return room;
+  };
+  const a = booth(5, 'back', 'BOOTH A', LIGHTS[2]);
+  g.record(...a.tile(3, 0));
+  g.pillar(...a.tile(4, 1), 0.9, { prop: 'amp', rot: Math.PI });
+  const bb = booth(13, 'front', 'BOOTH B', LIGHTS[1]);
+  g.pass(...bb.tile(3, 0));
+  g.foe('security', ...bb.tile(2, 1), { range: 3 });
+  const c = booth(18, 'back', 'BOOTH C', LIGHTS[2]);
+  g.road(...c.tile(3, 0), 50);
+  g.foe('drum', ...c.tile(2, 0), { path: [c.tile(1, -1), c.tile(3, -1), c.tile(3, 1), c.tile(1, 1)] });
+  const dd = booth(25, 'front', 'VOX', LIGHTS[0]);
+  g.record(...dd.tile(3, 0));
+  g.foe('critic', ...dd.tile(2, -1), { range: 3 });
+  g.tape(...dd.tile(1, 1));
+  const door = d.hall(4, { floor: 'carpet' });
+  barred(g, door, 2);
+  sign(door, 1, 'ON AIR', LIGHTS[0], 1.6, 0.8);
+  d.hall(5, { floor: 'carpet' });
+  d.turn('+x');
+
+  // The live room: kit and amps along the back, a chicane of live cable, kick drums on their sides to bounce off.
+  const live = d.room(21, 15, { floor: 'planks' });
   const deck = live.back * 6 - (live.back > 0 ? 1 : 0);
-  g.block(...live.rect(15, 4, deck, 2), 0.35, { prop: 'drums', rot: side });
-  for (const k of [2, 4, 7, 10]) g.pillar(...backTile(live, k), 1.0, { prop: 'amp', rot: side });
-  for (const k of [12, 13]) g.pillar(...backTile(live, k), 1.1, { prop: 'rack', rot: side });
+  g.block(...live.rect(15, 4, deck, 2), 0.35, { prop: 'drums', rot: side(live) });
+  for (const k of [2, 4, 7, 10]) g.pillar(...backTile(live, k), 1.0, { prop: 'amp', rot: side(live) });
+  for (const k of [12, 13]) g.pillar(...backTile(live, k), 1.1, { prop: 'rack', rot: side(live) });
   // Cable: whole-width runs with a gap to get through, each on the other side from the last.
   const run = (along, gapAcross) => {
-    const lo = live.lo;
-    const hi = lo + live.width;
+    const lo = live.lo, hi = lo + live.width;
     const left = gapAcross - 2, right = gapAcross + 2;
     if (left > lo) g.zap(...live.rect(along, 2, lo, left - lo), live.h);
     if (hi > right) g.zap(...live.rect(along, 2, right, hi - right), live.h);
   };
-  run(6, 5);
-  run(10, -5);
-  g.foe('critic', ...live.tile(3, -2), { range: 6 }).foe('suit', ...live.tile(8, 0), { range: 6 });
-  g.foe('hipster', ...live.tile(13, -3), { range: 6 }).foe('critic', ...live.tile(17, 3), { range: 6 });
-  g.pick(...live.tile(2, 3), 10).pick(...live.tile(6, 5), 10).pick(...live.tile(10, -5), 10).pick(...live.tile(14, 2), 10);
-  g.road(...live.tile(18, 5), 50);
+  run(5, 4);
+  run(10, -4);
+  run(15, 4);
+  for (const [al, ac] of [[7, 0], [8, 4], [12, -1], [13, 3]]) g.bumper(...live.tile(al, ac), { radius: 0.55, look: 'drum' });
+  g.foe('critic', ...live.tile(2, -2), { range: 5 }).foe('suit', ...live.tile(8, -4), { range: 5 });
+  g.foe('hipster', ...live.tile(13, -5), { range: 5 }).foe('influencer', ...live.tile(18, 2), { range: 5 });
+  g.pick(...live.tile(2, 4), 10).pick(...live.tile(7, -5), 10).pick(...live.tile(12, 5), 10).pick(...live.tile(17, -4), 10);
+  g.lighter(...live.tile(19, 6));
   wash(g, live, [LIGHTS[2], LIGHTS[1]], { cans: 4, program: 'chase', every: 4 });
   sign(live, 3, 'REC', LIGHTS[0], 1.5, 0.9);
-  sign(live, 14, 'LIVE', LIGHTS[1], 1.5, 0.7);
-  // Off the front, behind a sheet of foam, the first record: the vocal booth.
-  const vox = branch(d, live, 8);
-  const voxHall = vox.hall(9, { wall: 'foam' });
-  flat(g, voxHall, 8, { breakAt: 6.5, look: 'foam' });
-  const booth = vox.room(5, 5, { wall: 'foam' });
-  g.record(...booth.tile(3, 0));
-  g.pick(...booth.tile(1, -1), 10).pick(...booth.tile(1, 1), 10);
-  d.hall(4);
-  d.turn('+x');
-
-  // The patch corridor: monitor wedges the size of a fridge that come down on the beat.
-  const patch = d.hall(15);
-  g.speaker(...across(patch, 5, { beats: 4 }));
-  g.speaker(...across(patch, 10, { beats: 4, offset: 0.5 }));
-  g.pick(...patch.tile(3, 0), 5).pick(...patch.tile(7, 1), 5).pick(...patch.tile(7, -1), 5).pick(...patch.tile(13, 0), 10);
-  g.light('par', ...wallTile(patch, 4), { colors: [LIGHTS[0]], program: 'static', aim: [0, 0], glow: 0.8, reach: 7, height: 1.4 });
-  g.foe('suit', ...patch.tile(13, 0), { range: 3 });
-  d.hall(3);
-
-  // Up (or down) to the control room, on a lift with a view.
   d.hall(2);
+  // Down a floor to the control room, on the gear lift.
   d.shaft(2.5, { size: 3, period: 8 });
-  d.hall(3);
+  d.hall(2);
 
   // The control room: the desk across the back, racks, and the people who say "love it, but".
-  const control = d.room(17, 13, { wall: 'plywood' });
-  g.block(...control.rect(5, 7, control.back * 5 - (control.back > 0 ? 1 : 0), 2), 0.82, { prop: 'console', rot: control.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
-  for (const k of [1, 3, 14, 15]) g.pillar(...backTile(control, k), 1.1, { prop: 'rack', rot: control.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
-  g.foe('suit', ...control.tile(4, -2), { range: 6 }).foe('critic', ...control.tile(9, 2), { range: 6 }).foe('influencer', ...control.tile(13, -3), { range: 6 });
-  g.pick(...control.tile(2, 3), 10).pick(...control.tile(7, -3), 10).pick(...control.tile(11, 4), 10).pick(...control.tile(15, 0), 10);
-  g.lighter(...control.tile(15, 5));
+  const control = d.room(15, 13, { wall: 'plywood' });
+  g.block(...control.rect(4, 7, control.back * 5 - (control.back > 0 ? 1 : 0), 2), 0.82, { prop: 'console', rot: side(control) });
+  for (const k of [1, 2, 12, 13]) g.pillar(...backTile(control, k), 1.1, { prop: 'rack', rot: side(control) });
+  for (const [al, ac] of [[4, 2], [10, -1]]) g.pillar(...control.tile(al, ac), 0.8, { prop: 'seat' });
+  g.foe('suit', ...control.tile(4, -1), { range: 6 }).foe('critic', ...control.tile(9, 3), { range: 6 }).foe('suit', ...control.tile(12, -3), { range: 6 });
+  g.pick(...control.tile(2, 3), 10).pick(...control.tile(7, -2), 10).pick(...control.tile(11, 4), 10);
+  g.tape(...control.tile(13, 4));
   wash(g, control, [LIGHTS[2], LIGHTS[0]], { cans: 3, program: 'pulse', every: 2 });
-  sign(control, 8, 'ON AIR', LIGHTS[0], 1.6, 0.9);
-  // The pass is in the tape vault, with an A&R man on it.
-  const vault = branch(d, control, 7, 'front', 7);
-  vault.hall(3);
-  const tapes = vault.room(7, 7);
-  g.pass(...tapes.tile(4, 0));
-  g.foe('security', ...tapes.tile(3, 1), { range: 5 });
-  g.pick(...tapes.tile(5, -2), 10);
-  // A record on a plank over the snake pit of live cable.
-  const plankSide = branch(d, control, 12, 'back', 7);
-  plankSide.hall(2);
-  const plank = plankSide.bridge(7);
-  g.zap(...plank.rect(0, 7, plank.lo - 2, 5), plankSide.h - 1.6, { fill: true });
-  g.foe('hipster', ...plank.tile(3, 0), { path: [plank.tile(1, 0), plank.tile(5, 0)] });
-  const nook = plankSide.room(5, 5);
-  g.record(...nook.tile(2, 0));
-  d.hall(4);
-  const door = d.hall(6);
-  barred(g, door, 3);
-  d.turn('+z');
-  d.stairs(3, 1.5);
-
-  // Mastering: a last room, a sheet of steel across a side room with the last record, and the door.
-  const mastering = d.room(15, 13);
-  for (const k of [2, 6, 10]) g.pillar(...backTile(mastering, k), 1.1, { prop: 'rack', rot: mastering.back > 0 ? Math.PI / 2 : -Math.PI / 2 });
-  g.foe('suit', ...mastering.tile(5, -3), { range: 6 }).foe('critic', ...mastering.tile(8, 3), { range: 6 }).foe('security', ...mastering.tile(11, 0), { range: 6 });
-  g.pick(...mastering.tile(2, 3), 10).pick(...mastering.tile(6, 0), 10).pick(...mastering.tile(10, -4), 10);
-  g.tape(...mastering.tile(3, -4));
-  wash(g, mastering, [LIGHTS[1], LIGHTS[2]], { cans: 3, program: 'chase', every: 4 });
-  g.light('ball', ...centre(mastering), { colors: [LIGHTS[1], LIGHTS[2]], radius: 5, height: 2.6 });
-  const vaultSide = branch(d, mastering, 6);
-  const vaultHall = vaultSide.hall(9);
-  flat(g, vaultHall, 8, { breakAt: 6.5, look: 'steel' });
-  const safe = vaultSide.room(5, 5);
-  g.record(...safe.tile(3, 0));
-  g.road(...safe.tile(1, 1), 70);
-  d.hall(3);
-  d.stairs(3, 1.5);
+  sign(control, 7, 'ON AIR', LIGHTS[0], 1.6, 0.9);
   d.hall(2);
+  d.turn('+z');
+
+  // The echo chamber: a stairwell zig-zagging down, a flight each way, a landing at every turn.
+  const STAIRWELL = { wall: 'block', floor: 'concrete' };
+  d.turn('+z', STAIRWELL);
+  const flights = [];
+  for (const [i, way] of [['+z', 0], ['-z', 1], ['+z', 2]].map(([h], i) => [i, h])) {
+    if (i > 0) {
+      d.turn('+x', STAIRWELL);
+      d.hall(1, STAIRWELL);
+      d.turn(way, STAIRWELL);
+    }
+    const top = d.hall(2, STAIRWELL);
+    flights.push(top);
+    g.pick(...top.tile(1, 0), 5);
+    d.stairs(4, 1.4, STAIRWELL);
+  }
+  g.foe('critic', ...flights[1].tile(0, 0), { range: 3 });
+  g.foe('drum', ...flights[2].tile(0, 0), { path: [flights[2].tile(0, -1), flights[2].tile(1, -1), flights[2].tile(1, 1), flights[2].tile(0, 1)] });
+  const out = d.hall(6, STAIRWELL);
+  g.foe('suit', ...out.tile(3, 0), { range: 3 });
+  g.tape(...out.tile(1, 0));
+  // Off the bottom of the stairwell, across the reverb plate's catwalk: the last record.
+  const plate = branch(d, out, 3, 'front', 2);
+  const walk = plate.bridge(6);
+  g.zap(...walk.rect(0, 6, walk.lo - 2, 5), plate.h - 1.6, { fill: true });
+  const end = plate.room(4, 4, { wall: 'block', floor: 'plate' });
+  g.record(...end.tile(2, 0));
   d.exit(3);
   return g;
 }
