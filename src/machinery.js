@@ -24,30 +24,51 @@ export function createSpeakerMesh(GFX, { w, d, height, venue }) {
   if (style === 'crate') return createCrate(GFX, { w, d, height });
   const group = new GFX.Group();
   const grille = grilleTexture(GFX);
-  const tolex = dark(GFX, '#17171a', { roughness: 0.7 });
-  const side = (across) => {
-    const n = Math.max(1, Math.round(across));
-    return new GFX.MeshStandardMaterial({ color: new GFX.Color('#ffffff'), map: tiled(GFX, grille.map, n, 1), bumpMap: tiled(GFX, grille.bump, n, 1), bumpScale: 1.4, roughness: 0.92, metalness: 0 });
-  };
+  const tolex = dark(GFX, '#17171a', { roughness: 0.75 });
+  const cloth = new GFX.MeshStandardMaterial({ color: new GFX.Color('#5a5a5e'), map: grille.map, bumpMap: grille.bump, bumpScale: 1.4, roughness: 0.9 });
   const metal = dark(GFX, '#b8bcc4', { metalness: 0.9, roughness: 0.3 });
-  // BoxGeometry's material order: +x, -x, +y, -y, +z, -z.
-  const mats = [side(d), side(d), tolex, tolex, side(w), side(w)];
-  const body = new GFX.Mesh(new GFX.BoxGeometry(w, height, d), mats);
-  body.castShadow = body.receiveShadow = true;
+  const truss = dark(GFX, '#2a2a30', { metalness: 0.7, roughness: 0.4 });
+  const body = new GFX.Group();
   group.add(body);
-  for (const sx of [-1, 1]) {
-    for (const sz of [-1, 1]) {
-      const c = new GFX.Mesh(new GFX.BoxGeometry(0.1, 0.1, 0.1), metal);
-      c.position.set(sx * (w / 2 - 0.02), height / 2 - 0.02, sz * (d / 2 - 0.02));
-      group.add(c);
+  // A row of cabinets along the long side, two high: each a tolex box, the cloth front and back set into it, corners, a handle.
+  const long = w >= d, L = long ? w : d, S = long ? d : w;
+  const n = Math.max(1, Math.round(L));
+  const cw = L / n, ch = height / 2;
+  const box = new GFX.BoxGeometry(long ? cw - 0.03 : S, ch - 0.03, long ? S : cw - 0.03);
+  const front = new GFX.BoxGeometry(long ? cw - 0.16 : 0.02, ch - 0.16, long ? 0.02 : cw - 0.16);
+  const corner = new GFX.BoxGeometry(0.07, 0.07, 0.07);
+  for (let i = 0; i < n; i++) {
+    for (let k = 0; k < 2; k++) {
+      const a = -L / 2 + cw * (i + 0.5), y = -height / 2 + ch * (k + 0.5);
+      const at = (u, v, h) => (long ? [u, h, v] : [v, h, u]);
+      const cab = new GFX.Mesh(box, tolex);
+      cab.position.set(...at(a, 0, y));
+      cab.castShadow = cab.receiveShadow = true;
+      body.add(cab);
+      for (const side of [-1, 1]) {
+        const f = new GFX.Mesh(front, cloth);
+        f.position.set(...at(a, side * (S / 2 + 0.005), y));
+        body.add(f);
+      }
+      for (const su of [-1, 1]) for (const sv of [-1, 1]) for (const sh of [-1, 1]) {
+        const c = new GFX.Mesh(corner, metal);
+        c.position.set(...at(a + su * (cw / 2 - 0.05), sv * (S / 2 - 0.03), y + sh * (ch / 2 - 0.05)));
+        body.add(c);
+      }
     }
   }
-  const handle = new GFX.Mesh(new GFX.TorusGeometry(0.14, 0.025, 6, 14, Math.PI), metal);
-  handle.position.set(0, height / 2 + 0.01, 0);
-  group.add(handle);
-  const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.04, 0.04, 8, 8), metal);
-  chain.position.y = height / 2 + 4;
-  group.add(chain);
+  // The truss it is flown from, and two chains up into the dark.
+  const bar = new GFX.Mesh(new GFX.BoxGeometry(long ? L + 0.2 : 0.16, 0.16, long ? 0.16 : L + 0.2), truss);
+  bar.position.y = height / 2 + 0.2;
+  group.add(bar);
+  for (const e of [-1, 1]) {
+    const off = e * (L / 2 - 0.15);
+    for (const [h, len] of [[height / 2 + 0.1, 0.22], [height / 2 + 4.3, 8]]) {
+      const chain = new GFX.Mesh(new GFX.CylinderGeometry(0.025, 0.025, len, 6), metal);
+      chain.position.set(long ? off : 0, h, long ? 0 : off);
+      group.add(chain);
+    }
+  }
   return {
     group,
     update(up, time) {
