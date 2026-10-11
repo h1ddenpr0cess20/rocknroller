@@ -12,9 +12,11 @@ const shirt = bands(1, 0.06, '#ff8a3a', '#ffe14a', 0.5, 0.3);
 export default person({
   name: 'drunk',
   scale: 1.42,
-  b: 1.18,
+  b: 1.12,
+  shape: { legs: 0.86, girth: 1.22, head: 1.04 },
+  belly: 1.3,
   skin: '#e89a82',
-  look: { torso: shirt, sleeve: shirt, cuff: '#e89a82', legs: cloth('#c9b27a'), boot: '#e89a82' },
+  look: { belt: '#3a2a1a', sole: '#2a6a9a', torso: shirt, sleeve: shirt, cuff: '#e89a82', legs: cloth('#c9b27a'), boot: '#e89a82' },
   mats: { torso: 'cloth', sleeve: 'cloth', cuff: 'skin', legs: 'cloth', boot: 'skin' },
   face: { eyeColor: '#3a5a3a', brow: '#4a2e1a', blush: 1.0, jaw: 1.1 },
   hair: { color: cloth('#5a3a1e', '#3a2410'), locks: [[[0.05, 0.77, 0.0], [0.09, 0.78, 0.08], 0.03], [[-0.05, 0.77, 0.01], [-0.1, 0.78, 0.07], 0.03], [[0, 0.79, -0.05], [0.02, 0.82, -0.02], 0.03]] },

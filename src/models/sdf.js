@@ -211,6 +211,41 @@ export class Sculpt {
     this.paints = [];
     /** Shapes go into this part; each part is meshed on its own (see `split`). */
     this.current = 'body';
+    /**
+     * A warp (`setWarp`): shapes added after it are sculpted as given and
+     * then stretched by it, so one sculpt can stand taller, stockier or
+     * bigger-headed without a coordinate in it changing.
+     */
+    this.warp = null;
+  }
+
+  /**
+   * Shapes and paint added from now on are moved by `warp`: `to(p)` takes a
+   * point as sculpted to where it ends up, `from(p)` undoes it, and
+   * `scale(q)` is about the least it stretches anything by at q (as
+   * sculpted), to keep distances honest.
+   */
+  setWarp(warp) {
+    this.warp = warp;
+    return this;
+  }
+
+  /** A distance function, colour and bounds as sculpted, moved by the warp. */
+  warped(d, box, color) {
+    const w = this.warp;
+    if (!w) return { d, box, color };
+    const corners = [];
+    for (let c = 0; c < 8; c++) corners.push(w.to([box[c & 1][0], box[(c >> 1) & 1][1], box[(c >> 2) & 1][2]]));
+    const lo = [0, 1, 2].map((i) => Math.min(...corners.map((q) => q[i])));
+    const hi = [0, 1, 2].map((i) => Math.max(...corners.map((q) => q[i])));
+    return {
+      d: (p) => {
+        const q = w.from(p);
+        return d(q) * w.scale(q);
+      },
+      box: [lo, hi],
+      color: typeof color === 'function' ? (p, n) => color(w.from(p), n) : color,
+    };
   }
 
   /** Shapes added in `fn` go into part `name`: its own mesh, not melted into the rest. */
@@ -246,6 +281,7 @@ export class Sculpt {
    * or scales, see `shingles`).
    */
   shape(d, box, { op = 'add', k = 0.03, color = '#c0c0c0', bone = 'root', mat = 'skin', bump = null, locks = null } = {}) {
+    ({ d, box, color } = this.warped(d, box, color));
     const s = { id: shapeId++, d, box, op, k, bone, mat, bump, part: this.current, color: typeof color === 'string' ? rgb(color) : color };
     if (locks) {
       // [size, height, axis, stretch]: the surface raised in locks of fur or scales (`shingles`).
@@ -465,6 +501,14 @@ export class Sculpt {
    * is painted `color`, softened over `soft`.
    */
   paint(inside, color, soft = 0.01) {
+    if (this.warp) {
+      const w = this.warp, was = inside, fn = color;
+      inside = (p) => {
+        const q = w.from(p);
+        return was(q) * w.scale(q);
+      };
+      if (typeof fn === 'function') color = (p, n) => fn(w.from(p), n);
+    }
     this.paints.push({ inside, color: typeof color === 'string' ? rgb(color) : color, soft });
     return this;
   }
