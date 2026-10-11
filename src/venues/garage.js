@@ -9,6 +9,7 @@ import { across, backTile, barred, flat, loop, pick } from './helpers.js';
  * running at somebody to smash them, a speaker stack that comes down on the
  * beat, a gate and its pass, and a flimsy panel that someone ought to run at,
  * with a gold record behind it. Little brothers and a neighbour with a broom.
+ * The band's light show is two strings of fairy lights and a couple of cans.
  */
 
 export const GARAGE = {
@@ -52,8 +53,9 @@ export function garage() {
   g.foe('brother', ...room.tile(5, -2), { range: 6 }).foe('brother', ...room.tile(8, 2), { range: 6 });
   g.pick(...room.tile(3, 3), 10).pick(...room.tile(12, -3), 10).pick(...room.tile(6, 0), 5);
   g.road(...room.tile(13, -4), 50);
-  // The band's party rig: a wash of colour on the drums, a mirror ball over the floor, neon on the wall.
-  g.light('ball', ...room.tile(6, 0), { colors: PARTY, radius: 6.5, height: 2.7 });
+  // The band's party rig: a wash of colour on the drums, fairy lights strung across the room, neon on the wall.
+  g.light('festoon', ...room.tile(1, -4), { to: [12 * room.dir[0] + 8 * room.across[0], 12 * room.dir[1] + 8 * room.across[1]], colors: PARTY, height: 2.3 });
+  g.light('festoon', ...room.tile(1, 4), { to: [12 * room.dir[0] - 8 * room.across[0], 12 * room.dir[1] - 8 * room.across[1]], colors: [PARTY[2], PARTY[0], PARTY[1]], height: 2.3 });
   g.light('par', ...room.tile(13, room.back * 2), { colors: [PARTY[0], PARTY[1]], aim: [-2.2 * room.back, 0], shift: 0, glow: 0.7, reach: 7 });
   g.light('par', ...room.tile(1, room.back * -3), { colors: [PARTY[1], PARTY[2]], aim: [0, 2.5], shift: 1, glow: 0.7, reach: 7 });
   g.light('neon', ...backTile(room, 4), { text: 'ROCK', color: PARTY[0], height: 1.6, size: 0.7 });
