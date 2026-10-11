@@ -60,7 +60,6 @@ export function arena() {
   g.pick(...ring.tile(9, -8), 5).pick(...ring.tile(11, -8), 5).pick(...ring.tile(13, -8), 5).pick(...ring.tile(15, -8), 5);
   g.pick(...ring.tile(9, 8), 5).pick(...ring.tile(11, 8), 5).pick(...ring.tile(13, 8), 5).pick(...ring.tile(15, 8), 5);
   g.road(...ring.tile(25, -9), 50);
-  g.tape(...ring.tile(2, 9));
   // Over the middle of each stand; the merch stand's just past its end, where the wall behind it stands tall again past the stock-room door.
   sign(ring, 5, 'HOT DOGS', TEAM[1], 1.6, 0.6);
   sign(ring, 15.5, 'MERCH', RIG[0], 1.6, 0.7);
@@ -73,14 +72,14 @@ export function arena() {
   const shirts = stock.room(5, 5, { floor: 'carpet' });
   g.record(...shirts.tile(3, 0));
   g.pick(...shirts.tile(1, -1), 10).pick(...shirts.tile(1, 1), 10);
-  // The security office, off the front of the ring: the pass, with a bouncer on it.
+  // The security office, off the front of the ring: the pass, with a bouncer on it, and the first-aid tape.
   const office = branch(d, ring, 20, 'front', 11);
   office.hall(3);
   const desk = office.room(7, 7, { floor: 'carpet' });
   g.pass(...desk.tile(4, 0));
   g.foe('bouncer', ...desk.tile(3, 1), { range: 4 });
   g.block(...desk.rect(1, 3, -3, 1), 0.82, { prop: 'console' });
-  g.pick(...desk.tile(5, -2), 10);
+  g.pick(...desk.tile(5, -2), 10).tape(...desk.tile(5, 2));
 
   // The vomitory: a gate, and a tunnel of steps down through the seats onto the floor.
   const vom = d.hall(5);

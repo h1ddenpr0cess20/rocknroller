@@ -184,7 +184,9 @@ venue: every one has to be cleared start to finish, with all three gold
 records, by an autopilot (`test/helpers/autopilot.js`) that plans a route, waits
 for the speaker stacks and pyro, charges the panels, fetches the passes and
 duels the bosses. Every pickup has to be somewhere Rock can reach and out of
-the hazards, smashable props have to stand up to a nudge and go over at speed,
+the hazards, gaff tape has to come after something that can hurt him and
+before something that still can, a lighter before something that could finish
+him, smashable props have to stand up to a nudge and go over at speed,
 every neon sign has to hang on a wall that runs the whole width of it, every
 lamp has to stand on a wall of its own, and the mirror ball and each boss turn
 up once on the whole tour.

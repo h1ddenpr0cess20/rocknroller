@@ -42,8 +42,7 @@ export function garage() {
   for (const a of [2, 3, 4]) g.pick(...cable.tile(a, 0), 5);
   g.pick(...cable.tile(6, 1), 5);
   d.turn('+z');
-  const steps = d.hall(4);
-  g.tape(...steps.tile(2, 1));
+  d.hall(4);
   d.stairs(4, 2);
 
   // The band room: amps along the back, a drum kit on a riser, two little brothers.
@@ -74,13 +73,14 @@ export function garage() {
   const side = d.hall(11);
   g.foe('neighbour', ...side.tile(5, 0), { range: 5, path: [side.tile(2, 0), side.tile(9, 0)] });
   g.pick(...side.tile(9, 1), 10).pick(...side.tile(3, -1), 5);
-  g.tape(...side.tile(10, 0));
   // The practice amp's rigged up over the passage: it comes down on the beat.
   const rig = d.hall(11);
   g.speaker(...across(rig, 4, { beats: 4 }));
   g.pick(...rig.tile(5, 0), 5).pick(...rig.tile(5, 1), 5).pick(...rig.tile(5, -1), 5);
   g.speaker(...across(rig, 8, { beats: 4, offset: 0.5 }));
   g.pick(...rig.tile(9, 0), 10);
+  // Past the second stack, the first roll of tape: for whatever the stacks took off him.
+  g.tape(...rig.tile(10, 0));
   d.turn('+z');
   d.hall(3);
   d.stairs(5, 2.5);
@@ -91,6 +91,8 @@ export function garage() {
   g.foe('neighbour', ...cellar.tile(5, 0), { range: 6 }).foe('brother', ...cellar.tile(9, 3), { range: 6 }).foe('brother', ...cellar.tile(10, -3), { range: 6 });
   g.road(...cellar.tile(11, 5), 60).pick(...cellar.tile(1, -5), 10).pick(...cellar.tile(6, 5), 10);
   g.lighter(...cellar.tile(11, -5));
+  // On the way out, once the three of them have had a go at him, a roll of tape.
+  g.tape(...cellar.tile(12, 1));
   // The workbench: the pass is in a side room off the cellar.
   const bench = d.fork().jump(pick(cellar.tile(6, -7), '+x'));
   bench.hall(3);
@@ -111,19 +113,20 @@ export function garage() {
   d.turn('+x');
   d.ramp(7, 3);
 
-  // The last stretch: a ramp to run down, and a second sheet of ply across a side room with the last record behind it.
+  // The last stretch: a ramp to run down, and a second sheet of ply across a side room with the last record behind it,
+  // and the last roll of tape, for the stack still to come.
   const run = d.hall(9);
   const strongbox = d.fork().jump(pick(run.tile(4, -2), '-z'));
   const sbHall = strongbox.hall(9);
   flat(g, sbHall, 8, { breakAt: 6.5, look: 'drywall' });
   const lock = strongbox.room(5, 5);
   g.record(...lock.tile(3, 0));
-  g.road(...lock.tile(1, -1), 70);
+  g.road(...lock.tile(1, -1), 70).tape(...lock.tile(1, 1));
   g.foe('neighbour', ...run.tile(6, 1), { range: 5 });
   g.speaker(...across(run, 8, { beats: 4 }));
   const last = d.room(9, 9);
   g.foe('brother', ...last.tile(3, -2), { range: 5 }).foe('brother', ...last.tile(4, 2), { range: 5 });
-  g.pick(...last.tile(6, 0), 10).tape(...last.tile(1, 3));
+  g.pick(...last.tile(6, 0), 10);
   d.hall(3);
   d.stairs(3, 1.5);
   d.hall(2);

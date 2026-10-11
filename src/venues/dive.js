@@ -56,7 +56,6 @@ export function dive() {
   g.pillar(...bar.tile(15, bar.back * 5), 1.0, { prop: 'jukebox' });
   g.foe('drunk', ...bar.tile(5, 2), { range: 6 }).foe('drunk', ...bar.tile(9, -3), { range: 6 }).foe('freebird', ...bar.tile(13, bar.back * 3), { range: 5 }).foe('hipster', ...bar.tile(11, 3), { range: 6 });
   g.pick(...bar.tile(3, -2), 10).pick(...bar.tile(8, 0), 10).pick(...bar.tile(14, -5), 10);
-  g.tape(...bar.tile(15, 0));
   neon(bar, 3, 'COLD', NEONS[1], 1.5, 0.6);
   neon(bar, 7, 'BEER', NEONS[0], 1.6, 0.7);
   neon(bar, 11, 'OPEN', NEONS[3], 1.5, 0.6);
@@ -83,14 +82,14 @@ export function dive() {
   neon(pool, 7, 'POOL', NEONS[3], 1.5, 0.7);
   neon(pool, 11, 'DARTS', NEONS[2], 1.5, 0.6);
   glowAt(pool, 9, NEONS[3]);
-  // The staff door is locked, and its pass is in the stock room off the pool room, with a bouncer standing on it.
+  // The staff door is locked, and its pass is in the stock room off the pool room, with a bouncer standing on it, and tape for after him.
   const stock = branch(d, pool, 6, 'front', 7);
   stock.hall(3);
   const stockRoom = stock.room(7, 7);
   g.pass(...stockRoom.tile(4, 0));
   g.foe('bouncer', ...stockRoom.tile(3, 1), { range: 5 });
   g.pillar(...backTile(stockRoom, 1), 0.7, { prop: 'keg' });
-  g.pick(...stockRoom.tile(5, -2), 10);
+  g.pick(...stockRoom.tile(5, -2), 10).tape(...stockRoom.tile(5, 2));
   d.hall(4);
   const door = d.hall(6);
   barred(g, door, 3);
