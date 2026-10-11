@@ -23,6 +23,15 @@ test('a chase steps through its colours, one every `every` beats, and fades acro
   assert.deepEqual(colorAt({ ...f, shift: 1 }, 0), [0, 1, 0]);
 });
 
+test('every program has a colour before the downbeat too, as the band counts in', () => {
+  for (const program of ['chase', 'pulse', 'rainbow', 'static']) {
+    for (const beat of [-0.25, -3.7, -100.1]) {
+      const c = colorAt({ colors: ['#ff0000', '#00ff00', '#0000ff'], program, shift: 1 }, beat);
+      assert.ok(c.length === 3 && c.every((v) => v >= 0 && v <= 1), `${program} at beat ${beat}: ${c}`);
+    }
+  }
+});
+
 test('a pulse kicks on the beat and dies away; other programs are steady', () => {
   const pulse = { program: 'pulse' };
   assert.ok(levelAt(pulse, 0) > levelAt(pulse, 0.5));

@@ -53,7 +53,8 @@ export function colorAt(f, beat) {
   const colors = f.colors.map(rgb);
   if (colors.length === 1 || f.program === 'static') return colors[0];
   if (f.program === 'rainbow') {
-    const h = ((beat / (f.every ?? 8)) + (f.shift ?? 0) * 0.17) % 1;
+    // Round the wheel either way: the beat is a little below nought as the band counts in.
+    const h = ((((beat / (f.every ?? 8)) + (f.shift ?? 0) * 0.17) % 1) + 1) % 1;
     const k = h * 6, i = Math.floor(k), t = k - i;
     const [r, g, b] = [[1, t, 0], [1 - t, 1, 0], [0, 1, t], [0, 1 - t, 1], [t, 0, 1], [1, 0, 1 - t]][i % 6];
     return [r, g, b];
