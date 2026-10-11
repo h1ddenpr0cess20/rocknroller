@@ -151,7 +151,10 @@ export function createBand(ctx, out, noise) {
   limiter.ratio.value = 20;
   limiter.attack.value = 0.001;
   limiter.release.value = 0.08;
-  bus.connect(glue);
+  // A lift on the top end, for the cymbals and the bite of the guitars.
+  const air = ctx.createBiquadFilter();
+  air.type = 'highshelf'; air.frequency.value = 5000; air.gain.value = 6;
+  bus.connect(air).connect(glue);
   bus.connect(verb).connect(wet).connect(glue);
   glue.connect(limiter).connect(out);
 

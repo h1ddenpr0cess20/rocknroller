@@ -2,9 +2,9 @@ import { createRock as createBoulder } from './boulder.js';
 
 /**
  * Rock. The asset is Rock's own boulder, from github.com/h1ddenpr0cess20/rock
- * (`src/client/boulder/geometry.js`, copied unchanged as `boulder.js`): the
- * same granite, the same faceting, the same colours and material. Nothing is
- * added to it and nothing is taken away. Here it is only turned as the
+ * (`src/client/boulder/geometry.js`, copied as `boulder.js`): the same
+ * granite, the same shape, the same colours and material, only sampled more
+ * finely (`DETAIL`) so its faces are crisp and its grain fine up close. Here it is only turned as the
  * physics rolls it, and squashed on landing by the same sort of spring Rock's
  * own animation uses.
  *

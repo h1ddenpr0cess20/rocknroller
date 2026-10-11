@@ -188,38 +188,62 @@ export function createLiftMesh(GFX, { w, d, thickness, style }) {
   const side = dark(GFX, '#101012', { roughness: 0.8 });
   let live = null;
   if (style === 'crowd') {
-    // A raft of people, bobbing, arms up, shoulder to shoulder, under a dark slab.
-    const slab = new GFX.Mesh(new GFX.BoxGeometry(w, thickness, d), dark(GFX, '#17121e', { roughness: 0.95 }));
-    slab.castShadow = slab.receiveShadow = true;
-    group.add(slab);
-    const shirts = ['#ff2d95', '#2de2ff', '#ffd23a', '#8a4be8', '#3ae88a', '#f2f0ec', '#ff7a1a'].map((c) => dark(GFX, c, { roughness: 0.8 }));
-    const skin = [dark(GFX, '#d9a07c', { roughness: 0.6 }), dark(GFX, '#8a5a3a', { roughness: 0.6 }), dark(GFX, '#f0c8a8', { roughness: 0.6 })];
+    // Crowd-surfing: the people stand down in the pit, packed in, arms straight up, and Rock rides on their hands.
+    // There is nothing to see of the platform itself: the top of it is where their palms are.
+    const shirts = ['#ff2d95', '#2de2ff', '#ffd23a', '#8a4be8', '#3ae88a', '#f2f0ec', '#ff7a1a', '#16161c'].map((c) => dark(GFX, c, { roughness: 0.8 }));
+    const skins = ['#e8b48f', '#c08060', '#8a5a3a', '#f0c8a8', '#5a3a28'].map((c) => dark(GFX, c, { roughness: 0.6 }));
+    const hairs = ['#1a120c', '#5a3a1e', '#d8b060', '#2a2a2e', '#8a2a1a'].map((c) => dark(GFX, c, { roughness: 0.7 }));
+    const torso = new GFX.CylinderGeometry(0.15, 0.13, 0.5, 8);
+    const legs = new GFX.CylinderGeometry(0.12, 0.1, 0.5, 6);
+    const headG = new GFX.SphereGeometry(0.12, 10, 8);
+    const hairG = new GFX.SphereGeometry(0.125, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55);
+    const armG = new GFX.CylinderGeometry(0.04, 0.035, 0.5, 6);
+    const handG = new GFX.SphereGeometry(0.055, 6, 5);
+    const top = thickness / 2;
     const fans = [];
-    const cols = Math.max(2, Math.round(w * 2.4)), rows = Math.max(2, Math.round(d * 2.4));
+    const per = 2.6;
+    const cols = Math.max(2, Math.round(w * per)), rows = Math.max(2, Math.round(d * per));
     for (let j = 0; j < rows; j++) {
       for (let i = 0; i < cols; i++) {
-        const x = (-w / 2) + ((i + 0.5) / cols) * w, z = (-d / 2) + ((j + 0.5) / rows) * d;
+        const k = i * 7 + j * 13;
+        const jitter = [((k * 37) % 10) / 10 - 0.5, ((k * 53) % 10) / 10 - 0.5];
+        const x = -w / 2 + ((i + 0.5 + jitter[0] * 0.4) / cols) * w, z = -d / 2 + ((j + 0.5 + jitter[1] * 0.4) / rows) * d;
+        // Some taller than others: the hands don't all meet the platform at once.
+        const reach = 0.04 * ((k % 5) - 2);
         const person = new GFX.Group();
-        person.position.set(x, thickness / 2, z);
-        const body = new GFX.Mesh(new GFX.CylinderGeometry(0.13, 0.15, 0.3, 8), shirts[(i * 3 + j * 5) % shirts.length]);
-        body.position.y = 0.15;
-        const head = new GFX.Mesh(new GFX.SphereGeometry(0.1, 8, 6), skin[(i + j) % skin.length]);
-        head.position.y = 0.37;
-        person.add(body, head);
+        // Feet on the pit floor (the pits are dug 1.6 under the platform), palms at its top.
+        person.position.set(x, top - 1.6 + reach, z);
+        person.scale.setScalar(1.12);
+        const shirt = shirts[k % shirts.length], skin = skins[(k >> 1) % skins.length];
+        const lower = new GFX.Mesh(legs, shirts[7]);
+        lower.position.y = 0.25;
+        const body = new GFX.Mesh(torso, shirt);
+        body.position.y = 0.72;
+        const head = new GFX.Mesh(headG, skin);
+        head.position.y = 1.09;
+        const hair = new GFX.Mesh(hairG, hairs[k % hairs.length]);
+        hair.position.y = 1.1;
+        person.add(lower, body, head, hair);
         const arms = [-1, 1].map((m) => {
-          const a = new GFX.Mesh(new GFX.CylinderGeometry(0.035, 0.035, 0.34, 5), skin[(i + j) % skin.length]);
-          a.position.set(m * 0.14, 0.45, 0);
-          person.add(a);
-          return a;
+          const shoulder = new GFX.Group();
+          shoulder.position.set(m * 0.17, 0.92, 0);
+          const arm = new GFX.Mesh(armG, skin);
+          arm.position.y = 0.25;
+          const hand = new GFX.Mesh(handG, skin);
+          hand.position.y = 0.5;
+          shoulder.add(arm, hand);
+          person.add(shoulder);
+          return shoulder;
         });
+        person.rotation.y = (k % 8) * 0.8;
         group.add(person);
-        fans.push({ person, arms, seed: i * 1.3 + j * 2.1 });
+        fans.push({ person, arms, seed: k * 0.37, y: person.position.y });
       }
     }
     live = (time) => {
       for (const f of fans) {
-        f.person.position.y = thickness / 2 + Math.abs(Math.sin(time * 5 + f.seed)) * 0.05;
-        f.arms.forEach((a, k) => { a.rotation.z = (k ? -1 : 1) * (0.25 + 0.2 * Math.sin(time * 6 + f.seed)); });
+        f.person.position.y = f.y + Math.sin(time * 5 + f.seed) * 0.03;
+        f.arms.forEach((a, n) => { a.rotation.z = (n ? -1 : 1) * (0.08 + 0.08 * Math.sin(time * 6 + f.seed + n)); });
       }
     };
   } else if (style === 'forklift') {
