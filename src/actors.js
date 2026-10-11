@@ -19,6 +19,9 @@ const DOOR_THICKNESS = 0.18;
 /** Further than this from Rock, a foe with nothing to do stops being simulated. */
 const SLEEP = 26;
 
+/** How far each turning pickup's model is let down to touch the floor (its lowest point, as sculpted, is above it). */
+const SETTLE = Object.freeze({ tape: -0.014, pass: -0.078, record: -0.062, lighter: 0.005 });
+
 /** Pickups that lie on the floor rather than float. */
 const STILL = new Set(['pick', 'case']);
 
@@ -538,7 +541,8 @@ export function createActors(GFX, venue, world, { killY }) {
         p.mesh.visible = !p.taken;
         if (p.taken) continue;
         if (STILL.has(p.kind)) continue;
-        p.spin.position.y = 0.06 + Math.sin(time * 2.4 + i) * 0.05;
+        // Standing on the floor and turning, not hanging in the air.
+        p.spin.position.y = SETTLE[p.kind] ?? 0;
         p.spin.rotation.y = time * 1.6 + i;
       }
     },
