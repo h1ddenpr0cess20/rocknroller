@@ -208,7 +208,7 @@ async function film(name, reel) {
   const silent = join(work, 'picture.mp4');
   const sound = join(work, 'sound.wav');
   const video = run$('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
-    '-c:v', 'libx264', '-preset', 'slow', '-crf', '19', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-r', String(FPS), '-g', String(FPS * 2), silent], { input: true });
+    '-c:v', 'libx264', '-preset', 'slow', '-crf', '19', '-maxrate', '7M', '-bufsize', '14M', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-r', String(FPS), '-g', String(FPS * 2), silent], { input: true });
 
   const began = Date.now();
   let frame = 0;
