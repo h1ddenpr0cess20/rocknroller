@@ -1,0 +1,88 @@
+/*
+ * What the reels put over the game (reel.html): a thumb where a finger on the
+ * glass would be steering, one on the REV button while it is held, a line to
+ * open on, the address while it plays, and a card to end on. The page is a
+ * phone, upright, 405 by 720.
+ */
+
+#reel { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
+/* What Rock says, over the meters on a phone and behind the corner buttons: up above them on film, where it can be read. */
+#say { bottom: 172px; }
+#ui { transition: opacity 0.35s; }
+body.carded #ui { opacity: 0; }
+body.hooked #banner { visibility: hidden; }
+
+/* ———————————————————————————————————— thumbs */
+
+.thumb {
+  position: absolute; left: 0; top: 0; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.5) 0, rgba(255,255,255,0.22) 55%, rgba(255,255,255,0) 72%);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.6), 0 0 18px rgba(255,255,255,0.35);
+  opacity: 0; will-change: transform, opacity;
+}
+
+/* ———————————————————————————————————— the line to open on */
+
+#hook {
+  position: absolute; left: 16px; right: 16px; top: 21%; text-align: center; opacity: 0;
+  font-family: var(--display); font-size: 48px; line-height: 1; letter-spacing: 0.03em; text-transform: uppercase; color: #fff;
+  text-shadow: 0 0 4px #fff, 0 0 18px var(--pink), 0 0 42px var(--pink), 0 3px 0 #000;
+}
+#hook small {
+  display: block; margin-top: 12px; font-family: var(--body); font-weight: 700; font-size: 18px; letter-spacing: 0.16em;
+  color: #fff; text-shadow: 0 1px 8px #000, 0 0 2px #000;
+}
+#hook.on { animation: hook-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) forwards; }
+#hook.off { animation: hook-out 0.3s ease-in forwards; }
+
+/* ———————————————————————————————————— the address, while it plays */
+
+#pill {
+  position: absolute; left: 50%; top: 138px; transform: translateX(-50%); opacity: 0; white-space: nowrap;
+  display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; border-radius: 999px;
+  font: 700 15px var(--body); letter-spacing: 0.06em; color: #fff;
+  background: rgba(11,10,16,0.74); border: 1px solid rgba(45,226,255,0.65); box-shadow: 0 0 16px rgba(45,226,255,0.35);
+}
+#pill svg { width: 16px; height: 16px; flex: none; }
+#pill b { color: var(--yellow); font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; }
+#pill.on { animation: fade-in 0.4s ease-out forwards; }
+
+/* ———————————————————————————————————— the card to end on */
+
+#card {
+  position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 0; padding: 0 22px 60px;
+  text-align: center; opacity: 0;
+  background: radial-gradient(ellipse at 50% 42%, rgba(20,8,30,0.55), rgba(6,4,10,0.9));
+  backdrop-filter: blur(5px) saturate(1.2);
+}
+#card.on { animation: fade-in 0.4s ease-out forwards; }
+#card .logo { margin-bottom: 6px; opacity: 0; }
+#card .logo .top, #card .logo .bottom { font-size: 78px; }
+#card .logo .tag { font-size: 13px; letter-spacing: 0.36em; }
+#card .cta {
+  margin: 30px 0 12px; font: 700 21px var(--body); letter-spacing: 0.2em; text-transform: uppercase; color: var(--yellow);
+  text-shadow: 0 0 12px rgba(255,180,0,0.55); opacity: 0;
+}
+#card .url {
+  font-family: var(--display); font-size: 33px; letter-spacing: 0.02em; color: #fff; padding: 10px 22px 12px;
+  background: linear-gradient(180deg, #ff4fa8, var(--pink) 55%, #c4106c); border: 2px solid #fff; border-radius: 6px;
+  box-shadow: 0 0 34px rgba(255,45,149,0.85), 0 6px 0 #6e0a3c; transform: rotate(-1.5deg); opacity: 0;
+}
+#card .devices { display: flex; gap: 26px; margin-top: 30px; opacity: 0; }
+#card .devices span {
+  display: flex; align-items: center; gap: 8px; font: 700 19px var(--body); letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--cyan); text-shadow: 0 0 12px rgba(45,226,255,0.6);
+}
+#card .devices svg { width: 26px; height: 26px; filter: drop-shadow(0 0 6px rgba(45,226,255,0.7)); }
+#card .small { margin-top: 14px; font: 500 16px var(--body); letter-spacing: 0.08em; color: var(--dim); opacity: 0; }
+#card.on .logo { animation: pop-in 0.55s cubic-bezier(0.2, 1.5, 0.4, 1) 0.1s forwards; }
+#card.on .cta { animation: fade-in 0.35s ease-out 0.45s forwards; }
+#card.on .url { animation: stamp 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) 0.6s forwards; }
+#card.on .devices { animation: fade-in 0.4s ease-out 0.95s forwards; }
+#card.on .small { animation: fade-in 0.4s ease-out 1.15s forwards; }
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hook-in { 0% { opacity: 0; transform: scale(0.6); } 60% { opacity: 1; transform: scale(1.06); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes hook-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.1); } }
+@keyframes pop-in { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes stamp { 0% { opacity: 0; transform: rotate(-1.5deg) scale(1.8); } 100% { opacity: 1; transform: rotate(-1.5deg) scale(1); } }

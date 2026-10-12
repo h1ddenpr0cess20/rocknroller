@@ -196,7 +196,14 @@ Other things in the box:
 ```sh
 node scripts/map.js 4          # a venue as text (they count from 1); --heights for floor heights
 node scripts/bake.js           # bake every model and say what came out
+node scripts/reel.js           # gameplay reels for social media, into reels/
 ```
+
+The reels (`scripts/reels.js` says which) are upright films, 1080 by 1920, of
+the game as a phone shows it, played by the autopilot with its own music and
+sound, each ending on a card with the address. They are filmed a frame at a
+time in headless Chromium (`reel.html`), so no GPU is needed, only ffmpeg and
+a few minutes a reel.
 
 `models.html` is a viewer for the sculpted people and props. In the browser
 console, `rocknroller.debug` has `venue(i)` to jump to a venue and
