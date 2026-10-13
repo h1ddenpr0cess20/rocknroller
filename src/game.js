@@ -157,6 +157,7 @@ export function createGame({ stage, hud, input, audio, storage }) {
     setVenue(index);
     playTime = 0;
     lastCombo = 0;
+    paused = false;
     hud.paused(false);
     if (state === 'title') view.aim.zoom = playZoom.value;
     storage.reached(index);
