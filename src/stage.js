@@ -145,12 +145,12 @@ export async function createStage(host) {
   shadowSpan(1);
   scene.add(key, key.target);
 
-  // Rock's own light, high over him and faint: enough to find him in the dark, not so much it lights up his own shadow.
-  const lantern = new GFX.PointLight(0xffe2b8, 1.4, 12, 1.2);
+  // Rock's own light, high over him, faint and wide: enough to find him in the dark, a wash over the floor round him rather than a spot under him.
+  const lantern = new GFX.PointLight(0xffe2b8, 1.1, 22, 0.9);
   scene.add(lantern);
   // The fixtures nearest him: the light show sets where they are, what colour and how bright.
   const fixtureLights = Array.from({ length: FIXTURE_LIGHTS }, () => {
-    const light = new GFX.PointLight(0xffffff, 0, 7, 1.7);
+    const light = new GFX.PointLight(0xffffff, 0, 7, 1.1);
     scene.add(light);
     return light;
   });
@@ -231,7 +231,7 @@ export async function createStage(host) {
     key.position.copy(stage.target).addScaledVector(KEY, 45 + span);
     key.target.position.copy(stage.target);
     key.target.updateMatrixWorld();
-    lantern.position.set(stage.rock.x, stage.rock.y + 4, stage.rock.z);
+    lantern.position.set(stage.rock.x, stage.rock.y + 7, stage.rock.z);
   };
 
   const fit = () => renderer.setSize(host.clientWidth || 1, host.clientHeight || 1);
