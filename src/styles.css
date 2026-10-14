@@ -299,6 +299,8 @@ kbd {
 }
 #rev-button:active, #rev-button.held { transform: scale(0.94); filter: brightness(1.25); }
 @media (pointer: coarse) { #rev-button.available { display: grid; } }
+/* Not over the title, the menus, the pause card or a review: only while the game is on with nothing in front of it. */
+#ui:has(> .screen:not([hidden])) #rev-button { display: none; }
 
 /* ———————————————————————————————————— motion */
 
@@ -317,6 +319,19 @@ kbd {
   .meters { width: 46vw; }
   .btn { min-width: 220px; font-size: 22px; }
   .hype .num { font-size: 40px; }
+}
+/* On a phone. */
+@media (max-width: 520px) {
+  /* The plate's long names ran into the score: the plate smaller, and the score under it. */
+  .plate { padding: 5px 14px 5px 10px; }
+  .plate .act { font-size: 10px; letter-spacing: 0.18em; }
+  .plate .name { font-size: 16px; }
+  .hype { top: calc(66px + var(--safe-t)); }
+  /* The pickups in a column under the plate, off the score and its combo. */
+  .carried { left: calc(18px + var(--safe-l)); right: auto; top: calc(72px + var(--safe-t)); flex-direction: column; align-items: flex-start; gap: 0; }
+  .carried .chip { font-size: 18px; }
+  /* What Rock says, up over the meters, the corner buttons and the REV button rather than under them. */
+  #say { bottom: calc(178px + var(--safe-b)); max-width: 86vw; }
 }
 @media (prefers-reduced-motion: reduce) {
   .logo .flicker { animation: none; }
