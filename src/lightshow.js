@@ -503,7 +503,7 @@ export function createLightshow(GFX, venue) {
     };
   }
 
-  // ——— a PAR can on a post: a wash of colour, a shaft down, a pool where it lands.
+  // ——— a PAR can on a post: a wash of colour, a shaft down, a pool where it lands. The can faces where its beam lands, lens first.
   function par(f) {
     const y = heightOf(f.x, f.z);
     const high = f.height ?? 1.6;
@@ -514,12 +514,13 @@ export function createLightshow(GFX, venue) {
     g.position.set(f.x, y, f.z);
     const post = new GFX.Mesh(new GFX.CylinderGeometry(0.025, 0.04, high, 8), iron);
     post.position.y = high / 2;
-    const can = new GFX.Mesh(new GFX.CylinderGeometry(0.16, 0.12, 0.3, 14), iron);
+    // Its lens end, the wider, is its foot (-y), turned to face the target.
+    const can = new GFX.Mesh(new GFX.CylinderGeometry(0.12, 0.16, 0.3, 14), iron);
     can.position.y = high;
     can.lookAt(target[0], target[1], target[2]);
-    can.rotateX(Math.PI / 2);
+    can.rotateX(-Math.PI / 2);
     const lensMat = new GFX.MeshBasicMaterial({ color: new GFX.Color(1, 1, 1), toneMapped: false });
-    const lensMesh = new GFX.Mesh(new GFX.CircleGeometry(0.11, 14), lensMat);
+    const lensMesh = new GFX.Mesh(new GFX.CircleGeometry(0.14, 14), lensMat);
     lensMesh.position.set(0, -0.16, 0);
     lensMesh.rotation.x = Math.PI / 2;
     can.add(lensMesh);
@@ -551,7 +552,7 @@ export function createLightshow(GFX, venue) {
     };
   }
 
-  // ——— a moving head: the same, but the beam wanders, round `aim` from it.
+  // ——— a moving head: the same, but the beam wanders, round `aim` from it, and the head turns to follow it.
   function spot(f) {
     const y = heightOf(f.x, f.z);
     const high = f.height ?? 2.1;
@@ -562,6 +563,12 @@ export function createLightshow(GFX, venue) {
     post.position.y = high / 2;
     const head = new GFX.Mesh(new GFX.BoxGeometry(0.26, 0.3, 0.26), iron);
     head.position.y = high;
+    // Its lens on its underside (-y), which is turned to face wherever the beam lands.
+    const lensMat = new GFX.MeshBasicMaterial({ color: new GFX.Color(1, 1, 1), toneMapped: false });
+    const lensMesh = new GFX.Mesh(new GFX.CircleGeometry(0.1, 14), lensMat);
+    lensMesh.position.set(0, -0.152, 0);
+    lensMesh.rotation.x = Math.PI / 2;
+    head.add(lensMesh);
     post.castShadow = head.castShadow = true;
     const h = halo([1, 1, 1], 1.5);
     h.position.y = high;
@@ -581,6 +588,9 @@ export function createLightshow(GFX, venue) {
         target[0] = tx; target[1] = ty + 0.03; target[2] = tz;
         const c = colorAt(f, beat), l = levelAt(f, beat);
         b.aim(lens, target);
+        head.lookAt(target[0], target[1], target[2]);
+        head.rotateX(-Math.PI / 2);
+        tint(lensMat, c, 1.2);
         p.mesh.position.set(tx, ty + 0.03, tz);
         p.mesh.scale.setScalar(Math.hypot(lens[0] - tx, lens[1] - ty, lens[2] - tz) * angle * 1.15);
         tint(b.material, c, (0.75 * l + 0.2) * (f.faint ? 0.35 : 1));
