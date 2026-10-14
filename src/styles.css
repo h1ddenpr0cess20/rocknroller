@@ -336,3 +336,5 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .logo .flicker { animation: none; }
 }
+/* No keyboard on a phone: the rev meter doesn't say Space. */
+@media (pointer: coarse) { .meters .label kbd { display: none; } }
