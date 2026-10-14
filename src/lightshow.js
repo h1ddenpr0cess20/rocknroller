@@ -30,6 +30,17 @@ import { canvas, cached, copyOf, glowTexture, random, texture } from './textures
  * fixture lights to set.
  */
 
+/** How wide a par can's beam and a moving head's open, in radians from the middle of the beam to its edge: wide and soft, a wash rather than a pin spot. */
+const PAR_ANGLE = 0.3;
+const SPOT_ANGLE = 0.26;
+
+/**
+ * The real lights the fixtures nearest Rock get, softened: hung higher than
+ * the fixture offers, carried further and turned down to suit, so they wash
+ * the floor round him rather than throw a hot spot on it.
+ */
+const SOFT = { lift: 1.4, spread: 1.5, gain: 0.42 };
+
 /** The most flashes a second a strobe makes. */
 export const STROBE_MAX_HZ = 3;
 
@@ -109,6 +120,21 @@ function beamTexture(GFX) {
     g.addColorStop(1, 'rgba(255,255,255,0.95)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 64, 128);
+    return { map: texture(GFX, c), bump: null };
+  });
+}
+
+/** A pool of light on the floor: broad and even, with no hot spot in the middle, fading out softly to the edge. */
+function poolTexture(GFX) {
+  return cached('pool', () => {
+    const [c, ctx] = canvas(64);
+    const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+    g.addColorStop(0.4, 'rgba(255, 255, 255, 0.42)');
+    g.addColorStop(0.75, 'rgba(255, 255, 255, 0.14)');
+    g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 64, 64);
     return { map: texture(GFX, c), bump: null };
   });
 }
@@ -243,6 +269,7 @@ export function createLightshow(GFX, venue) {
   group.name = 'lightshow';
   const glow = glowTexture(GFX).map;
   const beamMap = beamTexture(GFX).map;
+  const poolMap = poolTexture(GFX).map;
   const additive = { transparent: true, blending: GFX.AdditiveBlending, depthWrite: false, toneMapped: false };
   const tempo = venue.tempo;
   const iron = new GFX.MeshStandardMaterial({ name: 'rig-iron', color: new GFX.Color('#25252b'), roughness: 0.45, metalness: 0.85 });
@@ -265,7 +292,7 @@ export function createLightshow(GFX, venue) {
   const beam = (angle, colour) => {
     const geometry = new GFX.ConeGeometry(1, 1, 20, 1, true);
     geometry.translate(0, -0.5, 0);
-    const material = new GFX.MeshBasicMaterial({ map: beamMap, color: new GFX.Color(...colour), side: GFX.DoubleSide, opacity: 0.55, ...additive });
+    const material = new GFX.MeshBasicMaterial({ map: beamMap, color: new GFX.Color(...colour), side: GFX.DoubleSide, opacity: 0.3, ...additive });
     const mesh = new GFX.Mesh(geometry, material);
     mesh.frustumCulled = false;
     const up = new GFX.Vector3(0, -1, 0), d = new GFX.Vector3();
@@ -283,7 +310,7 @@ export function createLightshow(GFX, venue) {
 
   /** A pool of light on the floor. */
   const pool = (colour) => {
-    const material = new GFX.MeshBasicMaterial({ map: glow, color: new GFX.Color(...colour), opacity: 0.7, ...additive });
+    const material = new GFX.MeshBasicMaterial({ map: poolMap, color: new GFX.Color(...colour), opacity: 0.6, ...additive });
     const mesh = new GFX.Mesh(new GFX.CircleGeometry(1, 28), material);
     mesh.rotation.x = -Math.PI / 2;
     mesh.frustumCulled = false;
@@ -502,12 +529,12 @@ export function createLightshow(GFX, venue) {
     h.position.y = high;
     g.add(h);
     group.add(g);
-    const b = beam(f.angle ?? 0.2, [1, 1, 1]);
+    const b = beam(f.angle ?? PAR_ANGLE, [1, 1, 1]);
     b.aim(lens, target);
     group.add(b.mesh);
     const p = pool([1, 1, 1]);
     p.mesh.position.set(...target);
-    p.mesh.scale.setScalar(Math.hypot(...lens.map((v, i) => v - target[i])) * (f.angle ?? 0.2) * 1.1);
+    p.mesh.scale.setScalar(Math.hypot(...lens.map((v, i) => v - target[i])) * (f.angle ?? PAR_ANGLE) * 1.1);
     group.add(p.mesh);
     sources.push({ pos: lens, colour: rgb(f.colors?.[0] ?? defaults.colors[0]), reach: f.reach ?? 6, strength: 0.7 });
     return {
@@ -540,7 +567,7 @@ export function createLightshow(GFX, venue) {
     h.position.y = high;
     g.add(post, head, h);
     group.add(g);
-    const angle = f.angle ?? 0.16;
+    const angle = f.angle ?? SPOT_ANGLE;
     const b = beam(angle, [1, 1, 1]);
     group.add(b.mesh);
     const p = pool([1, 1, 1]);
@@ -802,10 +829,10 @@ export function createLightshow(GFX, venue) {
         // Each fades in as it comes into reach, and out as the next one in line comes closer than it.
         const reach = o.reach * 1.7;
         const fade = smooth(reach, reach * 0.6, d) * (Number.isFinite(edge) ? smooth(0, 1.6, edge - d) : 1);
-        light.position.set(o.pos[0], o.pos[1], o.pos[2]);
+        light.position.set(o.pos[0], o.pos[1] + SOFT.lift, o.pos[2]);
         light.color.setRGB(o.color[0], o.color[1], o.color[2]);
-        light.distance = o.reach + 2;
-        light.intensity = o.intensity * fade;
+        light.distance = (o.reach + 2) * SOFT.spread;
+        light.intensity = o.intensity * fade * SOFT.gain;
         if (o.flash) flash = Math.max(flash, o.flash * smooth(10, 3, d));
       }
       this.flash = flash;
