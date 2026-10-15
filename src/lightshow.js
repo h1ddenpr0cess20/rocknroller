@@ -517,8 +517,8 @@ export function createLightshow(GFX, venue) {
     // Its lens end, the wider, is its foot (-y), turned to face the target.
     const can = new GFX.Mesh(new GFX.CylinderGeometry(0.12, 0.16, 0.3, 14), iron);
     can.position.y = high;
-    can.lookAt(target[0], target[1], target[2]);
-    can.rotateX(-Math.PI / 2);
+    // Turned from the known lens and target, not `lookAt`: the group has no world matrix before the first frame, so `lookAt` aims from the wrong place.
+    can.quaternion.setFromUnitVectors(new GFX.Vector3(0, -1, 0), new GFX.Vector3(target[0] - lens[0], target[1] - lens[1], target[2] - lens[2]).normalize());
     const lensMat = new GFX.MeshBasicMaterial({ color: new GFX.Color(1, 1, 1), toneMapped: false });
     const lensMesh = new GFX.Mesh(new GFX.CircleGeometry(0.14, 14), lensMat);
     lensMesh.position.set(0, -0.16, 0);
