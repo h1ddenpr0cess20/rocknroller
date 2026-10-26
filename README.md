@@ -7,9 +7,10 @@ that is playing in it.
 
 Rock is [Rock](https://github.com/h1ddenpr0cess20/rock)'s boulder: the same
 shape, granite and colours (`src/boulder.js` is its geometry), sampled more
-finely so the faces are crisp and the grain shows up close. The renderer,
-physics, tiled venues and camera come from
-[dungeon-roller](https://github.com/h1ddenpr0cess20/dungeon-roller).
+finely so the faces are crisp and the grain shows up close. It runs on the
+[Madness Engine](https://github.com/h1ddenpr0cess20/madness-engine): the
+renderer, physics, camera, stage and sound, and Rock, the cast, the rig and
+the band from its library.
 
 ![The title screen](docs/screenshots/title.png)
 
@@ -126,7 +127,8 @@ Every venue is laid out its own way, not the same rooms in a different paint.
 
 ## The light show
 
-Every venue is lit by a rig (`src/lightshow.js`) that keeps the beat of the band.
+Every venue is lit by a rig (the engine's `scenery/lightshow.rocknroller`) that
+keeps the beat of the band.
 
 | Fixture | What it does |
 |---|---|
@@ -146,19 +148,20 @@ tempo, and **Settings → Strobe lights** turns them down to a glow.
 
 ## The band and the people
 
-The music is played live by a small band in Web Audio (`src/music.js`), with no
-audio files: drums, bass, rhythm guitar, a lead, and pads and arpeggios where
-the venue wants them, in a different style for every venue. The sound effects
-are made the same way. The beat clock drives the hazards and the lights.
+The music is played live by a small band in Web Audio (the engine's
+`music/band.rocknroller`), with no audio files: drums, bass, rhythm guitar, a
+lead, and pads and arpeggios where the venue wants them, in a different style
+for every venue. The sound effects are made the same way. The beat clock
+drives the hazards and the lights.
 
-The people are sculpted in code (`src/models/cast/`) and baked in background
-workers while the page loads, so a venue starts with stand-ins and swaps the
-real people in as they finish. They share one rig, but each has a build of its
-own (`build()` in `humanoid.js`: legs, torso, head, girth, a belly), so a crowd
-isn't one body in different clothes. Little brothers, neighbours, drunks,
-moshers, hipsters, roadies, merch guys, influencers, metalheads, ushers,
-critics, A&R suits, security, bouncers, a mascot, stage divers, camera drones, a
-runaway drum and an 8-ball:
+The people are sculpted in code (the engine's `characters/`, listed in
+`src/models/cast/`) and baked in background workers while the page loads, so a
+venue starts with stand-ins and swaps the real people in as they finish. They
+share one rig, but each has a build of its own (`build()` in `humanoid.js`:
+legs, torso, head, girth, a belly), so a crowd isn't one body in different
+clothes. Little brothers, neighbours, drunks, moshers, hipsters, roadies,
+merch guys, influencers, metalheads, ushers, critics, A&R suits, security,
+bouncers, a mascot, stage divers, camera drones, a runaway drum and an 8-ball:
 
 ![The cast](docs/screenshots/cast.jpg)
 
@@ -168,6 +171,24 @@ tall, who moves only on the beat; and the Headliner, a giant with a flying V,
 who stamps and throws Rock back.
 
 ![The Promoter, the Maestro and the Headliner](docs/screenshots/bosses.jpg)
+
+## On the engine
+
+The game runs on the
+[Madness Engine](https://github.com/h1ddenpr0cess20/madness-engine), which
+`npm install` fetches from GitHub. The renderer (WebGPU, or WebGL 2), the
+physics, the controls, the arcade camera, the stage, the film, the sound, the
+flying bits and the weather, the save slot and the sculpting kit are the
+engine's, and so are Rock (`heroes/rock`), the rig
+(`scenery/lightshow.rocknroller`), the band (`music/band.rocknroller`), the
+venues' textures (`textures/venue.rocknroller`), the cast and props
+(`characters/…`, `props/…`) and each venue's mood (`moods/garage` and the
+rest: its light, sky and reflections), all from the engine's library. What is
+left here is the game: the venues, the rules, the machinery, the props and the
+HUD, and the game's own sounds and bits on the engine's (`audio.js`,
+`effects.js`). The rosters (`src/models/cast/index.js`,
+`src/models/props/index.js`) say who is in the game and take each one from the
+library.
 
 ## Develop
 
@@ -210,17 +231,16 @@ console, `rocknroller.debug` has `venue(i)` to jump to a venue and
 | `src/venue.js`, `src/gig.js` | A venue's tiles and what is in them; one step of everything. |
 | `src/smash.js`, `src/integrity.js`, `src/hype.js`, `src/rating.js` | The rules. |
 | `src/actors.js`, `src/machinery.js` | The people, and the speaker stacks, pyro, lifts, gates and panels. |
-| `src/lightshow.js` | The rig. |
-| `src/music.js`, `src/audio.js` | The band and the sound effects. |
-| `src/models/` | The people and props, sculpted and baked. |
-| `src/boulder.js`, `src/rock.js` | Rock: the boulder, and how it squashes and reacts. |
+| `src/stage.js`, `src/moods.js` | The engine's stage, and each venue's mood. |
+| `src/audio.js`, `src/effects.js` | The sound effects and the flying bits, on the engine's. |
+| `src/models/` | Who is in the game, and the engine's bakers for them. |
 | `src/decor.js`, `src/furniture.js` | The props: amps, kits, bars, desks, seats, racking, stands, barriers, tents. |
-| `src/vendor/gfx/` | The renderer. |
 
 ## Credits
 
 Rock is [h1ddenpr0cess20/rock](https://github.com/h1ddenpr0cess20/rock). The
-engine is [h1ddenpr0cess20/dungeon-roller](https://github.com/h1ddenpr0cess20/dungeon-roller).
+engine is the [Madness Engine](https://github.com/h1ddenpr0cess20/madness-engine),
+which grew out of [dungeon-roller](https://github.com/h1ddenpr0cess20/dungeon-roller).
 Type is Anton and Barlow Condensed, from [Fontsource](https://fontsource.org).
 
 More games like this one are listed in [docs/other-games.md](docs/other-games.md).

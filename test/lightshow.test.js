@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { createGig } from '../src/gig.js';
-import { colorAt, levelAt, mountSign, neonWidth, spotTarget, STROBE_MAX_HZ, strobeAt } from '../src/lightshow.js';
-import * as GFX from '../src/vendor/gfx/index.js';
+import { colorAt, levelAt, mountSign, neonWidth, spotTarget, STROBE_MAX_HZ, strobeAt } from 'madness-engine/scenery/lightshow.rocknroller';
+import * as GFX from 'madness-engine/gfx';
 import { VENUES } from '../src/venues/index.js';
 
 test('a fixture with one colour, or on static, never changes colour', () => {

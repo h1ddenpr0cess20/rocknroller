@@ -1,4 +1,4 @@
-import { canvas, cached, texture, tiled } from './textures.js';
+import { canvas, cached, texture, tiled } from 'madness-engine/textures/venue.rocknroller';
 
 /**
  * More of what venues are furnished with (see decor.js, which these join):

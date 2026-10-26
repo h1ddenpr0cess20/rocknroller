@@ -1,6 +1,6 @@
 import { createFoeMesh, FLIGHT, FOES, KNOCKED_OUT } from './foes.js';
 import { createBumperMesh, createGateMesh, createLiftMesh, createPanelMesh, createPickupMesh, createPyroMesh, createSpeakerMesh } from './machinery.js';
-import { collideBalls, createBall, PUSH, stepBall } from './physics.js';
+import { collideBalls, createBall, PUSH, stepBall } from 'madness-engine/physics';
 
 /**
  * Everything in a venue that moves or can be taken, and isn't Rock: the

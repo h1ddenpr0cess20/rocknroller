@@ -1,71 +1,20 @@
+import { createBakeLibrary } from 'madness-engine/models/bake';
 import { CAST } from './cast/index.js';
-import { adopt } from './model.js';
 import { PROPS } from './props/index.js';
 
 /** Everything sculpted, by name: the creatures and the props. */
 export const SCULPTED = { ...CAST, ...PROPS };
 
 /**
- * The models, baked in the background as the page starts: a few workers
- * share out the work, and each mesh is handed over as it is done. Until
- * then whoever wants one waits (`ready`) or carries on without it.
+ * The models, baked in the background as the page starts (the engine's
+ * `createBakeLibrary`): a few workers share out the work, and each mesh is
+ * handed over as it is done. Until then whoever wants one waits (`ready`)
+ * or carries on without it. By default the props are baked first (small,
+ * and everywhere) and then the creatures, at the detail the board wants.
  */
-
-const done = new Map();
-const waiting = new Map();
-const key = (name, detail) => `${name}@${detail}`;
-
-/** Whether `name` at `detail` is ready to use. */
-export const isBaked = (name, detail) => done.has(key(name, detail));
-
-/**
- * Resolves once every one of `jobs` ([name, detail] pairs) is baked (or
- * after 20 seconds whatever happens); at once where nothing bakes in the
- * background (no workers: tests, scripts).
- */
-export function readyAll(jobs) {
-  if (typeof Worker === 'undefined') return Promise.resolve();
-  const all = Promise.all(jobs.filter(([n]) => SCULPTED[n]).map(([n, d]) => ready(n, d)));
-  // Not forever, though: if a bake has gone wrong, better to play without it.
-  return Promise.race([all, new Promise((r) => setTimeout(r, 20000))]);
-}
-
-/** Resolves once `name` at `detail` is baked. */
-export function ready(name, detail) {
-  const k = key(name, detail);
-  if (done.has(k)) return Promise.resolve();
-  if (!waiting.has(k)) {
-    let resolve;
-    const p = new Promise((r) => { resolve = r; });
-    waiting.set(k, { p, resolve });
-  }
-  return waiting.get(k).p;
-}
-
-/**
- * Starts baking `jobs` ([name, detail] pairs), first come first served
- * across the workers: by default the props (small, and everywhere) and
- * then the creatures, at the detail the board wants them.
- */
-export function preload(jobs = [...Object.keys(PROPS).map((n) => [n, 1]), ...Object.keys(CAST).map((n) => [n, 0.5])]) {
-  if (typeof Worker === 'undefined') return;
-  const queue = jobs.filter(([n, d]) => SCULPTED[n] && !done.has(key(n, d)));
-  const count = Math.max(1, Math.min(queue.length, (navigator.hardwareConcurrency || 4) - 1, 4));
-  for (let i = 0; i < count; i++) {
-    const worker = new Worker(new URL('./bake.worker.js', import.meta.url), { type: 'module' });
-    const next = () => {
-      const job = queue.shift();
-      if (!job) { worker.terminate(); return; }
-      worker.postMessage({ name: job[0], detail: job[1] });
-    };
-    worker.onmessage = ({ data: { name, detail, data } }) => {
-      adopt(SCULPTED[name], detail, data);
-      const k = key(name, detail);
-      done.set(k, true);
-      waiting.get(k)?.resolve();
-      next();
-    };
-    worker.onerror = (e) => console.error('dungeon-roller: a model would not bake', e);
-    next();
-  }
-}
+export const { isBaked, readyAll, ready, preload } = createBakeLibrary({
+  sculpted: SCULPTED,
+  spawn: () => new Worker(new URL('./bake.worker.js', import.meta.url), { type: 'module' }),
+  jobs: () => [...Object.keys(PROPS).map((n) => [n, 1]), ...Object.keys(CAST).map((n) => [n, 0.5])],
+  label: 'rocknroller',
+});

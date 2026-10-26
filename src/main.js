@@ -6,7 +6,7 @@ import '@fontsource/barlow-condensed/700.css';
 import { createAudio } from './audio.js';
 import { createGame } from './game.js';
 import { createHud } from './hud.js';
-import { createInput } from './input.js';
+import { createInput } from 'madness-engine/input';
 import { preload } from './models/library.js';
 import { createStage } from './stage.js';
 import { createStorage } from './storage.js';
@@ -40,6 +40,8 @@ hud.muteButton.addEventListener('mute', () => hud.muted(audio.toggleMute()));
 hud.pauseButton.addEventListener('pausebutton', () => game?.pause(!game.paused));
 
 input = createInput(view, {
+  // Rev: Space or Shift, the pad's A, X and triggers, and the REV button on a touch screen (`setRev`).
+  boost: { pad: [0, 2, 7, 6] },
   anchor: () => game?.rockOnScreen(view.getBoundingClientRect()),
 });
 
@@ -56,14 +58,7 @@ try {
   audio.setVolume('music', storage.load().settings.music);
   audio.setVolume('sfx', storage.load().settings.sfx);
 
-  let last = performance.now();
-  stage.renderer.setAnimationLoop((now) => {
-    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
-    last = now;
-    game.update(dt, input.take());
-    stage.look();
-    stage.render();
-  });
+  stage.run((dt) => game.update(dt, input.take()));
 } catch (err) {
   const box = document.getElementById('error');
   box.hidden = false;

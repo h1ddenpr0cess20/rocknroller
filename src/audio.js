@@ -1,4 +1,5 @@
-import { createBand, THEMES } from './music.js';
+import { createAudio as createSound, finite, NOTE } from 'madness-engine/audio';
+import { createBand, THEMES } from 'madness-engine/music/band.rocknroller';
 
 /**
  * Every sound, made on the spot with Web Audio — no samples. Rock rolling is
@@ -6,134 +7,39 @@ import { createBand, THEMES } from './music.js';
  * knocking on the floor; a smash is a kick drum and a crash cymbal; picks
  * plink, tape rips, a lighter clicks and catches, gates rattle, panels
  * splinter, speakers thump, pyro whooshes, floor zaps, and the crowd roars
- * for an encore. The band (music.js) plays under it all, and keeps the time.
+ * for an encore. The band (the engine's `music/band`) plays under it all, and keeps the time.
  *
- * Nothing can play until the page has had a click or a key (browsers insist),
- * so `wake()` is called on the first one.
+ * It is all made on the engine's sound (`madness-engine/audio`). Nothing can
+ * play until the page has had a click or a key (browsers insist), so `wake()`
+ * is called on the first one.
  */
-
-const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12);
-
-/**
- * A number the game hands the audio, made safe for an AudioParam: Web Audio
- * throws on anything not finite, and an exponential ramp can't reach zero.
- */
-const finite = (v, fallback = 0) => (Number.isFinite(v) ? v : fallback);
-const audible = (v) => Math.max(0.0001, finite(v, 0.0001));
 
 export function createAudio() {
-  let ctx = null, master = null, sfx = null, music = null;
   let rollSrc = null, revNode = null, crowd = null;
-  let noise = null;
-  let muted = false;
   let band = null;
-  const volume = { music: 0.8, sfx: 0.9 };
 
-  try { muted = localStorage.getItem('rocknroller.muted') === '1'; } catch {}
+  const sound = createSound({
+    storageKey: 'rocknroller.muted',
+    level: 0.75,
+    // A compressor on the effects, so a pile of them at once doesn't clip.
+    glue: true,
+    onWake() {
+      // The roll: a low grind, speed makes it louder and higher.
+      const roll = sound.loop({ filters: [{ type: 'bandpass', freq: 140, q: 0.9 }, { type: 'lowpass', freq: 700, q: 1 }] });
+      rollSrc = { band: roll.filters[0], gain: roll.gain };
+      // The rev: a saw growling up and down.
+      const rev = sound.loop({ source: 'sawtooth', freq: 55, filters: [{ type: 'lowpass', freq: 500, q: 1 }] });
+      revNode = { o: rev.source, f: rev.filters[0], gain: rev.gain };
+      // The crowd: a murmur of filtered noise that swells when something good happens.
+      const murmur = sound.loop({ filters: [{ type: 'bandpass', freq: 900, q: 0.5 }] });
+      crowd = { filter: murmur.filters[0], gain: murmur.gain, base: 0.02 };
+      murmur.gain.gain.value = crowd.base;
 
-  function wake() {
-    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
-    const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
-    if (!AC) return;
-    ctx = new AC();
-    master = ctx.createGain();
-    master.gain.value = muted ? 0 : 0.75;
-    master.connect(ctx.destination);
-    sfx = ctx.createGain();
-    sfx.gain.value = volume.sfx;
-    const sfxGlue = ctx.createDynamicsCompressor();
-    sfxGlue.threshold.value = -10;
-    sfxGlue.ratio.value = 6;
-    sfx.connect(sfxGlue).connect(master);
-    music = ctx.createGain();
-    music.gain.value = volume.music;
-    music.connect(master);
-
-    noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-    const data = noise.getChannelData(0);
-    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-
-    // The roll: a low grind, speed makes it louder and higher.
-    const source = ctx.createBufferSource();
-    source.buffer = noise;
-    source.loop = true;
-    const band1 = ctx.createBiquadFilter();
-    band1.type = 'bandpass'; band1.frequency.value = 140; band1.Q.value = 0.9;
-    const low = ctx.createBiquadFilter();
-    low.type = 'lowpass'; low.frequency.value = 700;
-    const gain = ctx.createGain();
-    gain.gain.value = 0;
-    source.connect(band1).connect(low).connect(gain).connect(sfx);
-    source.start();
-    rollSrc = { band: band1, gain };
-
-    // The rev: a saw growling up and down.
-    const o = ctx.createOscillator();
-    o.type = 'sawtooth';
-    o.frequency.value = 55;
-    const f = ctx.createBiquadFilter();
-    f.type = 'lowpass'; f.frequency.value = 500;
-    const rg = ctx.createGain();
-    rg.gain.value = 0;
-    o.connect(f).connect(rg).connect(sfx);
-    o.start();
-    revNode = { o, f, gain: rg };
-
-    // The crowd: a murmur of filtered noise that swells when something good happens.
-    const c = ctx.createBufferSource();
-    c.buffer = noise;
-    c.loop = true;
-    const cf = ctx.createBiquadFilter();
-    cf.type = 'bandpass'; cf.frequency.value = 900; cf.Q.value = 0.5;
-    const cg = ctx.createGain();
-    cg.gain.value = 0.0;
-    c.connect(cf).connect(cg).connect(sfx);
-    c.start();
-    crowd = { filter: cf, gain: cg, base: 0.02 };
-    cg.gain.value = crowd.base;
-
-    band = createBand(ctx, music, noise);
-  }
-
-  const now = () => ctx.currentTime;
-
-  function burst({ at = 0, length = 0.1, type = 'lowpass', freq = 1000, q = 0.7, gain = 0.5, sweep = null }) {
-    if (!ctx) return;
-    [at, length, freq, gain] = [Math.max(0, finite(at)), Math.max(0.01, finite(length, 0.1)), audible(freq), audible(gain)];
-    if (sweep !== null) sweep = audible(sweep);
-    const t = now() + at;
-    const s = ctx.createBufferSource();
-    s.buffer = noise;
-    const f = ctx.createBiquadFilter();
-    f.type = type;
-    f.frequency.setValueAtTime(freq, t);
-    if (sweep) f.frequency.exponentialRampToValueAtTime(sweep, t + length);
-    f.Q.value = q;
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(gain, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + length);
-    s.connect(f).connect(g).connect(sfx);
-    s.start(t, Math.random() * 1.5);
-    s.stop(t + length + 0.05);
-  }
-
-  function tone({ at = 0, freq = 440, to = null, length = 0.15, type = 'sine', gain = 0.3, out = sfx, attack = 0.004 }) {
-    if (!ctx) return;
-    [at, length, freq, gain] = [Math.max(0, finite(at)), Math.max(0.01, finite(length, 0.15)), audible(freq), audible(gain)];
-    if (to !== null) to = audible(to);
-    const t = now() + at;
-    const o = ctx.createOscillator();
-    o.type = type;
-    o.frequency.setValueAtTime(freq, t);
-    if (to) o.frequency.exponentialRampToValueAtTime(to, t + length);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(gain, t + attack);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + length);
-    o.connect(g).connect(out);
-    o.start(t);
-    o.stop(t + length + 0.05);
-  }
+      band = createBand(sound.ctx, sound.music, sound.noise);
+    },
+  });
+  const { burst, tone } = sound;
+  const now = () => sound.now();
 
   /** The crowd swells for `seconds`. */
   function cheer(amount = 1, seconds = 1.6) {
@@ -155,24 +61,15 @@ export function createAudio() {
   }
 
   const api = {
-    wake,
+    wake: sound.wake,
 
-    get muted() { return muted; },
+    get muted() { return sound.muted; },
 
-    toggleMute() {
-      muted = !muted;
-      try { localStorage.setItem('rocknroller.muted', muted ? '1' : '0'); } catch {}
-      if (master) master.gain.setTargetAtTime(muted ? 0 : 0.75, now(), 0.05);
-      return muted;
-    },
+    toggleMute: sound.toggleMute,
 
     /** The settings sliders: 'music' or 'sfx', 0 to 1. */
     setVolume(kind, v) {
-      if (kind !== 'music' && kind !== 'sfx') return;
-      v = Math.max(0, Math.min(1, finite(v, volume[kind])));
-      volume[kind] = v;
-      const node = kind === 'music' ? music : sfx;
-      if (node) node.gain.setTargetAtTime(v, now(), 0.05);
+      if (kind === 'music' || kind === 'sfx') sound.setVolume(kind, v);
     },
 
     /** The grind of rolling, every frame: speed in tiles a second, and whether he is on anything. */
@@ -338,7 +235,7 @@ export function createAudio() {
      * the venue's tempo) in step with `gig`'s clock.
      */
     startMusic(venue, { gig = null } = {}) {
-      if (!ctx || !band) return;
+      if (!band) return;
       const name = venue.look?.theme ?? 'garage';
       const beat0 = gig ? (gig.time * venue.tempo) / 60 : 0;
       band.start(THEMES[name] ?? THEMES.garage, venue.tempo, beat0);

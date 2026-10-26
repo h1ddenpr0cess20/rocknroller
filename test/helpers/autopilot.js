@@ -10,10 +10,10 @@
  * every venue to that.
  */
 
-import * as GFX from '../../src/vendor/gfx/index.js';
+import * as GFX from 'madness-engine/gfx';
 import { hammerAt, liftAt, spikesAt } from '../../src/actors.js';
 import { createGig, putBack, STEP, stepGig } from '../../src/gig.js';
-import { FALL_LIMIT } from '../../src/physics.js';
+import { FALL_LIMIT } from 'madness-engine/physics';
 
 /** The furthest it will drop off a ledge: well short of a drop that hurts. */
 export const DROP = FALL_LIMIT * 0.6;
