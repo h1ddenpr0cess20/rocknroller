@@ -1,7 +1,7 @@
 import { isBaked, ready } from './models/library.js';
-import { createStatic } from './models/model.js';
+import { createStatic } from 'madness-engine/models/model';
 import { PROPS } from './models/props/index.js';
-import { floorTexture, gaffTexture, glowTexture, grilleTexture, panelTexture, shutterTexture, tiled } from './textures.js';
+import { floorTexture, gaffTexture, glowTexture, grilleTexture, panelTexture, shutterTexture, tiled } from 'madness-engine/textures/venue.rocknroller';
 
 /**
  * What moves, and what lies about, as it is drawn: speaker stacks that slam

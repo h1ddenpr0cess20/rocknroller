@@ -1,5 +1,5 @@
 import { BELT } from './gig.js';
-import { canvas, texture, beltTexture, cached, floorTexture, wallTexture } from './textures.js';
+import { canvas, texture, beltTexture, cached, floorTexture, wallTexture } from 'madness-engine/textures/venue.rocknroller';
 import { createZapMaterial } from './zap.js';
 
 /**
@@ -8,7 +8,7 @@ import { createZapMaterial } from './zap.js';
  * into the dark, belts with their chevrons running, the electrified floor
  * (zap.js), and the stage door at the end — an arch with a neon sign over
  * it, and a spotlight ring on the floor. Every texture is painted on a canvas
- * at startup (textures.js); under node (the tests) there is no canvas and the
+ * at startup (the engine's `textures/venue`); under node (the tests) there is no canvas and the
  * meshes go without.
  */
 

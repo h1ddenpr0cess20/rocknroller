@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import { buildVenue as buildCourse, Venue as Course } from '../src/venue.js';
 import {
   BREAK_SPEED, closestOnTriangle, collideBalls, createBall, GRAVITY, placeBall, rollSpin, stepBall, turn,
-} from '../src/physics.js';
+} from 'madness-engine/physics';
 
 const STEP = 1 / 120;
 

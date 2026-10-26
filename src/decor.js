@@ -1,5 +1,5 @@
 import { FURNITURE } from './furniture.js';
-import { canvas, cached, grilleTexture, random, texture, tiled } from './textures.js';
+import { canvas, cached, grilleTexture, random, texture, tiled } from 'madness-engine/textures/venue.rocknroller';
 
 /**
  * What the venues are furnished with. Each prop stands over the tiles of a

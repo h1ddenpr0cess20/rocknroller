@@ -1,12 +1,12 @@
 import { createActors } from './actors.js';
 import { createHype, earn, smashed } from './hype.js';
 import { encore, heal, hurt, createIntegrity, HARM, shattered } from './integrity.js';
-import { BREAK_SPEED, createBall, placeBall, PUSH, stepBall, TOP_SPEED } from './physics.js';
+import { BREAK_SPEED, createBall, placeBall, PUSH, stepBall, TOP_SPEED } from 'madness-engine/physics';
 import { createRoll, ROCK_RADIUS, stepRoll } from './roll.js';
 import { closingSpeed, resolveImpact } from './smash.js';
 import { buildVenue, DEPTH, HEADING } from './venue.js';
 import { loadVenue } from './venues/index.js';
-import { groundAxes } from './view.js';
+import { groundAxes } from 'madness-engine/views/arcade';
 
 /** What smashing a prop is worth. */
 export const PROP_HYPE = 15;

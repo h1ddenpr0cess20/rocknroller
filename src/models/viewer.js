@@ -3,13 +3,16 @@
  * stage floor under stage light, to look at while sculpting. Not part of
  * the game. ?m=rat,orc&clip=walk&yaw=0.6&pitch=0.3&dist=1.4&time=0
  * (time fixed for a still; no time and it plays; detail=0.5 for the
- * board's mesh; ty=0.6 to look at that height). A model not yet in the cast
- * is loaded from its file.
+ * board's mesh; ty=0.6 to look at that height). A model not in the cast
+ * is taken from the engine's library.
  */
 
-import * as GFX from '../vendor/gfx/index.js';
-import { createRenderer, paintRoom } from '../stage.js';
-import { createModel } from './model.js';
+import { CHARACTERS } from 'madness-engine/characters';
+import * as GFX from 'madness-engine/gfx';
+import { createModel } from 'madness-engine/models/model';
+import { PROPS as ALL_PROPS } from 'madness-engine/props';
+import { createRenderer } from 'madness-engine/stage';
+import { paintRoom } from 'madness-engine/textures/rooms/venue';
 import { CAST } from './cast/index.js';
 import { PROPS } from './props/index.js';
 
@@ -56,15 +59,11 @@ scene.background = null;
 let models = [];
 const state = { look: params.has('ty') ? Number(params.get('ty')) : null, clip: params.get('clip') ?? 'idle', t: 0, yaw: Number(params.get('yaw') ?? 0.6), pitch: Number(params.get('pitch') ?? 0.32), dist: Number(params.get('dist') ?? 1), time: params.has('time') ? Number(params.get('time')) : null, playing: !params.has('time') };
 
-/** A definition by name: from the cast, or straight from its file while it is being sculpted. */
-const defs = new Map();
-async function load(name) {
-  if (!defs.has(name)) defs.set(name, CAST[name] ?? PROPS[name] ?? (await import(`./cast/${name}.js`)).default);
-  return defs.get(name);
-}
+/** A definition by name: from the cast, or from the engine's library. */
+const load = (name) => CAST[name] ?? PROPS[name] ?? CHARACTERS[name] ?? ALL_PROPS[name];
 
 async function place(names, detail = 1) {
-  const list = await Promise.all(names.map((n) => load(n)));
+  const list = names.map(load);
   for (const m of models) scene.remove(m.group);
   models = list.map((def) => createModel(GFX, def, { detail }));
   let x = 0;

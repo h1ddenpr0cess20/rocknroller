@@ -1,6 +1,6 @@
 import { CAST } from './models/cast/index.js';
 import { isBaked, ready } from './models/library.js';
-import { createModel } from './models/model.js';
+import { createModel } from 'madness-engine/models/model';
 
 /**
  * Who is in the way: the annoying people you find at a gig. Each has how it

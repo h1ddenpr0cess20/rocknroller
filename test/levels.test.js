@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { FOES } from '../src/foes.js';
-import { THEMES } from '../src/music.js';
+import { THEMES } from 'madness-engine/music/band.rocknroller';
 import { loadVenue, VENUES } from '../src/venues/index.js';
 import { drive } from './helpers/autopilot.js';
 

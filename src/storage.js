@@ -1,30 +1,30 @@
 /**
  * What the game remembers between visits: how far down the tour you have
  * got, the stars, best hype, best time and gold records of each venue, and
- * the settings. Browser storage can be missing or refuse, so every touch of
- * it is guarded and the game plays the same without it.
+ * the settings. The slot is the engine's (`saveSlot`), guarded, so the game
+ * plays the same without storage.
  */
+
+import { pickSettings, saveSlot, SETTINGS } from 'madness-engine/storage';
 
 const KEY = 'rocknroller.v1';
 
 const blankVenue = () => ({ stars: 0, best: 0, time: null, records: 0, smashed: 0 });
-const DEFAULTS = { music: 0.8, sfx: 0.9, flashing: true, touchHints: true };
 
 export function createStorage(store = globalThis.localStorage) {
-  let saved = { venues: {}, reached: 0, settings: { ...DEFAULTS }, last: null };
-  try {
-    const raw = JSON.parse(store?.getItem(KEY) ?? 'null');
-    if (raw && typeof raw === 'object') {
-      saved.reached = Number.isInteger(raw.reached) ? raw.reached : 0;
-      for (const [k, v] of Object.entries(raw.venues ?? {})) {
-        if (v && typeof v === 'object') saved.venues[k] = { ...blankVenue(), ...pickNumbers(v) };
-      }
-      saved.settings = { ...DEFAULTS, ...pickSettings(raw.settings ?? {}) };
+  const slot = saveSlot(KEY, store);
+  let saved = { venues: {}, reached: 0, settings: { ...SETTINGS }, last: null };
+  const raw = slot.read();
+  if (raw && typeof raw === 'object') {
+    saved.reached = Number.isInteger(raw.reached) ? raw.reached : 0;
+    for (const [k, v] of Object.entries(raw.venues ?? {})) {
+      if (v && typeof v === 'object') saved.venues[k] = { ...blankVenue(), ...pickNumbers(v) };
     }
-  } catch {}
+    saved.settings = { ...SETTINGS, ...pickSettings(raw.settings ?? {}) };
+  }
 
   const save = () => {
-    try { store?.setItem(KEY, JSON.stringify(saved)); } catch {}
+    slot.write(saved);
     return snapshot();
   };
   const snapshot = () => ({ ...saved, venues: { ...saved.venues }, settings: { ...saved.settings } });
@@ -55,7 +55,7 @@ export function createStorage(store = globalThis.localStorage) {
       return save();
     },
     setting(name, value) {
-      if (!(name in DEFAULTS)) return snapshot();
+      if (!(name in SETTINGS)) return snapshot();
       saved.settings[name] = value;
       return save();
     },
@@ -68,11 +68,5 @@ function pickNumbers(v) {
   const out = {};
   for (const k of ['stars', 'best', 'records', 'smashed']) if (Number.isFinite(v[k])) out[k] = v[k];
   if (Number.isFinite(v.time)) out.time = v.time;
-  return out;
-}
-
-function pickSettings(s) {
-  const out = {};
-  for (const k of Object.keys(DEFAULTS)) if (typeof s[k] === typeof DEFAULTS[k]) out[k] = s[k];
   return out;
 }

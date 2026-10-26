@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import { FOES } from '../src/foes.js';
 import { RECORDS } from '../src/rating.js';
 import { VENUES, loadVenue } from '../src/venues/index.js';
-import * as GFX from '../src/vendor/gfx/index.js';
+import * as GFX from 'madness-engine/gfx';
 import { createGig } from '../src/gig.js';
 import { drive, graph, plan } from './helpers/autopilot.js';
 
