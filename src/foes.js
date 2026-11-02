@@ -28,6 +28,9 @@ export const FOES = Object.freeze({
   // The people.
   brother: { name: 'Little Brother', blurb: 'Has a recorder. Knows two notes.', move: 'walk', toughness: 3, power: 3, hype: 30, radius: 0.29, speed: 4.6 },
   neighbour: { name: 'Angry Neighbour', blurb: 'Called about the noise. Brought a broom.', move: 'walk', toughness: 5, power: 5, hype: 60, radius: 0.37, speed: 3.4 },
+  crossingguard: { name: 'Crossing Guard', blurb: 'Stop means stop. Rock waits. Everybody waits.', move: 'walk', toughness: 4, power: 4, hype: 45, radius: 0.37, speed: 3.0 },
+  mailcarrier: { name: 'Mail Carrier', blurb: 'Neither rain nor snow nor a rolling boulder.', move: 'walk', toughness: 4, power: 4, hype: 45, radius: 0.37, speed: 3.8 },
+  oldtimer: { name: 'Old-Timer', blurb: 'Saw Elvis. Was not impressed. Is not impressed now.', move: 'walk', toughness: 4, power: 3, hype: 40, radius: 0.37, speed: 2.2 },
   phone: { name: 'Phone Guy', blurb: 'Is filming all of this. For later. He will not watch it.', move: 'walk', toughness: 4, power: 4, hype: 50, radius: 0.37, speed: 2.2, flash: true },
   freebird: { name: 'Freebird Guy', blurb: 'It was funny the first time. It is the first time.', move: 'walk', toughness: 5, power: 5, hype: 60, radius: 0.37, speed: 2.6, shout: 'FREEBIRD!' },
   drunk: { name: 'Drunk Guy', blurb: 'Loves you, man. Loves everyone, man.', move: 'walk', toughness: 4, power: 4, hype: 50, radius: 0.37, speed: 2.0, wobble: 1 },

@@ -8,7 +8,9 @@ import { across, backTile, barred, flat, loop, pick } from './helpers.js';
  * a basement under it. Everything is taught here: rolling over picks,
  * running at somebody to smash them, a speaker stack that comes down on the
  * beat, a gate and its pass, and a flimsy panel that someone ought to run at,
- * with a gold record behind it. Little brothers and a neighbour with a broom.
+ * with a gold record behind it. Little brothers, a neighbour with a broom,
+ * the old-timer from next door, the mail carrier, and the crossing guard
+ * from the corner, who has come to see what all the noise is.
  * The band's light show is two strings of fairy lights and a couple of cans.
  */
 
@@ -88,7 +90,8 @@ export function garage() {
   // The basement: boxes on the floor, a neighbour guarding it, the way out barred.
   const cellar = d.room(13, 13);
   for (const [a, b] of [[2, 3], [2, -3], [8, 4], [8, -4]]) g.pillar(...cellar.tile(a, b), 0.8, { prop: 'case' });
-  g.foe('neighbour', ...cellar.tile(5, 0), { range: 6 }).foe('brother', ...cellar.tile(9, 3), { range: 6 }).foe('brother', ...cellar.tile(10, -3), { range: 6 });
+  // The old-timer from next door has come down to complain about the noise.
+  g.foe('neighbour', ...cellar.tile(5, 0), { range: 6 }).foe('brother', ...cellar.tile(9, 3), { range: 6 }).foe('oldtimer', ...cellar.tile(10, -3), { range: 6 });
   g.road(...cellar.tile(11, 5), 60).pick(...cellar.tile(1, -5), 10).pick(...cellar.tile(6, 5), 10);
   g.lighter(...cellar.tile(11, -5));
   // On the way out, once the three of them have had a go at him, a roll of tape.
@@ -98,13 +101,15 @@ export function garage() {
   bench.hall(3);
   const shop = bench.room(6, 7);
   g.pass(...shop.tile(3, 0));
-  g.foe('brother', ...shop.tile(2, 2), { range: 4 });
+  // The mail carrier, come round the back with a parcel, and not leaving without a signature.
+  g.foe('mailcarrier', ...shop.tile(2, 2), { range: 4 });
   g.pick(...shop.tile(4, -2), 10);
   // And over a gap, on a plank, a second record.
   const pit = d.fork().jump(pick(cellar.tile(10, room.back * 7), room.back > 0 ? '-x' : '+x'));
   pit.hall(2);
   const plank = pit.bridge(7);
-  g.foe('brother', ...plank.tile(3, 0), { path: [plank.tile(1, 0), plank.tile(5, 0)] });
+  // The crossing guard has the plank: up and back, the paddle up, and nobody crosses until it says so.
+  g.foe('crossingguard', ...plank.tile(3, 0), { path: [plank.tile(1, 0), plank.tile(5, 0)] });
   const alcove = pit.room(5, 5);
   g.record(...alcove.tile(2, 0));
   d.hall(4);
@@ -125,7 +130,7 @@ export function garage() {
   g.foe('neighbour', ...run.tile(6, 1), { range: 5 });
   g.speaker(...across(run, 8, { beats: 4 }));
   const last = d.room(9, 9);
-  g.foe('brother', ...last.tile(3, -2), { range: 5 }).foe('brother', ...last.tile(4, 2), { range: 5 });
+  g.foe('crossingguard', ...last.tile(3, -2), { range: 5 }).foe('brother', ...last.tile(4, 2), { range: 5 });
   g.pick(...last.tile(6, 0), 10);
   d.hall(3);
   d.stairs(3, 1.5);

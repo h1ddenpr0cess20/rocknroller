@@ -371,6 +371,54 @@ export class Venue {
     return this;
   }
 
+  /**
+   * Stands the rig's lights on posts where nothing goes. A light set on the
+   * floor (where the cast walk and Rock rolls) or in a prop is moved to the
+   * nearest bare wall beside the floor, its post on the wall top, still
+   * aimed at the floor it lit and its lens about as high: nothing can go
+   * through it there. Where there is no such wall near, it stays, on a plinth
+   * that is wall, which everything goes round. Called once the venue is dug.
+   */
+  settleRig({ reach = 4 } = {}) {
+    const at = (f) => Math.floor(f.z) * this.cols + Math.floor(f.x);
+    const taken = new Set(this.fixtures.map(at));
+    const bare = (x, z) => {
+      const c = this.cell(x, z);
+      return c?.kind === 'wall' && !c.prop && !this.open.has(z * this.cols + x) && !taken.has(z * this.cols + x)
+        && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) => { const n = this.cell(x + dx, z + dz); return n && n.kind !== 'wall'; });
+    };
+    const top = (c) => Math.max(...c.h);
+    for (const f of this.fixtures) {
+      if (!POSTED.has(f.kind)) continue;
+      const x = Math.floor(f.x), z = Math.floor(f.z), c = this.cell(x, z);
+      if (!c || (c.kind === 'wall' && !c.prop)) continue;
+      // Out of an object (the stands, a bar) it may have further to go: it will still be aimed where it was.
+      const far = c.prop ? reach * 4 : reach;
+      let best = null, bestD = Infinity;
+      for (let j = z - far; j <= z + far; j++) {
+        for (let i = x - far; i <= x + far; i++) {
+          const d = Math.hypot(i - x, j - z);
+          if (d <= far && d < bestD && bare(i, j)) { best = [i, j]; bestD = d; }
+        }
+      }
+      if (!best) {
+        // Nowhere to move it: a plinth under it, which nothing goes through.
+        if (c.kind !== 'wall' && !c.prop) this.pillar(x, z, 0.12);
+        continue;
+      }
+      // Still lighting the floor it lit (where it pointed, or the tile it stood on), its lens about as high.
+      const aim = f.aim ?? [0, 0], target = [f.x + aim[0], f.z + aim[1]];
+      const lens = top(c) + (f.height ?? 1.6), wall = top(this.cell(best[0], best[1]));
+      taken.delete(at(f));
+      f.x = best[0] + 0.5;
+      f.z = best[1] + 0.5;
+      taken.add(at(f));
+      f.aim = [target[0] - f.x, target[1] - f.z];
+      f.height = Math.round(Math.min(3.6, Math.max(0.6, lens - wall)) * 100) / 100;
+    }
+    return this;
+  }
+
   /** Sticky floor — spilled beer, mud — which slows what rolls over it. */
   sticky(x, z, w, d) {
     this._fx(x, z, w, d, 'sticky');
