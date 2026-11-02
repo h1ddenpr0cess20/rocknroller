@@ -20,7 +20,8 @@ export function createAudio() {
 
   const sound = createSound({
     storageKey: 'rocknroller.muted',
-    level: 0.75,
+    // Under half what it was: it was loud over anything else playing. The band and the effects keep their balance.
+    level: 0.35,
     // A compressor on the effects, so a pile of them at once doesn't clip.
     glue: true,
     onWake() {

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import * as GFX from 'madness-engine/gfx';
-import { openSide } from '../src/decor.js';
+import { openSide } from 'madness-engine/scenery/gear/decor';
 import { createGig, STEP, stepGig } from '../src/gig.js';
 import { VENUES, loadVenue } from '../src/venues/index.js';
 

@@ -17,5 +17,6 @@ import { studio } from './studio.js';
 export const VENUES = [garage, rehearsal, dive, club, dock, studio, opera, festival, arena, stadium];
 
 export function loadVenue(index) {
-  return VENUES[index]();
+  // The rig's lights on posts stood where nothing walks or rolls into them.
+  return VENUES[index]().settleRig();
 }
