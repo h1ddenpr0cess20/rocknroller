@@ -3,7 +3,7 @@ import { createGig, PROP_HYPE, putBack, resultOf, STEP, stepGig, toGround } from
 import { comboAt, earn, windowLeft } from './hype.js';
 import { HARM } from './integrity.js';
 import { createLightshow } from 'madness-engine/scenery/lightshow.rocknroller';
-import { createProps } from './decor.js';
+import { createProps } from 'madness-engine/scenery/gear/decor';
 import { readyAll } from './models/library.js';
 import { stars } from './rating.js';
 import { createRock } from 'madness-engine/heroes/rock';

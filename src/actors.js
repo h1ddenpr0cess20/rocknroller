@@ -1,6 +1,11 @@
 import { createFoeMesh, FLIGHT, FOES, KNOCKED_OUT } from './foes.js';
-import { createBumperMesh, createGateMesh, createLiftMesh, createPanelMesh, createPickupMesh, createPyroMesh, createSpeakerMesh } from './machinery.js';
+import { createBumperMesh, createGateMesh, createLiftMesh, createPanelMesh, createPickupMesh, createPyroMesh, createSpeakerMesh, usePickups } from 'madness-engine/scenery/gear/machinery';
 import { collideBalls, createBall, PUSH, stepBall } from 'madness-engine/physics';
+import { isBaked, ready } from './models/library.js';
+import { PROPS as PICKUPS } from './models/props/index.js';
+
+// The engine's machinery draws this game's pickups, baked off the page by its library.
+usePickups({ props: PICKUPS, isBaked, ready });
 
 /**
  * Everything in a venue that moves or can be taken, and isn't Rock: the
