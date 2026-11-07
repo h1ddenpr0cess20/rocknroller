@@ -4,7 +4,6 @@ import { comboAt, earn, windowLeft } from './hype.js';
 import { HARM } from './integrity.js';
 import { createLightshow } from 'madness-engine/scenery/lightshow.rocknroller';
 import { createProps } from 'madness-engine/scenery/gear/decor';
-import { readyAll } from './models/library.js';
 import { stars } from './rating.js';
 import { createRock } from 'madness-engine/heroes/rock';
 import { ROCK_RADIUS } from './roll.js';
@@ -42,7 +41,7 @@ const BANNERS = {
 const TITLE_ZOOM = 0.42;
 const TITLE_TURN = 0.16;
 
-export function createGame({ stage, hud, input, audio, storage }) {
+export function createGame({ stage, hud, input, audio, storage, loading }) {
   const { GFX, scene, view } = stage;
   const effects = createEffects(GFX, scene);
   const rock = createRock(GFX, { radius: ROCK_RADIUS });
@@ -96,7 +95,7 @@ export function createGame({ stage, hud, input, audio, storage }) {
     // Once everything in it has baked (they come in in the background), draw it all again so its shaders are ready too.
     const here = gig;
     baking = true;
-    readyAll([
+    loading.bake([
       ...venue.foes.map((m) => [m.kind, BOARD_DETAIL]),
       ...venue.pickups.map((p) => [p.kind, 1]),
     ]).then(() => {

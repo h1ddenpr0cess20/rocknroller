@@ -7,12 +7,16 @@ import { createAudio } from './audio.js';
 import { createGame } from './game.js';
 import { createHud } from './hud.js';
 import { createInput } from 'madness-engine/input';
-import { preload } from './models/library.js';
+import { preload, startupJobs } from './models/library.js';
+import { createLoading } from './loading.js';
 import { createStage } from './stage.js';
 import { createStorage } from './storage.js';
 
-// The foes and the props are sculpted in code: start baking them before anything else.
+// The foes and the props are sculpted in code: start baking them before anything else, and
+// hold the page on the loading screen until they are in.
+const loading = createLoading(document.body, 'Loading');
 preload();
+loading.bake(startupJobs());
 
 const view = document.getElementById('view');
 const audio = createAudio();
@@ -47,7 +51,7 @@ input = createInput(view, {
 
 try {
   const stage = await createStage(view);
-  game = createGame({ stage, hud, input, audio, storage });
+  game = createGame({ stage, hud, input, audio, storage, loading });
   globalThis.rocknroller = game;
   game.debug.audio = audio;
   // For the tests and the console: run the game `seconds` ahead without drawing it (software rendering is slow).
