@@ -5,6 +5,9 @@ import { PROPS } from './props/index.js';
 /** Everything sculpted, by name: the creatures and the props. */
 export const SCULPTED = { ...CAST, ...PROPS };
 
+/** The models a player can meet anywhere: the props (small, and everywhere), then the creatures at the detail the board wants. */
+export const startupJobs = () => [...Object.keys(PROPS).map((n) => [n, 1]), ...Object.keys(CAST).map((n) => [n, 0.5])];
+
 /**
  * The models, baked in the background as the page starts (the engine's
  * `createBakeLibrary`): a few workers share out the work, and each mesh is
@@ -15,6 +18,6 @@ export const SCULPTED = { ...CAST, ...PROPS };
 export const { isBaked, readyAll, ready, preload } = createBakeLibrary({
   sculpted: SCULPTED,
   spawn: () => new Worker(new URL('./bake.worker.js', import.meta.url), { type: 'module' }),
-  jobs: () => [...Object.keys(PROPS).map((n) => [n, 1]), ...Object.keys(CAST).map((n) => [n, 0.5])],
+  jobs: startupJobs,
   label: 'rocknroller',
 });
