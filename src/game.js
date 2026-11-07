@@ -5,7 +5,7 @@ import { HARM } from './integrity.js';
 import { createLightshow } from 'madness-engine/scenery/lightshow.rocknroller';
 import { createProps } from 'madness-engine/scenery/gear/decor';
 import { stars } from './rating.js';
-import { createRock } from 'madness-engine/heroes/rock';
+import { createRock } from 'madness-engine/heroes/rock.rocknroller';
 import { ROCK_RADIUS } from './roll.js';
 import { createExit, createVenueMeshes } from './scenery.js';
 import { GRADES } from './smash.js';
