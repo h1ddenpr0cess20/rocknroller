@@ -5,7 +5,7 @@ import { HARM } from './integrity.js';
 import { createLightshow } from 'madness-engine/scenery/lightshow.rocknroller';
 import { createProps } from 'madness-engine/scenery/gear/decor';
 import { stars } from './rating.js';
-import { createRock } from 'madness-engine/heroes/rock';
+import { createGraniteRock } from 'madness-engine/heroes/rock-granite';
 import { ROCK_RADIUS } from './roll.js';
 import { createExit, createVenueMeshes } from './scenery.js';
 import { GRADES } from './smash.js';
@@ -44,7 +44,7 @@ const TITLE_TURN = 0.16;
 export function createGame({ stage, hud, input, audio, storage, loading }) {
   const { GFX, scene, view } = stage;
   const effects = createEffects(GFX, scene);
-  const rock = createRock(GFX, { radius: ROCK_RADIUS });
+  const rock = createGraniteRock(GFX, { radius: ROCK_RADIUS, colour: 'black' });
   rock.group.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   scene.add(rock.group);
 
