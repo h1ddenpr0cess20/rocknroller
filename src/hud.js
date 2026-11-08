@@ -1,5 +1,5 @@
 import { goals, RECORDS } from './rating.js';
-import { MAX_INTEGRITY } from './integrity.js';
+import { MAX_INTEGRITY } from 'madness-engine/venue/integrity';
 import { VENUES } from './venues/index.js';
 
 /**

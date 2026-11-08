@@ -1,6 +1,6 @@
-import { digger } from '../dig.js';
+import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { backTile, barred, branch, centre, flat, toBack, wallTile, wash } from './helpers.js';
+import { backTile, barred, branch, centre, flat, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 4: The Club. A basement dance club at two in the morning. It starts

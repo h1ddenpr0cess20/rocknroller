@@ -22,7 +22,7 @@ for (let i = 0; i < VENUES.length; i++) {
   test(`venue ${i + 1}, ${loadVenue(i).name}, can be cleared start to finish with all three gold records`, () => {
     const result = drive(i);
     assert.ok(result.finished, `stuck: ${JSON.stringify(result.stuck)}`);
-    assert.equal(result.gig.stats.records, 3);
-    assert.ok(result.gig.rock.hp > 0);
+    assert.equal(result.gig.stats.tokens, 3);
+    assert.ok(result.gig.hero.hp > 0);
   });
 }

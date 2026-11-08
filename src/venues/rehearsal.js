@@ -1,6 +1,6 @@
-import { digger } from '../dig.js';
+import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { across, branch, wallTile } from './helpers.js';
+import { across, branch, wallTile } from 'madness-engine/venue/helpers';
 
 /**
  * Act 2: The Rehearsal Rooms. A converted warehouse cut up into practice

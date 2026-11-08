@@ -1,6 +1,6 @@
-import { digger } from '../dig.js';
+import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, branch, flat, toBack, wallTile } from './helpers.js';
+import { across, backTile, barred, branch, flat, toBack, wallTile } from 'madness-engine/venue/helpers';
 
 /**
  * Act 3: Sticky's. A dive bar with a floor that has never been mopped:
