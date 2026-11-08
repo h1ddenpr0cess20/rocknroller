@@ -1,6 +1,6 @@
-import { digger } from '../dig.js';
+import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, branch, centre, flat, frontHeading, toBack, wallTile, wash } from './helpers.js';
+import { across, backTile, barred, branch, centre, flat, frontHeading, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 5: The Loading Dock. The back of the house, where the gear comes in

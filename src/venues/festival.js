@@ -1,6 +1,6 @@
-import { digger } from '../dig.js';
+import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { across, backTile, branch, centre, flat, wallTile, wash } from './helpers.js';
+import { across, backTile, branch, centre, flat, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 8: The Festival. Day three, golden hour, and no walls to speak of:

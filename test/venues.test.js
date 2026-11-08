@@ -19,7 +19,7 @@ test('every venue can be played through to the stage door in one piece, with all
     const records = r.gig.actors.pickups.filter((p) => p.kind === 'record');
     assert.equal(records.length, RECORDS, `${name} hides ${RECORDS} records`);
     assert.ok(records.every((p) => p.taken), `${name}: every record can be got`);
-    assert.ok(r.gig.rock.hp > 0, `${name}: Rock got there whole`);
+    assert.ok(r.gig.hero.hp > 0, `${name}: Rock got there whole`);
   }
 });
 

@@ -1,6 +1,6 @@
-import { digger } from '../dig.js';
+import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { backTile, branch, centre, facingRot, flat, frontHeading, toBack, wallTile, wash } from './helpers.js';
+import { backTile, branch, centre, facingRot, flat, frontHeading, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 7: The Opera House. Red velvet, gold leaf, damask on the walls and

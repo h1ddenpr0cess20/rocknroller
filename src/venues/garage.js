@@ -1,6 +1,6 @@
-import { digger } from '../dig.js';
+import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, flat, loop, pick } from './helpers.js';
+import { across, backTile, barred, flat, loop, pick } from 'madness-engine/venue/helpers';
 
 /**
  * Act 1: The Garage. Where Rock starts. A two-car garage with a band in it

@@ -1,6 +1,6 @@
-import { digger } from '../dig.js';
+import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { backTile, branch, centre, flat, toBack, wallTile, wash } from './helpers.js';
+import { backTile, branch, centre, flat, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 10: The Stadium. The last night of the tour. Floodlights, a sky
