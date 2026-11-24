@@ -1,6 +1,6 @@
 import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { across, backTile, branch, centre, flat, wallTile, wash } from 'madness-engine/venue/helpers';
+import { across, backTile, branch, center, flat, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 8: The Festival. Day three, golden hour, and no walls to speak of:
@@ -138,7 +138,7 @@ export function festival() {
   const store = crate.room(5, 5, { wall: 'fence', floor: 'plate' });
   g.record(...store.tile(3, 0));
   g.road(...store.tile(1, 1), 70);
-  void across; void centre;
+  void across; void center;
   d.hall(2, { wall: 'fence' });
   d.exit(3);
   return g;

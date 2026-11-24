@@ -1,6 +1,6 @@
 import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { backTile, branch, centre, flat, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
+import { backTile, branch, center, flat, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 9: The Arena. Twenty thousand seats, and Rock has to go round all of
@@ -64,7 +64,7 @@ export function arena() {
   sign(ring, 5, 'HOT DOGS', TEAM[1], 1.6, 0.6);
   sign(ring, 15.5, 'MERCH', RIG[0], 1.6, 0.7);
   sign(ring, 21, 'BEER', RIG[2], 1.6, 0.7);
-  g.light('spot', ...centre(ring), { colors: [TEAM[2]], radius: 3, height: 3.4 });
+  g.light('spot', ...center(ring), { colors: [TEAM[2]], radius: 3, height: 3.4 });
   // Behind the merch stand, through the stock-room door: a record in among the shirts.
   const stock = branch(d, ring, 12, 'back', 11);
   const stockHall = stock.hall(8);

@@ -18,7 +18,7 @@ import { FALL_LIMIT } from 'madness-engine/physics';
 /** The furthest it will drop off a ledge: well short of a drop that hurts. */
 export const DROP = FALL_LIMIT * 0.6;
 
-const NEIGHBOURS = [
+const NEIGHBORS = [
   [0, -1, (c) => [c.h[0], c.h[1]], (n) => [n.h[2], n.h[3]]],
   [0, 1, (c) => [c.h[2], c.h[3]], (n) => [n.h[0], n.h[1]]],
   [-1, 0, (c) => [c.h[0], c.h[2]], (n) => [n.h[1], n.h[3]]],
@@ -27,7 +27,7 @@ const NEIGHBOURS = [
 
 
 /**
- * The ways from tile to tile: a step to a neighbour that isn't higher at the
+ * The ways from tile to tile: a step to a neighbor that isn't higher at the
  * shared edge and isn't too far down, and a ride on each lift, from the
  * tiles beside it at one end of its run to those beside it at the other.
  * `rides` are the lift rides out of each tile: { to, lift, from, end }.
@@ -45,7 +45,7 @@ export function graph(venue) {
       const c = venue.cell(x, z);
       if (!walkable(c, x, z)) continue;
       const out = [];
-      for (const [dx, dz, mine, theirs] of NEIGHBOURS) {
+      for (const [dx, dz, mine, theirs] of NEIGHBORS) {
         const n = venue.cell(x + dx, z + dz);
         if (!walkable(n, x + dx, z + dz)) continue;
         const [a0, a1] = mine(c), [b0, b1] = theirs(n);
@@ -177,21 +177,21 @@ function open(a, c) {
   return true;
 }
 
-/** Turns a plan into waypoints: tile centres at a pace to suit, with waits and rides where they're needed. */
+/** Turns a plan into waypoints: tile centers at a pace to suit, with waits and rides where they're needed. */
 function waypoints(gig, moves, from) {
   const venue = gig.venue;
   const out = [];
   let prev = from;
-  const centre = (x, z) => [x + 0.5, z + 0.5];
+  const center = (x, z) => [x + 0.5, z + 0.5];
   const zoneOf = (list, x, z) => list.find((s) => x >= s.x && z >= s.z && x < s.x + s.w && z < s.z + s.d);
   for (const m of moves) {
     if (m.lift !== undefined) {
       const l = gig.actors.lifts[m.lift];
       const last = out[out.length - 1];
-      const wait = { at: centre(...prev), speed: 2.5, stop: true, until: liftWaiting(l, m.from) };
+      const wait = { at: center(...prev), speed: 2.5, stop: true, until: liftWaiting(l, m.from) };
       if (last) Object.assign(last, wait); else out.push(wait);
       out.push({ on: m.lift, at: [l.w / 2, l.d / 2], speed: 2.2, stop: true, until: liftWaiting(l, 1 - m.from), radius: 0.35 });
-      out.push({ at: centre(m.x, m.z), speed: 2.2, radius: 0.4 });
+      out.push({ at: center(m.x, m.z), speed: 2.2, radius: 0.4 });
       prev = [m.x, m.z];
       continue;
     }
@@ -201,19 +201,19 @@ function waypoints(gig, moves, from) {
     // Wait on the tile before a speaker stack or pyro for the moment to go.
     if (cell.crush && !before.crush) {
       const h = zoneOf(gig.actors.crushers, m.x, m.z);
-      const wait = { at: centre(...prev), speed: 2.5, stop: true, until: crusherUp(h) };
+      const wait = { at: center(...prev), speed: 2.5, stop: true, until: crusherUp(h) };
       if (last) Object.assign(last, wait); else out.push(wait);
     }
     if (cell.trap && !before.trap) {
       const s = zoneOf(gig.actors.spikes, m.x, m.z);
-      const wait = { at: centre(...prev), speed: 2.5, stop: true, until: pyroQuiet(s) };
+      const wait = { at: center(...prev), speed: 2.5, stop: true, until: pyroQuiet(s) };
       if (last) Object.assign(last, wait); else out.push(wait);
     }
     let speed = 3.8;
     if (edgy(venue, m.x, m.z)) speed = 2.6;
     if (!venue.cell(m.x + 1, m.z) && !venue.cell(m.x - 1, m.z) || !venue.cell(m.x, m.z + 1) && !venue.cell(m.x, m.z - 1)) speed = 2.2;
     if (cell.crush || cell.trap) speed = 4.5;
-    const point = { at: centre(m.x, m.z), speed };
+    const point = { at: center(m.x, m.z), speed };
     if (cell.door) {
       const g = zoneOf(gig.actors.doors, m.x, m.z);
       if (g.kind === 'panel' && g.box.solid) {

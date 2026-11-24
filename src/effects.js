@@ -12,7 +12,7 @@
 
 import { createEffects as createBits, outward } from 'madness-engine/effects';
 
-const PICK_COLOURS = ['#ff3a8a', '#2ad0ff', '#ffd23a', '#7a4be8', '#3ae88a', '#ff7a1a', '#f5f0e6'];
+const PICK_COLORS = ['#ff3a8a', '#2ad0ff', '#ffd23a', '#7a4be8', '#3ae88a', '#ff7a1a', '#f5f0e6'];
 
 export function createEffects(GFX, scene) {
   const effects = createBits(GFX, scene);
@@ -22,19 +22,19 @@ export function createEffects(GFX, scene) {
   const smoke = new GFX.MeshStandardMaterial({ name: 'smoke', color: new GFX.Color('#c9c4d4'), roughness: 1, transparent: true, opacity: 0.55, depthWrite: false });
   // A guitar pick: a rounded triangle, thin.
   const pickGeometry = new GFX.CylinderGeometry(0.075, 0.075, 0.014, 3);
-  const picks = PICK_COLOURS.map((c) => new GFX.MeshStandardMaterial({ name: 'pick', color: new GFX.Color(c), roughness: 0.3, metalness: 0.1, emissive: new GFX.Color(c), emissiveIntensity: 0.35 }));
+  const picks = PICK_COLORS.map((c) => new GFX.MeshStandardMaterial({ name: 'pick', color: new GFX.Color(c), roughness: 0.3, metalness: 0.1, emissive: new GFX.Color(c), emissiveIntensity: 0.35 }));
   const mote = new GFX.SphereGeometry(0.035, 6, 4);
   const glows = new Map();
-  const glow = (colour) => {
-    if (!glows.has(colour)) glows.set(colour, new GFX.MeshBasicMaterial({ name: 'glow', color: new GFX.Color(colour), toneMapped: false }));
-    return glows.get(colour);
+  const glow = (color) => {
+    if (!glows.has(color)) glows.set(color, new GFX.MeshBasicMaterial({ name: 'glow', color: new GFX.Color(color), toneMapped: false }));
+    return glows.get(color);
   };
   const grit = new GFX.BoxGeometry(0.05, 0.05, 0.05);
   const dirt = new GFX.MeshStandardMaterial({ name: 'grit', color: new GFX.Color('#8a8276'), roughness: 1 });
   const chip = new GFX.BoxGeometry(0.07, 0.05, 0.06);
   const granite = new GFX.MeshStandardMaterial({ name: 'chip', color: new GFX.Color('#7a746b'), roughness: 0.95, flatShading: true });
   const paper = new GFX.PlaneGeometry(0.09, 0.05);
-  const paperMats = PICK_COLOURS.map((c) => new GFX.MeshBasicMaterial({ name: 'confetti', color: new GFX.Color(c), side: GFX.DoubleSide, toneMapped: false }));
+  const paperMats = PICK_COLORS.map((c) => new GFX.MeshBasicMaterial({ name: 'confetti', color: new GFX.Color(c), side: GFX.DoubleSide, toneMapped: false }));
   const star = new GFX.IcosahedronGeometry(0.06, 0);
 
   return {
@@ -49,8 +49,8 @@ export function createEffects(GFX, scene) {
     weather: effects.weather,
 
     /** A ring on the floor that goes out and fades. */
-    ring(x, y, z, colour = '#ffffff', reach = 2) {
-      effects.ring(x, y, z, { colour, reach });
+    ring(x, y, z, color = '#ffffff', reach = 2) {
+      effects.ring(x, y, z, { color, reach });
     },
 
     /** Somebody smashed: a cloud, a spray of stars and paper, and a ring going out. */
@@ -87,9 +87,9 @@ export function createEffects(GFX, scene) {
       }
     },
 
-    sparkle(x, y, z, colour = '#ff5a7a') {
+    sparkle(x, y, z, color = '#ff5a7a') {
       for (let i = 0; i < 18; i++) {
-        const m = new GFX.Mesh(mote, glow(colour));
+        const m = new GFX.Mesh(mote, glow(color));
         const [ox, oy, oz] = outward(1.2, 3);
         spawn(m, { x, y: y + 0.3, z, vx: ox, vy: oy, vz: oz, life: 0.7 + Math.random() * 0.5, floaty: -0.1, drag: 1.5, bounce: 0 });
       }
@@ -105,17 +105,17 @@ export function createEffects(GFX, scene) {
     },
 
     /** Pyro on Rock, or a zap: embers and sparks up off him. */
-    embers(x, y, z, colour = '#ff7a1a') {
+    embers(x, y, z, color = '#ff7a1a') {
       for (let i = 0; i < 30; i++) {
-        const m = new GFX.Mesh(mote, glow(i % 3 ? colour : '#ffd23a'));
+        const m = new GFX.Mesh(mote, glow(i % 3 ? color : '#ffd23a'));
         const [ox, , oz] = outward(0.8, 0);
         spawn(m, { x: x + ox * 0.3, y, z: z + oz * 0.3, vx: ox, vy: 1.5 + Math.random() * 2.5, vz: oz, life: 0.8 + Math.random() * 0.9, floaty: -0.12, spin: 0, bounce: 0 });
       }
     },
 
     /** One spark lifting off a live floor and drifting up as it dies. */
-    ember(x, y, z, colour = '#7ad8ff') {
-      const m = new GFX.Mesh(mote, glow(Math.random() < 0.6 ? colour : '#ffffff'));
+    ember(x, y, z, color = '#7ad8ff') {
+      const m = new GFX.Mesh(mote, glow(Math.random() < 0.6 ? color : '#ffffff'));
       m.scale.setScalar(0.5 + Math.random() * 0.6);
       spawn(m, { x, y, z, vx: (Math.random() - 0.5) * 0.3, vy: 0.5 + Math.random() * 0.7, vz: (Math.random() - 0.5) * 0.3, life: 1.2 + Math.random() * 1.4, floaty: -0.05, spin: 0, bounce: 0 });
     },

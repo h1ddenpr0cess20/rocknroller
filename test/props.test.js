@@ -9,7 +9,7 @@ import { VENUES, loadVenue } from '../src/venues/index.js';
 /** Rock rolled at the middle of `prop`'s near side from `back` tiles off, going `speed`. */
 function charge(gig, prop, speed, back = 0.9) {
   const b = gig.ball;
-  const [cx, , cz] = prop.centre;
+  const [cx, , cz] = prop.center;
   b.x = prop.box.min[0] - back; b.z = cz; b.y = prop.spec.base + b.r + 0.01;
   b.vx = speed; b.vy = 0; b.vz = 0;
   void cx;
@@ -20,7 +20,7 @@ function charge(gig, prop, speed, back = 0.9) {
 function propWithRoom(gig) {
   const v = gig.venue;
   return gig.actors.props.find((p) => {
-    const z = Math.floor(p.centre[2]);
+    const z = Math.floor(p.center[2]);
     return [1, 2].every((k) => {
       const c = v.cell(p.spec.x - k, z);
       return c && c.kind === 'floor' && !c.prop && Math.abs(Math.max(...c.h) - p.spec.base) < 0.01;

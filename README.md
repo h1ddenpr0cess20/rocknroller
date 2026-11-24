@@ -6,7 +6,7 @@ Every venue has its own light show, and all of it keeps the beat of the band
 that is playing in it.
 
 Rock is [Rock](https://github.com/h1ddenpr0cess20/rock)'s boulder: the same
-shape, granite and colours (`src/boulder.js` is its geometry), sampled more
+shape, granite and colors (`src/boulder.js` is its geometry), sampled more
 finely so the faces are crisp and the grain shows up close. It runs on the
 [Madness Engine](https://github.com/h1ddenpr0cess20/madness-engine): the
 renderer, physics, camera, stage and sound, and Rock, the cast, the rig and
@@ -104,7 +104,7 @@ Every venue is laid out its own way, not the same rooms in a different paint.
 
 | | Venue | The band | The way through |
 |---|---|---|---|
-| 1 | **The Garage** | 124 bpm | A band room under fairy lights, the side of the house, a basement. Little brothers and an angry neighbour. Teaches the lot: picks, a gate and its pass, a speaker stack, a sheet of ply with a record behind it. |
+| 1 | **The Garage** | 124 bpm | A band room under fairy lights, the side of the house, a basement. Little brothers and an angry neighbor. Teaches the lot: picks, a gate and its pass, a speaker stack, a sheet of ply with a record behind it. |
 | 2 | **The Rehearsal Rooms** | 118 bpm | A block of nine practice rooms opening into each other, a band in each, the PA dropping in some of the doorways. Records in the far rooms, the pass with the A&R man, a locked fire door and a slide down the fire escape. |
 | 3 | **Sticky's** | 96 bpm | A dive bar: sticky floor, neon beer signs, a pool table, a jukebox, pinball bumpers, drunks, a bouncer and an 8-ball with a grudge. |
 | 4 | **The Club** | 126 bpm | A velvet-rope queue doubling back along the street, a podium dance floor under the tour's only mirror ball, a crowd-surf over the pit, a sticky bar, the VIP rope, and the Promoter, who lunges for his cut. |
@@ -133,10 +133,10 @@ keeps the beat of the band.
 | Fixture | What it does |
 |---|---|
 | **bulb** | A caged bulb: warm, steady, a little flicker. |
-| **par** | A PAR can: a coloured wash and a shaft of haze, changing colour on the beat (chase, pulse or rainbow). |
+| **par** | A PAR can: a colored wash and a shaft of haze, changing color on the beat (chase, pulse or rainbow). |
 | **spot** | A moving head: a beam and a pool of light that wander the floor. |
 | **strobe** | Flashes white on the beat, in bursts. |
-| **ball** | A mirror ball: it turns and throws sparkles across the floor, in colours that chase. There is one, in the Club. |
+| **ball** | A mirror ball: it turns and throws sparkles across the floor, in colors that chase. There is one, in the Club. |
 | **laser** | A fan of thin beams, sweeping. |
 | **neon** | A word in tube, flickering, fixed to a wall. |
 | **chandelier** | Crystal and candle-bulbs on brass arms, warm and swaying: the Opera House. |
@@ -159,7 +159,7 @@ The people are sculpted in code (the engine's `characters/`, listed in
 venue starts with stand-ins and swaps the real people in as they finish. They
 share one rig, but each has a build of its own (`build()` in `humanoid.js`:
 legs, torso, head, girth, a belly), so a crowd isn't one body in different
-clothes. Little brothers, neighbours, drunks, moshers, hipsters, roadies,
+clothes. Little brothers, neighbors, drunks, moshers, hipsters, roadies,
 merch guys, influencers, metalheads, ushers, critics, A&R suits, security,
 bouncers, a mascot, stage divers, camera drones, a runaway drum and an 8-ball:
 

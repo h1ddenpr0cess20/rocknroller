@@ -6,12 +6,12 @@ import { colorAt, levelAt, mountSign, neonWidth, spotTarget, STROBE_MAX_HZ, stro
 import * as GFX from 'madness-engine/gfx';
 import { VENUES } from '../src/venues/index.js';
 
-test('a fixture with one colour, or on static, never changes colour', () => {
+test('a fixture with one color, or on static, never changes color', () => {
   assert.deepEqual(colorAt({ colors: ['#ff0000'] }, 17), [1, 0, 0]);
   assert.deepEqual(colorAt({ colors: ['#ff0000', '#0000ff'], program: 'static' }, 9), [1, 0, 0]);
 });
 
-test('a chase steps through its colours, one every `every` beats, and fades across the end of each step', () => {
+test('a chase steps through its colors, one every `every` beats, and fades across the end of each step', () => {
   const f = { colors: ['#ff0000', '#00ff00', '#0000ff'], every: 2 };
   assert.deepEqual(colorAt(f, 0), [1, 0, 0]);
   assert.deepEqual(colorAt(f, 2.2), [0, 1, 0]);
@@ -23,7 +23,7 @@ test('a chase steps through its colours, one every `every` beats, and fades acro
   assert.deepEqual(colorAt({ ...f, shift: 1 }, 0), [0, 1, 0]);
 });
 
-test('every program has a colour before the downbeat too, as the band counts in', () => {
+test('every program has a color before the downbeat too, as the band counts in', () => {
   for (const program of ['chase', 'pulse', 'rainbow', 'static']) {
     for (const beat of [-0.25, -3.7, -100.1]) {
       const c = colorAt({ colors: ['#ff0000', '#00ff00', '#0000ff'], program, shift: 1 }, beat);

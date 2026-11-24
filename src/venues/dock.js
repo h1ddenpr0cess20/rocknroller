@@ -1,6 +1,6 @@
 import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { across, backTile, barred, branch, centre, flat, frontHeading, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
+import { across, backTile, barred, branch, center, flat, frontHeading, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 5: The Loading Dock. The back of the house, where the gear comes in
@@ -20,7 +20,7 @@ export const DOCK = {
   ambient: [0.95, 0.96, 1.05], lamp: '#ffc060', trap: '#2a2a2e', lift: '#4a4a52', exit: '#ffb02a', zapHue: 0.5, vary: 0.07,
 };
 
-/** Amber, red and cyan: the colours of a working yard. */
+/** Amber, red and cyan: the colors of a working yard. */
 const BEACON = ['#ff9a1a', '#ff3a3a', '#2de2ff'];
 
 export function dock() {
@@ -147,7 +147,7 @@ export function dock() {
   const back = van.room(5, 5);
   g.record(...back.tile(3, 0));
   g.road(...back.tile(1, 1), 70);
-  void centre; void across;
+  void center; void across;
   d.hall(3);
   d.exit(3);
   return g;
