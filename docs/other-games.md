@@ -42,7 +42,7 @@ and always upright.
   pull up what's growing.
 - **[Eggscape the Permanent
   Underclass](https://github.com/h1ddenpr0cess20/eggscape-iii)**: a walkway
-  forty storeys over a surveillance city. There's no getting out of this one,
+  forty stories over a surveillance city. There's no getting out of this one,
   so the score is how long you last.
 - **[Runny Egg](https://github.com/h1ddenpr0cess20/runny-egg)**: a hurdles
   race for six eggs in five lanes. You aren't the fastest, but you have to

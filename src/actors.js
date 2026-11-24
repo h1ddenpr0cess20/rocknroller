@@ -187,7 +187,7 @@ export function createActors(GFX, venue, world, { killY }) {
     const make = g.kind === 'panel' ? createPanelMesh : createGateMesh;
     const look = make(GFX, { span, height: DOOR_HEIGHT, thickness: DOOR_THICKNESS, across, venue, look: g.look });
     group.add(look.group);
-    return { ...g, base, box, mesh: look.group, look, opening: -1, broken: -1, centre: [cx, base, cz] };
+    return { ...g, base, box, mesh: look.group, look, opening: -1, broken: -1, center: [cx, base, cz] };
   });
 
   // Bumpers.
@@ -201,7 +201,7 @@ export function createActors(GFX, venue, world, { killY }) {
 
   // Props that can be smashed: a box over each, solid until Rock comes at it hard enough.
   const props = venue.props.filter((p) => p.breakAt).map((p) => ({
-    spec: p, breakAt: p.breakAt, broken: -1, centre: [p.x + p.w / 2, p.base, p.z + p.d / 2],
+    spec: p, breakAt: p.breakAt, broken: -1, center: [p.x + p.w / 2, p.base, p.z + p.d / 2],
     box: {
       solid: true, kind: 'prop', vx: 0, vy: 0, vz: 0,
       min: [p.x + 0.04, p.base, p.z + 0.04], max: [p.x + p.w - 0.04, p.base + Math.max(0.6, p.rise), p.z + p.d - 0.04],
@@ -427,9 +427,9 @@ export function createActors(GFX, venue, world, { killY }) {
           if (kind.move === 'fly') m.y = m.flight;
           else m.y = venue.heightAt(x, z) ?? m.y;
           if (rock && !touched && open) {
-            const centre = kind.move === 'fly' ? m.y : m.y + 0.2;
+            const center = kind.move === 'fly' ? m.y : m.y + 0.2;
             const flat = Math.hypot(rock.x - x, rock.z - z);
-            if (flat < rock.r + kind.radius * (kind.move === 'fly' ? 1 : 0.8) && Math.abs(rock.y - centre) < 0.7) touched = m;
+            if (flat < rock.r + kind.radius * (kind.move === 'fly' ? 1 : 0.8) && Math.abs(rock.y - center) < 0.7) touched = m;
           }
         }
       }
@@ -537,7 +537,7 @@ export function createActors(GFX, venue, world, { killY }) {
         l.look.update?.(time);
       }
       for (const g of doors) {
-        g.mesh.position.set(g.centre[0], (g.box.min[1] + g.box.max[1]) / 2, g.centre[2]);
+        g.mesh.position.set(g.center[0], (g.box.min[1] + g.box.max[1]) / 2, g.center[2]);
         g.mesh.visible = !(g.broken >= 0 && g.kind === 'panel' && g.box.min[1] > g.base + 0.01 && !g.box.solid);
         g.look.update?.(time, g.broken >= 0 ? time - g.broken : -1);
       }

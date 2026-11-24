@@ -17,12 +17,12 @@ test('a hit is graded by how fast it was: tap, bonk, smash, crit', () => {
 });
 
 test('a smash costs Rock nothing, a tap costs him the foe\'s whole power, and a bonk less the closer it was to a smash', () => {
-  const neighbour = foe('neighbour');
-  assert.equal(resolveImpact({ speed: neighbour.toughness, foe: neighbour }).damage, 0);
-  assert.equal(resolveImpact({ speed: 0, foe: neighbour }).damage, neighbour.power);
-  const slow = resolveImpact({ speed: neighbour.toughness * 0.55, foe: neighbour }).damage;
-  const fast = resolveImpact({ speed: neighbour.toughness * 0.95, foe: neighbour }).damage;
-  assert.ok(fast < slow && slow < neighbour.power);
+  const neighbor = foe('neighbor');
+  assert.equal(resolveImpact({ speed: neighbor.toughness, foe: neighbor }).damage, 0);
+  assert.equal(resolveImpact({ speed: 0, foe: neighbor }).damage, neighbor.power);
+  const slow = resolveImpact({ speed: neighbor.toughness * 0.55, foe: neighbor }).damage;
+  const fast = resolveImpact({ speed: neighbor.toughness * 0.95, foe: neighbor }).damage;
+  assert.ok(fast < slow && slow < neighbor.power);
 });
 
 test('a boss is worn down, and never goes down for nothing', () => {

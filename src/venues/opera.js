@@ -1,6 +1,6 @@
 import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { backTile, branch, centre, facingRot, flat, frontHeading, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
+import { backTile, branch, center, facingRot, flat, frontHeading, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 7: The Opera House. Red velvet, gold leaf, damask on the walls and
@@ -28,7 +28,7 @@ export function opera() {
     name: 'The Opera House', act: 7, cols: 130, rows: 120, palette: OPERA, tempo: 88,
     intro: 'Please silence your rock.',
     look: {
-      theme: 'theatre', floor: 'carpet', wall: 'damask', lamp: 'bulb', exitSign: 'GIG', ampName: 'OPERA', crusher: 'chandelier',
+      theme: 'theater', floor: 'carpet', wall: 'damask', lamp: 'bulb', exitSign: 'GIG', ampName: 'OPERA', crusher: 'chandelier',
       hemi: ['#ffe0c8', '#5a2a30', 1.15], key: '#fff0e0', keyK: 1.1, lantern: '#ffe0b0',
       skyColors: ['#0c0408', '#18080e', '#2a0c14', '#40121c', '#5a1a24'],
       reflect: WARM, ceiling: '#3a1620',
@@ -51,7 +51,7 @@ export function opera() {
   for (const [a, b] of [[3, -3], [3, 3], [9, -3], [9, 3]]) g.pillar(...foyer.tile(a, b), 2.2, { wall: 'block' });
   g.foe('usher', ...foyer.tile(6, -4), { range: 6 }).foe('critic', ...foyer.tile(5, 4), { range: 6 }).foe('suit', ...foyer.tile(10, 0), { range: 5 });
   g.pick(...foyer.tile(2, 0), 10).pick(...foyer.tile(6, 0), 10).pick(...foyer.tile(11, -5), 10).pick(...foyer.tile(11, 5), 10);
-  g.light('chandelier', ...centre(foyer), { height: 3.4, radius: 4 });
+  g.light('chandelier', ...center(foyer), { height: 3.4, radius: 4 });
   g.light('neon', ...wallTile(foyer, 6), { text: 'TONIGHT: ROCK', color: GOLD, height: 1.7, size: 0.5 });
   // The grand staircase: wide, and a long way down.
   const grand = d.stairs(6, 3, { width: 9, ...MARBLE });
@@ -116,7 +116,7 @@ export function opera() {
   g.foe('usher', ...stage.tile(16, 5), { range: 4 });
   g.pick(...stage.tile(2, 0), 10).pick(...stage.tile(7, -5), 10).pick(...stage.tile(7, 5), 10).pick(...stage.tile(12, -5), 10);
   g.tape(...stage.tile(2, -5)).tape(...stage.tile(2, 5));
-  g.light('chandelier', ...centre(stage), { height: 3.6, radius: 4.5 });
+  g.light('chandelier', ...center(stage), { height: 3.6, radius: 4.5 });
   wash(g, stage, ['#ffd890', '#ff8a5a'], { cans: 3, program: 'static' });
   g.light('spot', ...wallTile(stage, 9), { colors: ['#fff4e0'], radius: 3, aim: toBack(stage).map((v) => -4 * v), height: 2.4 });
   // Under the stage, through a trap the prompter left open: the second record.

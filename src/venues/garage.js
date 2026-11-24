@@ -8,7 +8,7 @@ import { across, backTile, barred, flat, loop, pick } from 'madness-engine/venue
  * a basement under it. Everything is taught here: rolling over picks,
  * running at somebody to smash them, a speaker stack that comes down on the
  * beat, a gate and its pass, and a flimsy panel that someone ought to run at,
- * with a gold record behind it. Little brothers, a neighbour with a broom,
+ * with a gold record behind it. Little brothers, a neighbor with a broom,
  * the old-timer from next door, the mail carrier, and the crossing guard
  * from the corner, who has come to see what all the noise is.
  * The band's light show is two strings of fairy lights and a couple of cans.
@@ -20,7 +20,7 @@ export const GARAGE = {
   ambient: [0.95, 0.9, 0.92], lamp: '#ffb766', trap: '#3a3632', lift: '#4a4a52', exit: '#ff3fa4', vary: 0.07,
 };
 
-/** The party colours the band has up: pink, cyan, yellow. */
+/** The party colors the band has up: pink, cyan, yellow. */
 const PARTY = ['#ff2d95', '#2de2ff', '#ffd23a'];
 
 export function garage() {
@@ -54,7 +54,7 @@ export function garage() {
   g.foe('brother', ...room.tile(5, -2), { range: 6 }).foe('brother', ...room.tile(8, 2), { range: 6 });
   g.pick(...room.tile(3, 3), 10).pick(...room.tile(12, -3), 10).pick(...room.tile(6, 0), 5);
   g.road(...room.tile(13, -4), 50);
-  // The band's party rig: a wash of colour on the drums, fairy lights strung across the room, neon on the wall.
+  // The band's party rig: a wash of color on the drums, fairy lights strung across the room, neon on the wall.
   g.light('festoon', ...room.tile(1, -4), { to: [12 * room.dir[0] + 8 * room.across[0], 12 * room.dir[1] + 8 * room.across[1]], colors: PARTY, height: 2.3 });
   g.light('festoon', ...room.tile(1, 4), { to: [12 * room.dir[0] - 8 * room.across[0], 12 * room.dir[1] - 8 * room.across[1]], colors: [PARTY[2], PARTY[0], PARTY[1]], height: 2.3 });
   g.light('par', ...room.tile(13, room.back * 2), { colors: [PARTY[0], PARTY[1]], aim: [-2.2 * room.back, 0], shift: 0, glow: 0.7, reach: 7 });
@@ -71,9 +71,9 @@ export function garage() {
   d.hall(5);
   d.turn('+x');
 
-  // Along the side of the house, the neighbour on patrol.
+  // Along the side of the house, the neighbor on patrol.
   const side = d.hall(11);
-  g.foe('neighbour', ...side.tile(5, 0), { range: 5, path: [side.tile(2, 0), side.tile(9, 0)] });
+  g.foe('neighbor', ...side.tile(5, 0), { range: 5, path: [side.tile(2, 0), side.tile(9, 0)] });
   g.pick(...side.tile(9, 1), 10).pick(...side.tile(3, -1), 5);
   // The practice amp's rigged up over the passage: it comes down on the beat.
   const rig = d.hall(11);
@@ -87,11 +87,11 @@ export function garage() {
   d.hall(3);
   d.stairs(5, 2.5);
 
-  // The basement: boxes on the floor, a neighbour guarding it, the way out barred.
+  // The basement: boxes on the floor, a neighbor guarding it, the way out barred.
   const cellar = d.room(13, 13);
   for (const [a, b] of [[2, 3], [2, -3], [8, 4], [8, -4]]) g.pillar(...cellar.tile(a, b), 0.8, { prop: 'case' });
   // The old-timer from next door has come down to complain about the noise.
-  g.foe('neighbour', ...cellar.tile(5, 0), { range: 6 }).foe('brother', ...cellar.tile(9, 3), { range: 6 }).foe('oldtimer', ...cellar.tile(10, -3), { range: 6 });
+  g.foe('neighbor', ...cellar.tile(5, 0), { range: 6 }).foe('brother', ...cellar.tile(9, 3), { range: 6 }).foe('oldtimer', ...cellar.tile(10, -3), { range: 6 });
   g.road(...cellar.tile(11, 5), 60).pick(...cellar.tile(1, -5), 10).pick(...cellar.tile(6, 5), 10);
   g.lighter(...cellar.tile(11, -5));
   // On the way out, once the three of them have had a go at him, a roll of tape.
@@ -127,7 +127,7 @@ export function garage() {
   const lock = strongbox.room(5, 5);
   g.record(...lock.tile(3, 0));
   g.road(...lock.tile(1, -1), 70).tape(...lock.tile(1, 1));
-  g.foe('neighbour', ...run.tile(6, 1), { range: 5 });
+  g.foe('neighbor', ...run.tile(6, 1), { range: 5 });
   g.speaker(...across(run, 8, { beats: 4 }));
   const last = d.room(9, 9);
   g.foe('crossingguard', ...last.tile(3, -2), { range: 5 }).foe('brother', ...last.tile(4, 2), { range: 5 });

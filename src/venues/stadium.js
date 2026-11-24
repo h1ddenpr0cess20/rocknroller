@@ -1,6 +1,6 @@
 import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { backTile, branch, centre, flat, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
+import { backTile, branch, center, flat, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 10: The Stadium. The last night of the tour. Floodlights, a sky
@@ -138,7 +138,7 @@ export function stadium() {
   g.light('laser', ...stage.tile(20, 8), { colors: [SHOW[4]], aim: [-12, -8], height: 3.4 });
   wash(g, stage, SHOW, { cans: 4, program: 'rainbow', every: 4 });
   sign(stage, 10, 'ROCK', GOLD, 2.8, 1.4);
-  void centre;
+  void center;
   d.hall(2, { floor: 'planks' });
   d.stairs(3, 1.5);
   d.exit(3);

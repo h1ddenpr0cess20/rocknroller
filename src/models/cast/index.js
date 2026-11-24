@@ -17,7 +17,7 @@ import mascot from 'madness-engine/characters/mascot';
 import merch from 'madness-engine/characters/merch';
 import metalhead from 'madness-engine/characters/metalhead';
 import mosher from 'madness-engine/characters/mosher';
-import neighbour from 'madness-engine/characters/neighbour';
+import neighbor from 'madness-engine/characters/neighbor';
 import oldtimer from 'madness-engine/characters/oldtimer';
 import phone from 'madness-engine/characters/phone';
 import poolball from 'madness-engine/characters/poolball';
@@ -30,6 +30,6 @@ import usher from 'madness-engine/characters/usher';
 
 /** Everyone sculpted, by name (see foes.js for who they are). */
 export const CAST = {
-  brother, neighbour, crossingguard, mailcarrier, oldtimer, phone, drunk, freebird, mosher, scalper, hipster, roadie, merch, influencer, metalhead,
+  brother, neighbor, crossingguard, mailcarrier, oldtimer, phone, drunk, freebird, mosher, scalper, hipster, roadie, merch, influencer, metalhead,
   usher, critic, suit, hippie, security, bouncer, mascot, diver, drone, drum, poolball, promoter, maestro, headliner,
 };

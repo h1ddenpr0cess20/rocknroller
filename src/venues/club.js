@@ -1,6 +1,6 @@
 import { digger } from 'madness-engine/venue/dig';
 import { Venue } from '../venue.js';
-import { backTile, barred, branch, centre, flat, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
+import { backTile, barred, branch, center, flat, toBack, wallTile, wash } from 'madness-engine/venue/helpers';
 
 /**
  * Act 4: The Club. A basement dance club at two in the morning. It starts
@@ -20,7 +20,7 @@ export const CLUB = {
   ambient: [0.9, 0.85, 1.05], lamp: '#ff7ad0', trap: '#22182e', lift: '#3a2a52', exit: '#2de2ff', zapHue: 5.3, vary: 0.06,
 };
 
-/** The club's colours: hot pink, cyan, violet, acid green. */
+/** The club's colors: hot pink, cyan, violet, acid green. */
 const NEON = ['#ff2d95', '#2de2ff', '#a23aff', '#7cff3a'];
 
 export function club() {
@@ -89,7 +89,7 @@ export function club() {
   g.foe('drone', ...floor.tile(11, 0), { path: [floor.tile(6, 0), floor.tile(15, 0)] });
   g.pick(...floor.tile(3, 3), 10).pick(...floor.tile(8, -2), 10).pick(...floor.tile(12, 0), 10).pick(...floor.tile(18, -2), 10);
   g.road(...floor.tile(19, 0), 50);
-  g.light('ball', ...centre(floor), { colors: NEON, radius: 8, height: 3.3 });
+  g.light('ball', ...center(floor), { colors: NEON, radius: 8, height: 3.3 });
   g.light('laser', ...wallTile(floor, 3), { colors: [NEON[3]], aim: [4, -floor.back * 7], height: 2.3 });
   g.light('laser', ...wallTile(floor, 18), { colors: [NEON[0]], aim: [-4, -floor.back * 7], height: 2.3 });
   wash(g, floor, [NEON[0], NEON[2], NEON[1]], { cans: 3, program: 'chase', every: 1 });
